@@ -1,5 +1,7 @@
 # webcam.php
 
+![Webcam example screenshot](webcam-example.png)
+
 Generates HTML pages for webcam images in a directory structure like this:
 `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`.
 
@@ -9,6 +11,9 @@ Highlights:
 * Navigation with touch gestures and arrow keys.
 
 Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231116)
+
+Todo:
+* Add a small `HH:MM` CSS overlay on the mini images shown for days, months and years.
 
 Please note: The script started as a simple hack, then grew into this much larger
 and bare maintainable hack. It is a good candidate for a complete rewrite if you have the time.
