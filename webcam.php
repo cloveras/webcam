@@ -164,6 +164,9 @@ function footer($images_printed, $previous, $next, $up, $down) {
     echo '
         <p>
     ';
+
+    echo "<p style=\"color: rgb(200, 200, 200\")>Made with <a style=\"color: rgb(200, 200, 200)\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
+
     echo "</body>\n</html>\n";
 }
 

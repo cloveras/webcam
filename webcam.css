@@ -2,23 +2,17 @@ body {
   font-family: Helvetica, Verdana, Arial;
   font-size: 14px;
 
-  width: 90%;
+  width: 95%;
   margin-top: 2%;
   margin-left: 5%;
   margin-right: 5%;
   margin-bottom: 5%;
 }
 
-a {
+a:link, a:visited {
     color: black; 
-    /* text-decoration: underline; */
 }
-a:link {
-    color: black;
-}
-a:visited {
-    color: black;
-}
+
 a:hover {
     color: white;
     background-color: black;
@@ -33,40 +27,4 @@ img {
     max-height: 100%;
     position: relative;
     display: inline-block;
-  }
-
-  /*
-.mini {
-    width:160px;
-    position:relative;
 }
-
-.mini img{
-    max-width:100%;
-  }
-
-  .thumbnail b{
-    position:absolute;
-    top:50%;
-    left:0;
-    color:white;
-    background: red;
-    width:100%;
-    text-align:center;
-    transform:translateY(-50%); 
-    margin:0;
-  }
-
-.data-overlay {
-    font-family: Helvetica, Arial, sans-serif; 
-    font-size: 12px;
-    color: white;
-    background-color: red;
-    width:30px;
-    line-height: 16px;
-    text-align: center;
-    position: relative;
-    right: 40px;
-    bottom: 8px;
-}
-*/

@@ -3,7 +3,8 @@
 # rename_and_make_mini_images.sh
 #
 # Renames from long to short filenames.
-# Generates mini versions in the "mini" subdirectory.
+# Generates mini versions in the "mini" subdirectory using convert.
+# Adds comment with exiftool.
 
 # Go the the directory with all files.
 webcam_dir="/home/1/l/lilleviklofoten/www/webcam"
@@ -13,11 +14,9 @@ today="$(date +'%Y/%m/%d')"
 
 # Where are we?
 image_dir="$webcam_dir/$today"
-# echo $image_dir
 
 # cd to today's directory (Ymd)
 cd $image_dir
-# echo `pwd`
 
 # Exit of the "today" directory does not exist.
 [ ! -d $image_dir ] && exit

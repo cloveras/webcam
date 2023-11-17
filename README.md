@@ -23,13 +23,9 @@ Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&d
 
 ## Todo
 
-* Add a small `HH:MM` CSS overlay on the mini images shown for days, months and years.
+* Add a CSS overlay to display `HH:MM` in the lower right corner on the mini images shown for days, months and years.
 
 ## Things that should be changed if you want to use this
-
-Please note: The script started as a simple hack, then grew into this much larger
-and bare maintainable hack. It is a good candidate for a complete rewrite if you have the time.
-It works well, but the code is not super elegant. PRs are welcome.
 
 * Add cron jobs for `copy-latest-image.sh` and `rename_and_make_mini_images.sh`.
 * Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too late.
@@ -39,7 +35,11 @@ It works well, but the code is not super elegant. PRs are welcome.
 * Change the code for Google and Analytics Microsoft Clarity.
 * Update the HTML meta tags.
 
-For verbose feedback for debugging: `$debug = 1`
+For verbose feedback for debugging: `$debug = 1`.
+
+Please note: The script started as a simple hack, then grew into this much larger
+and barely maintainable hack.  It works well, but the code is not super elegant.
+PRs are welcome.
 
 ## Got lots of images you need to sort?
 
@@ -47,5 +47,8 @@ The Bash script `webcam-image-organize-fix.sh` can be a good _starting point_
 for reorganizing thousands of images into `YYYY/MM/DD` directories.
 
 ## Example screenshot
+
+This example from https://lilleviklofoten.no/webcam/?type=day&date=20231117
+shows all the images for 2023-11-17:
 
 ![Webcam example screenshot](webcam-example.png)
