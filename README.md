@@ -1,7 +1,17 @@
 # webcam.php
 
 Generates HTML pages for webcam images in a directory structure like this:
-`YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`.
+`YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`:
+
+```
+2023
+├── 01
+│   ├── 01
+│   │   ├── 20230101032215.jpg
+│   │   ├── 20230101032721.jpg
+│   │   ├── 20230101033228.jpg
+[...]
+```
 
 ## Highlights
 
@@ -15,10 +25,11 @@ Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&d
 
 * Add a small `HH:MM` CSS overlay on the mini images shown for days, months and years.
 
+## Things that should be changed if you want to use this
+
 Please note: The script started as a simple hack, then grew into this much larger
 and bare maintainable hack. It is a good candidate for a complete rewrite if you have the time.
-
-## Things that should be changed if you want to use this
+It works well, but the code is not super elegant. PRs are welcome.
 
 * Add cron jobs for `copy-latest-image.sh` and `rename_and_make_mini_images.sh`.
 * Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too late.
