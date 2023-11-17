@@ -48,4 +48,4 @@ do
 done
 
 # Add comment to the renamed files
-exiftool -r -Description='Lillevik Lofoten webcam: https://lilleviklofoten.no/webcam/' -overwrite_original $image_dir > /dev/null
+# exiftool -r -Description='Lillevik Lofoten webcam: https://lilleviklofoten.no/webcam/' -overwrite_original $image_dir > /dev/null

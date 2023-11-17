@@ -3,9 +3,9 @@
 //
 // webcam.php
 //
-// Code: https://github.com/cloveras/kamera
+// Code: https://github.com/cloveras/webcam
 //
-// Example: http://lilleviklofoten.no/webcamera/
+// Example: http://lilleviklofoten.no/webcam/
 //
 ============================================================ */
 
@@ -24,7 +24,7 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
   <meta name="keywords" content="lofoten,webcam,webcamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index" />
-  <meta name="generator" content="webcam.php: https://github.com/cloveras/kamera">
+  <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
   <link rel="stylesheet" type="text/css" href="webcam.css" />
 
 END1;
@@ -53,7 +53,8 @@ END2;
         echo "  <script>\n";
     
         function printArrowScript($keyCode, $url) {
-            echo "    function ${keyCode}ArrowPressed() { window.location.href=\"$url\"; }\n";
+            //echo "    function ${keyCode}ArrowPressed() { window.location.href=\"$url\"; }\n";
+            echo "    function {$keyCode}ArrowPressed() { window.location.href=\"$url\"; }\n";
         }
     
         if ($previous) printArrowScript("left", $previous);
@@ -210,47 +211,6 @@ function polar_night($timestamp, $latitude, $longitude) {
     return ($month == 12 && $day >= 6) || ($month == 1 && $day <= 6);
 }
 
-// A new attempot, still not quite working
-// ------------------------------------------------------------
-/*
-function find_sun_times_new($timestamp) {
-    // If $date is not provided, use the current date
-    if ($timestamp === null) {
-        $timestamp = time();
-    }
-
-    $latitude = 68.33007;
-    $longitude = 14.09165;
-
-    // Get sun info for the specified date, latitude, and longitude
-    $sunInfo = date_sun_info($timestamp, $latitude, $longitude);
-
-    // Extract times from the sun info
-    $sunrise = new DateTime("@{$sunInfo['sunrise']}");
-    $sunset = new DateTime("@{$sunInfo['sunset']}");
-    $civilDawn = new DateTime("@{$sunInfo['civil_twilight_begin']}");
-    $civilDusk = new DateTime("@{$sunInfo['civil_twilight_end']}");
-    $nauticalDawn = new DateTime("@{$sunInfo['nautical_twilight_begin']}");
-    $nauticalDusk = new DateTime("@{$sunInfo['nautical_twilight_end']}");
-
-    // Calculate midnight sun and polar night
-    $midnightSun = $sunset->diff($sunrise)->invert === 1;
-    $polarNight = $sunrise->diff($sunset)->invert === 1;
-
-    return [
-        'sunrise' => $sunrise->format('Y-m-d H:i:s'),
-        'sunset' => $sunset->format('Y-m-d H:i:s'),
-        'civil_dawn' => $civilDawn->format('Y-m-d H:i:s'),
-        'civil_dusk' => $civilDusk->format('Y-m-d H:i:s'),
-        'nautical_dawn' => $nauticalDawn->format('Y-m-d H:i:s'),
-        'nautical_dusk' => $nauticalDusk->format('Y-m-d H:i:s'),
-        'midnight_sun' => $midnightSun,
-        'polar_night' => $polarNight,
-    ];
-    //return array($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night);
-}
-*/
-
 // Find sunrise and sunset, return all kinds of stuff we need later.
 // Fakes sunrise and sunset for midnight sun and polar night.
 // ------------------------------------------------------------
@@ -396,17 +356,18 @@ function print_full_month($year, $month) {
                 if ($images_printed == 0) {
                     echo "<p>\n";
                 }
-                // Print mini or large images.
+                // Print mini images, link to all images for that day.
                 echo "<a href=\"?type=day&date=$year$month$day\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
-                // Print mini images, link to all images for that day.
-                // If the mini version has been created: Use that.
+                // If the mini version has been created: Use that. If not: Scale down the large version.
                 if ($size == "mini" || empty($size)) {
                     if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
                         echo "mini/$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
-                    } 
+                    } else {
+                        echo "$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
+                    }
                 } else {
                     echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width \" height=\"$large_image_height\" ";
                 }
@@ -420,7 +381,8 @@ function print_full_month($year, $month) {
     if ($images_printed > 0) {
         echo "</p>\n";
     } else {
-        echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n"; // No pictures found for this month.
+        // No pictures found for this month.
+        echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n"; 
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -455,7 +417,7 @@ function print_full_year($year) {
     page_header("Lillevik Lofoten webcam: $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
     print_previous_next_year_links($year);
 
-    // Links to all months 1-12.
+    // Links to all months 1-12: Commas and "and" for the last one.
     echo "\n<p>Months: \n";
     $monthLinks = [];
     for ($i = 1; $i <= 12; $i++) {
@@ -466,6 +428,7 @@ function print_full_year($year) {
 
     // Link to today.
     echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
+    echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
@@ -484,7 +447,6 @@ function print_full_year($year) {
             $yyyymmddhhmmss = find_first_image_after_time($year, $month, $day, $monthly_hour, 0, 0);
             if ($yyyymmddhhmmss) {
                 // There was an image.
-                debug("FOUND: yyyymmddhhmmss: $yyyymmddhhmmss");
                 $hour = substr($yyyymmddhhmmss, 8, 2);
                 $minute = substr($yyyymmddhhmmss, 10, 2);
                 $image_filename = $year . "/" . $month . "/" . $day . "/" . $yyyymmddhhmmss . ".jpg";
@@ -498,7 +460,7 @@ function print_full_year($year) {
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 echo "src=\"$year/$month/$day/";
-                // If the mini version has been created: Use that.
+                // If the mini version has been created: Use that. If not: Scale down the full version.
                 if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
                     echo "mini/";
                 } 
@@ -511,7 +473,8 @@ function print_full_year($year) {
     if ($images_printed > 0) {
         echo "</p>\n";
     } else {
-        echo "<p>(No photos to display for " .  date("Y", mktime(12, 0, 0, 1, 1, $year)) . ")</p>\n"; // No pictures found for this year.
+        // No pictures found for this year.
+        echo "<p>(No photos to display for " .  date("Y", mktime(12, 0, 0, 1, 1, $year)) . ")</p>\n"; 
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -520,93 +483,70 @@ function print_full_year($year) {
 // ------------------------------------------------------------
 function print_all_years() {
     debug("<br/>print_all_years()");
-    global $size;
+    global $monthly_day;
     global $monthly_hour;
-    global $large_image_width;
-    global $large_image_height;
     global $mini_image_width;
     global $mini_image_height;
-    //$days = array(1, 8, 15, 23); // Four days per month.
-    $days = range(1,31); 
+   
+    $start_year = 2015;
+    $monthly_days = [1, 7, 14, 21, 28];
+    $this_year = date('Y');
 
-    // Find previous and next year, and create the links to them.
-    $previous = false;
-    $next = false;
-    $up = false;
-    $down = false;
-
-    // Find first year with images.
-    $first_year_with_images = find_first_year_with_images();
-
-    $first_day_with_images = "";
-    for ($month = 1; $month <= 12; $month++) {
-        $month = sprintf("%02d", $month);
-        $first_day_with_images = find_first_day_with_images($year, $month);
-        if ($first_day_with_images) {
-            // We found a month (and also a day, which we don't need now).
-            $down = "?type=month&year=$year&month=$month";
-            break;
-        }
-    }
-
-    page_header("Lillevik Lofoten webcam: All days", $previous, $next, $up, $down);
-    echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
+    $previous = $next = $up = $down = false;
+    page_header("Lillevik Lofoten webcam: $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
+    echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
+    echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a> \n";
+    echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "</p>\n\n";
+        
+    for ($year = $start_year; $year <= $this_year; $year++) {
 
-    // Helpers for loops below.
-    $images_printed = 0;
-    $yyyymmddhhmmss = "";
-    $image_filename = "";
+        print "\n<h2>$year</h2>\n\n";
 
-    // Loop through all years, please.
-    for ($year = $first_year_with_images; $year <= date('Y'); $year++) {
-        // Loop through all months (1-12) for this year and print images for the $days if they exist.
+        // Loop through all months 1-12 (again) and print images for the $days if they exist.
+        $days = range(1, 31);
+        $images_printed = 0;
+        $yyyymmddhhmmss = "";
+        $image_filename = "";
+
+        // Loop through all months for this year.
         for ($month = 1; $month <= 12; $month++) {
             $month = sprintf("%02d", $month);
-            // Check for each of the days in the $days array
-            foreach ($days as $day) {
-                $day = sprintf("%02d", $day);
-                // Find first image for that day taken after $hour
-                $yyyymmddhhmmss = find_first_image_after_time($year, $month, $day, $monthly_hour, 0, 0);
+
+            // Loop through all $monthly_days for this month.
+            foreach($monthly_days as $monthly_day) {
+
+                // Find first image for the $monthly_day taken after $monthly_hour
+                debug("find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);");
+                print "<p>find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);</p>\n";
+                $yyyymmddhhmmss = find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);
                 if ($yyyymmddhhmmss) {
+                    // There was an image.
+                    $hour = substr($yyyymmddhhmmss, 8, 2);
                     $minute = substr($yyyymmddhhmmss, 10, 2);
-                    // Something was found.
-                    debug("Found image: $yyyymmddhhmmss");
-                    $image_filename = $year . "$month$day/" . $yyyymmddhhmmss . ".jpg";
-                    debug("Filename: $image_filename");
                     // Print it!
                     if ($images_printed == 0) {
-                        echo "<p>\n";
+                        echo "<p>\n"; 
                     }
-                    // Print images
-                    echo "<a href=\"?type=one&image=$year$month$day$monthly_hour;$minute$seconds\">";
-                    if ($size == "mini") {
-                        // Print mini images.
-                        echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $monthly_hour:$minute\" ";
-                        echo "title=\"$year-$month-$day $monthly_hour:$minute\" ";
-                        echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
-                        echo "src=\"$year$month$day/";
-                        if (file_exists("$year$month$day/mini/$yyyymmddhhmmss.jpg")) {
-                            // If the mini version has been created: Use that.
-                            echo "mini/";
-                        } 
-                        echo "$yyyymmddhhmmss.jpg\"/></a>\n";
-                    } else if ($size == "large") {
-                        // Print large images.
-                        echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $monthly_hour:$minute\" ";
-                        echo "title=\"$year-$month-$day $monthly_hour:$minute\" ";
-                        echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
-                        echo "src=\"$image\_filename\"/></a><br/>\n";
-                    }
+                    // Print mini images (never large images for full years), link to all images for that day.
+                    echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
+                    echo "<img alt=\"Lillevik Lofoten webcam: $year-$month--$monthly_day $hour:$minute\" ";
+                    echo "title=\"$year-$month-$monthly_day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
+                    echo "src=\"$year/$month/$monthly_day/";
+                    // If the mini version has been created: Use that. If not: Scale down the full version.
+                    if (file_exists("$year/$month/$monthly_dayy/mini/$yyyymmddhhmmss.jpg")) {
+                        echo "mini/";
+                    } 
+                    echo "$yyyymmddhhmmss.jpg\"/></a>\n";
+
                     $images_printed += 1;
-                }
-            }
+                }    
+            } 
         }
-    }
-    if ($images_printed > 0) {
-        echo "</p>\n";
-    } else {
-        echo "<p>(No photos to display - at all!</p>\n"; // No pictures found for this year.
+        if ($images_printed > 0) {
+            echo "</p>\n";
+        }
+
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -762,7 +702,7 @@ function print_single_image($image_filename, $last_image) {
                 $previous_image = $images[$i - 1];
             }
             if ($i != $number_of_images) {
-                // This was not the last image in the array, so we can get the next one.
+                // This was not the Latest image in the array, so we can get the next one.
                 $next_image = $images[$i + 1];
             }
             break;
@@ -876,6 +816,7 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month) {
         }
         echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
         echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
+        //echo "<a href=\"?type=last\">Latest image</a>.\n";
     } else {
         // Not showing a full month: Work hard to find the days.
 
@@ -895,12 +836,14 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month) {
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
             echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
         } 
+        //echo "<a href=\"?type=last\">Latest image</a>.\n";
 
         // Link to the full month and year - and everything.
         //------------------------------------------------------------
-        echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("M") . "</a>.\n";
+        echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("M", $timestamp) . "</a>.\n";
         echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
     }
+    echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "</p>\n\n";
 }
 
@@ -984,6 +927,9 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 
+    // Streaming container div for all the mini images, so the CSS time overlay can be positioned relative to it.
+    //echo "<div class=\"streaming-container\">\n";
+
     // Get all *jpg images in "today's" image directory.
     $directory = date('Y/m/d', $timestamp);
     $images_printed = 0;
@@ -1030,6 +976,8 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 //echo "</div>";
 
                 echo "</a>\n";
+
+                //echo "<span class=\"time-overlay\">$hour:$minute</span>";
     
                 if ($image_size == "large") {
                     // Large images: Print full size with linebreaks.
@@ -1047,8 +995,12 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
             
         }
     } else {
-
+        // No images for this day.
     }
+
+    // Close the streaming-container div.
+    //echo "</div>\n";
+
     if ($images_printed > 0) {
         echo "</p>\n";
     } else {
@@ -1127,13 +1079,13 @@ if ($type == "" || $type == false) {
 }
 
 if ($type == "last") {
-    // Only the last image, even if it is after both sunset and dusk.
+    // Only the Latest image, even if it is after both sunset and dusk.
     $latest_image = find_latest_image();
     $latest_image_filename = get_yyyymmddhhmmss($latest_image);
-    print_single_image($latest_image_filename, true); // true = last image.
+    print_single_image($latest_image_filename, true); // true = Latest image.
 } else if ($type == "one") {
     // One specific image, the datepart is in the $image parameter (no path or .jpg): 2015112613051901
-    print_single_image($image, false); // false = not last image.
+    print_single_image($image, false); // false = not Latest image.
 } else if ($type == "day") {
     // All images for the specified date either in $date parameter or created below: 20151130.
     if ($date) {

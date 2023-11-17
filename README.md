@@ -1,6 +1,8 @@
 # webcam.php
 
-Generates HTML pages for webcam images in a directory structure like this:
+Generates HTML pages
+([examples here](#example-screenshots))
+for webcam images stored in a directory structure like this:
 `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`:
 
 ```
@@ -21,11 +23,12 @@ Generates HTML pages for webcam images in a directory structure like this:
 
 ## Highlights
 
-* Finds sunrise, sunset, dawn, and dusk based on latitude and longtitude.
+* Finds sunrise, sunset, dawn, and dusk based on latitude and longitude.
 * Only shows images taken between dawn and dusk, handles midnight sun and polar night.
 * Navigation with touch gestures and arrow keys.
+* Data collection with Google Analytics and Microsoft Clarity
 
-Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231116)
+Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
 
 ## Todo
 
