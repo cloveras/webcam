@@ -11,6 +11,12 @@ Generates HTML pages for webcam images in a directory structure like this:
 │   │   ├── 20230101032721.jpg
 │   │   ├── 20230101033228.jpg
 [...]
+├── 11
+│   ├── 17
+│   │   ├── 20231117000232.jpg
+│   │   ├── 20231117001233.jpg
+│   │   ├── 20231117002233.jpg
+[...]
 ```
 
 ## Highlights
@@ -46,9 +52,16 @@ PRs are welcome.
 The Bash script `webcam-image-organize-fix.sh` can be a good _starting point_
 for reorganizing thousands of images into `YYYY/MM/DD` directories.
 
-## Example screenshot
+## Example screenshots
 
-This example from https://lilleviklofoten.no/webcam/?type=day&date=20231117
-shows all the images for 2023-11-17:
+A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231117095251
 
-![Webcam example screenshot](webcam-example.png)
+![Webcam example screenshot: Single image](webcam-example-single-image.png)
+
+One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231117
+
+![Webcam example screenshot: Day](webcam-example-day.png)
+
+One full month: https://lilleviklofoten.no/webcam/?type=month&year=2023&month=11
+
+![Webcam example screensho: Month](webcam-example-month.png)
