@@ -22,10 +22,14 @@ function page_header($title, $previous, $next, $up, $down) {
 <head>
   <meta charset="utf-8">
   <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
-  <meta name="keywords" content="lofoten,webcam,webcamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
+  <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index" />
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
   <link rel="stylesheet" type="text/css" href="webcam.css" />
+
+  <!-- Touch gestures -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://alloyteam.github.io/AlloyFinger/alloy_finger.js"></script>
 
 END1;
 
@@ -95,9 +99,6 @@ END2;
     })(window, document, "clarity", "script", "brp4ocus57");
     </script>
 
-    <!-- Touch gestures -->
-    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
-
 </head>
 <body>
 
@@ -126,26 +127,38 @@ function debug($txt) {
 
 // Footer
 // ------------------------------------------------------------
-
 function footer($images_printed, $previous, $next, $up, $down) {
-    echo '
-        <script>
-            document.addEventListener(\'DOMContentLoaded\', function() {
-                var hammertime = new Hammer(document.body);
-                hammertime.on(\'swipeleft\', function() {
-                    ' . ($next ? 'window.location.href = \'' . $next . '\';' : '') . '
-                });
-                hammertime.on(\'swiperight\', function() {
-                    ' . ($previous ? 'window.location.href = \'' . $previous . '\';' : '') . '
-                });
-            });
-        </script>
-    ';
+    echo <<<TOUCH
+<!-- Touch gestures: Only showing the available navigation, similar to arrow keys -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var body = document.body;
 
-    echo '
-        <p>Use swipe gestures or arrow keys to navigate:
-    ';
+        var af = new AlloyFinger(body, {
+            swipe: function (evt) {
+                // Swiping logic here
+                if (evt.direction === 'Left') { window.location.href = '{$next}'; }
+                if (evt.direction === 'Right') { window.location.href = '{$previous}'; }
+                if (evt.direction === 'Up') { window.location.href = '{$up}'; }
+                if (evt.direction === 'Down') { window.location.href = '{$down}'; }
+            },
+            pinch: function (evt) {
+                // Pinch-to-zoom logic here
+                var scale = Math.max(1, Math.min(evt.zoom, 3));
+                body.style.transform = 'scale(' + scale + ') translate(' + evt.deltaX + 'px,' + evt.deltaY + 'px)';
+            },
+            pressMove: function (evt) {
+                // Panning logic here
+                body.style.transform = 'scale(1) translate(' + evt.deltaX + 'px,' + evt.deltaY + 'px)';
+            }
+        });
+    });
+</script>
+TOUCH;
 
+    // Navigation links
+    echo '<p>Use swipe gestures or arrow keys to navigate: ';
+    
     if ($next) {
         echo '<a href="' . $next . '">forward</a> (&rarr;), ';
     }
@@ -159,15 +172,12 @@ function footer($images_printed, $previous, $next, $up, $down) {
     }
 
     if ($down) {
-        echo 'og <a href="' . $down . '">down</a> (&darr;).</p>';
+        echo 'and <a href="' . $down . '">down</a> (&darr;).</p>';
     }
 
-    echo '
-        <p>
-    ';
-
-    echo "<p style=\"color: rgb(200, 200, 200\")>Made with <a style=\"color: rgb(200, 200, 200)\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
-
+    // GitHub link
+    echo '<p>Made with <a href="https://github.com/cloveras/webcam" style="color: #ccc;">webcam.php</a></p>\n';
+    
     echo "</body>\n</html>\n";
 }
 
