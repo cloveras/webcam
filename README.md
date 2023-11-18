@@ -44,8 +44,7 @@ If you like this you can
   and
   [`rename_and_make_mini_images.sh`](https://github.com/cloveras/webcam/blob/main/cron/rename_and_make_mini_images.sh).
 * Add cron jobs for those two scripts. See
-  [crontab.txt](util/crontab.txt)
-  for an example.  
+  [crontab.txt](util/crontab.txt).
 * Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too slow.
 * Update latitude and longitude (use Google Maps to find coordinates)
 * Verify the calculated sunrise and sunset at [yr.no](https://www.yr.no/).
