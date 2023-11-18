@@ -7,7 +7,7 @@ src_dir="/Volumes/Klumpen/webcam-reolink"
 dest_dir="/Volumes/Klumpen/webcam-reolink-fixed"
 
 # Iterate through files in the source directory
-find "$src_dir" \( -type f -name "image-*.jpg" -or -type f -path "*/small/image-*.jpg" \) | while read -r file; do
+find "$src_dir" \( -type f -name "image-*.jpg" -or -type f -path "*/small/image-*.jpg" \) |  while read -r file; do
     # Extract date and time from the file name
     base_name=$(basename "$file")
     date_time_part=$(echo "$base_name" | cut -d'-' -f2 | cut -d'.' -f1)
@@ -34,8 +34,8 @@ find "$src_dir" \( -type f -name "image-*.jpg" -or -type f -path "*/small/image-
     mkdir -p "$dest_dir/$year/$month/$day/$subdirectory"
 
     # Copy the file to the destination directory
-    cp -f "$file" "$dest_dir/$year/$month/$day/$subdirectory/$truncated_date_time.jpg"
-    echo cp -f "$file" "$dest_dir/$year/$month/$day/$subdirectory/$truncated_date_time.jpg"
+    cp -f -p "$file" "$dest_dir/$year/$month/$day/$subdirectory/$truncated_date_time.jpg"
+    echo cp -f -p "$file" "$dest_dir/$year/$month/$day/$subdirectory/$truncated_date_time.jpg"
 
 done
 
