@@ -79,7 +79,8 @@ A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231117095251
 
 One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231117
 
-![Webcam example screenshot: Day](images/webcam-example-day.png)
+![Webcam example screenshot: Day](images/webcam-example-day-1.png)
+![Webcam example screenshot: Day](images/webcam-example-day-2.png)
 
 One full month: https://lilleviklofoten.no/webcam/?type=month&year=2023&month=11
 

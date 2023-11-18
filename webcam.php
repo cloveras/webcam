@@ -213,6 +213,7 @@ function polar_night($timestamp, $latitude, $longitude) {
 
 // Find sunrise and sunset, return all kinds of stuff we need later.
 // Fakes sunrise and sunset for midnight sun and polar night.
+// Adjusts dawn and susk to be the same day as sunrise and sunset.
 // ------------------------------------------------------------
 function find_sun_times($timestamp) {
     // Return timestamps for everything.
@@ -230,7 +231,6 @@ function find_sun_times($timestamp) {
     $polar_night_fake_dawn_hour = $polar_night_fake_sunrise_hour - $adjust_dawn_dusk_hours;
     $polar_night_fake_dusk_hour = $polar_night_fake_sunset_hour + $adjust_dawn_dusk_hours;
     $polar_night_hours = 30; // Adding this to the hours below.
-
 
     // Where: Årstrandveien 663, 8314 Gimsøysand: 68.33007, 14.09165
     $latitude = 68.33007; // North
@@ -488,13 +488,13 @@ function print_all_years() {
     global $mini_image_height;
    
     $start_year = 2015;
-    $monthly_days = [1, 7, 14, 21, 28];
     $this_year = date('Y');
+    $monthly_days = [1, 7, 14, 21, 28]; // Only show these days in each month.
 
     $previous = $next = $up = $down = false;
     page_header("Lillevik Lofoten webcam: $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
     echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
-    echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a> \n";
+    echo "<p>\n<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a> \n";
     echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "</p>\n\n";
         
@@ -509,6 +509,7 @@ function print_all_years() {
         $image_filename = "";
 
         // Loop through all months for this year.
+        echo "<p>\n";
         for ($month = 1; $month <= 12; $month++) {
             $month = sprintf("%02d", $month);
 
@@ -517,16 +518,11 @@ function print_all_years() {
 
                 // Find first image for the $monthly_day taken after $monthly_hour
                 debug("find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);");
-                print "<p>find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);</p>\n";
                 $yyyymmddhhmmss = find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);
                 if ($yyyymmddhhmmss) {
                     // There was an image.
                     $hour = substr($yyyymmddhhmmss, 8, 2);
                     $minute = substr($yyyymmddhhmmss, 10, 2);
-                    // Print it!
-                    if ($images_printed == 0) {
-                        echo "<p>\n"; 
-                    }
                     // Print mini images (never large images for full years), link to all images for that day.
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
                     echo "<img alt=\"Lillevik Lofoten webcam: $year-$month--$monthly_day $hour:$minute\" ";
@@ -542,10 +538,11 @@ function print_all_years() {
                 }    
             } 
         }
-        if ($images_printed > 0) {
-            echo "</p>\n";
+        if ($images_printed == 0) {
+            echo "(No photos to display for $year)\n";   
         }
-
+        echo "</p>\n\n"; 
+        
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -942,6 +939,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     $directory = date('Y/m/d', $timestamp);
     $images_printed = 0;
     debug("Getting images from directory: <a href=\"$directory\">$directory</a>");
+    echo "<p>\n";
     if (file_exists($directory)) {
         debug("Directory exists: ". $directory);  
         $images = glob("$directory/*.jpg");
@@ -949,26 +947,22 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
         foreach(array_reverse($images) as $image) {
             // Each filename is of this type: "2023/11/14/20231114134047.jpg".
             $yyyymmddhhmmss = get_yyyymmddhhmmss($image); // Get the "20231114134047" part.
-            list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($yyyymmddhhmmss); // Split into variables.
+            list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($yyyymmddhhmmss);
             
             // Create timestamp to check if this image is from between dawn and dusk.
             $image_timestamp = mktime($hour, $minute, $seconds, $month, $day, $year);
 
             // Check if the image is between dawn and dusk.
             if ($image_timestamp >= $dawn && $image_timestamp <= $dusk) {
-                if ($images_printed === 0) {
-                    echo "<p>\n";
+                if ($image_size == "large") {
+                    // Large images: Print full size with linebreaks.
+                    echo "<p>\n\n";
                 }
             
                 $imagePath = "$year/$month/$day/";
                 $imagePath .= ($image_size != "large" && file_exists("$imagePath/mini/$yyyymmddhhmmss.jpg")) ? "mini/" : "";
                 
-                echo "<a ";
-                //echo "style=\"position: relative; display: inline-block;\" ";
-                echo "href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
-
-                //echo "<div class=\"mini\">";
-
+                echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
                 if ($image_size == "large") {
@@ -979,13 +973,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                     echo "height=\"$mini_image_height\" ";
                 }
                 echo "src=\"$imagePath$yyyymmddhhmmss.jpg\">";
-
-                //echo "<b>$hour:$minute</b>";
-                //echo "</div>";
-
                 echo "</a>\n";
-
-                //echo "<span class=\"time-overlay\">$hour:$minute</span>";
     
                 if ($image_size == "large") {
                     // Large images: Print full size with linebreaks.
