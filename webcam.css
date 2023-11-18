@@ -2,7 +2,7 @@ body {
   font-family: Helvetica, Verdana, Arial;
   font-size: 14px;
 
-  width: 95%;
+  width: 100%%;
   margin-top: 2%;
   margin-left: 5%;
   margin-right: 5%;
@@ -17,11 +17,6 @@ a:hover {
     color: white;
     background-color: black;
 }
-/*
-a:active {
-    color: red;
-}
-*/
 
 img {
     height: auto;
