@@ -1,7 +1,0 @@
-# MAILTO=""
-
-# Copy the latest webcam image to latest.jpg
-* * * * * /home/1/l/lilleviklofoten/www/webcam/copy-latest-image.sh
-
-# Rename and make mini images
-* * * * * /home/1/l/lilleviklofoten/www/webcam/rename_and_make_mini_images.sh
