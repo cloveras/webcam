@@ -39,11 +39,14 @@ If you like this you can
 
 ## Things that should be changed if you want to use this
 
-* Add cron jobs for
+* Edit
   [`copy-latest-image.sh`](https://github.com/cloveras/webcam/blob/main/cron/copy-latest-image.sh)
   and
   [`rename_and_make_mini_images.sh`](https://github.com/cloveras/webcam/blob/main/cron/rename_and_make_mini_images.sh).
-* Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too late.
+* Add cron jobs for those two scripts. See
+  [crontab.txt](util/crontab.txt)
+  for an example.  
+* Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too slow.
 * Update latitude and longitude (use Google Maps to find coordinates)
 * Verify the calculated sunrise and sunset at [yr.no](https://www.yr.no/).
 * Update the dates in functions `midnight_sun()` and `polar_night()`.
