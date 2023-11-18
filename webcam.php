@@ -176,7 +176,7 @@ TOUCH;
     }
 
     // GitHub link
-    echo '<p>Made with <a href="https://github.com/cloveras/webcam" style="color: #ccc;">webcam.php</a></p>\n';
+    echo "<p>Made with <a href=\"https://github.com/cloveras/webcam\" style=\"color: #ccc;\">webcam.php</a></p>\n";
     
     echo "</body>\n</html>\n";
 }
