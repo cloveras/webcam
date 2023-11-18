@@ -555,7 +555,7 @@ function print_all_years() {
 function print_mini_large_links($timestamp, $size) {
     $date = date('Ymd', $timestamp);
     echo "<p>\n";
-    if ($size == "large" || empty($size)) { // Link to mini if we showed large, or don't know.
+    if ($size == "large") { // Link to mini if we showed large, or don't know.
         echo "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>. ";
     }
     if ($size == "mini" || empty($size)) { // Links to large if we showed mini, or don't know.
