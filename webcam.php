@@ -25,10 +25,10 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index" />
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="webcam.css" />
 
   <!-- Touch gestures -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://alloyteam.github.io/AlloyFinger/alloy_finger.js"></script>
 
 END1;
@@ -39,15 +39,13 @@ END1;
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
     if ($previous) {
-        echo "  <link rel=\"prev\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\" />\n";
+        echo "  <link rel=\"prev\" rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\" />\n";
     }
     if ($next) {
-        echo "  <link rel=\"next\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\" />\n";
+        echo "  <link rel=\"next\" rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\" />\n";
     }
 
     print <<<END2
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>$title</title>
 END2;
 
@@ -176,7 +174,7 @@ TOUCH;
     }
 
     // GitHub link
-    echo "<p>Made with <a href=\"https://github.com/cloveras/webcam\" style=\"color: #ccc;\">webcam.php</a></p>\n";
+    echo "<p style=\"color: rgb(200, 200, 200\")>Made with <a style=\"color: rgb(200, 200, 200)\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
     
     echo "</body>\n</html>\n";
 }
