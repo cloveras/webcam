@@ -36,7 +36,10 @@ Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&d
 
 ## Things that should be changed if you want to use this
 
-* Add cron jobs for `copy-latest-image.sh` and `rename_and_make_mini_images.sh`.
+* Add cron jobs for
+  [`copy-latest-image.sh`](https://github.com/cloveras/webcam/blob/main/cron/copy-latest-image.sh)
+  and
+  [`rename_and_make_mini_images.sh`](https://github.com/cloveras/webcam/blob/main/cron/rename_and_make_mini_images.sh).
 * Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too late.
 * Update latitude and longitude (use Google Maps to find coordinates)
 * Verify the calculated sunrise and sunset at [yr.no](https://www.yr.no/).
@@ -50,10 +53,18 @@ Please note: The script started as a simple hack, then grew into this much large
 and barely maintainable hack.  It works well, but the code is not super elegant.
 PRs are welcome.
 
-## Got lots of images you need to sort?
+## Got lots of images you need to sort and upload?
 
-The Bash script `webcam-image-organize-fix.sh` can be a good _starting point_
+The Bash script
+[`webcam-image-organize-fix.sh`](https://github.com/cloveras/webcam/blob/main/util/webcam-image-organize-fix.sh)
+can be a good _starting point_
 for reorganizing thousands of images into `YYYY/MM/DD` directories.
+
+To Bash script
+[`util/nctpput-all-images.sh`](https://github.com/cloveras/webcam/blob/main/util/nctpput-all-images.sh)
+uses
+[`ncftp`](https://www.ncftp.com)
+and can be a good _starting point_ for mass-uploading thousands of files.
 
 ## Example screenshots
 
