@@ -23,13 +23,11 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta charset="utf-8">
   <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
-  <meta name="robot" content="index" />
+  <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="webcam.css" />
+  <link rel="stylesheet" type="text/css" href="webcam.css">
 
-  <!-- Touch gestures -->
-  <script src="https://alloyteam.github.io/AlloyFinger/alloy_finger.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 END1;
 
@@ -39,10 +37,10 @@ END1;
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
     if ($previous) {
-        echo "  <link rel=\"prev\" rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\" />\n";
+        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
     }
     if ($next) {
-        echo "  <link rel=\"next\" rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\" />\n";
+        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
     }
 
     print <<<END2
@@ -89,7 +87,7 @@ END2;
     </script>
 
     <!-- Microsoft Clarity -->
-    <script type="text/javascript">
+    <script>
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
@@ -109,7 +107,6 @@ at
 <a href="https://maps.app.goo.gl/nZDV8TKvMUvEcLeQ7">Vik, Gimsøy, Lofoten, Norway</a>.
 See also: <a href="https://lilleviklofoten.no/webcams/">other webcams in Lofoten</a>.
 </p>
-
 END3;
 }
 
@@ -126,55 +123,50 @@ function debug($txt) {
 // Footer
 // ------------------------------------------------------------
 function footer($images_printed, $previous, $next, $up, $down) {
+ 
+    $touch = true;
+
+    if ($touch) {
     echo <<<TOUCH
-<!-- Touch gestures: Only showing the available navigation, similar to arrow keys -->
+
+<!-- Touch gestures -->
+<script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var body = document.body;
-
-        var af = new AlloyFinger(body, {
-            swipe: function (evt) {
-                // Swiping logic here
-                if (evt.direction === 'Left') { window.location.href = '{$next}'; }
-                if (evt.direction === 'Right') { window.location.href = '{$previous}'; }
-                if (evt.direction === 'Up') { window.location.href = '{$up}'; }
-                if (evt.direction === 'Down') { window.location.href = '{$down}'; }
-            },
-            pinch: function (evt) {
-                // Pinch-to-zoom logic here
-                var scale = Math.max(1, Math.min(evt.zoom, 3));
-                body.style.transform = 'scale(' + scale + ') translate(' + evt.deltaX + 'px,' + evt.deltaY + 'px)';
-            },
-            pressMove: function (evt) {
-                // Panning logic here
-                body.style.transform = 'scale(1) translate(' + evt.deltaX + 'px,' + evt.deltaY + 'px)';
-            }
+        var hammer = new Hammer(body);
+        hammer.on('swiperight', function() {
+            window.location.href = '{$next}';
+        });
+        hammer.on('swipeleft', function() {
+            window.location.href = '{$previous}';
         });
     });
 </script>
+
 TOUCH;
+    }
 
     // Navigation links
-    echo '<p>Use swipe gestures or arrow keys to navigate: ';
-    
+    echo "\n\n<p>Use ";
+    if ($touch) {
+        echo "swipe gestures or ";
+    }   
+    echo 'the arrow keys to navigate: ';
     if ($next) {
-        echo '<a href="' . $next . '">forward</a> (&rarr;), ';
+        echo "<a href=\"$next\">forward</a> (&rarr;), ";
     }
-
     if ($previous) {
-        echo '<a href="' . $previous . '">back</a> (&larr;), ';
+        echo "<a href=\"$previous\">back</a> (&larr;), ";
     }
-
     if ($up) {
-        echo '<a href="' . $up . '">up</a> (&uarr;) ';
+        echo "<a href=\"$up\">up</a> (&uarr;) ";
     }
-
     if ($down) {
-        echo 'and <a href="' . $down . '">down</a> (&darr;).</p>';
+        echo "and <a href=\"$down\">down</a> (&darr;)\n";
     }
-
-    // GitHub link
-    echo "<p style=\"color: rgb(200, 200, 200\")>Made with <a style=\"color: rgb(200, 200, 200)\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
+    echo ".</p>\n\n";
+    echo "<p style=\"color: rgb(200, 200, 200);\" >Made with <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
     
     echo "</body>\n</html>\n";
 }
@@ -372,14 +364,13 @@ function print_full_month($year, $month) {
                 // If the mini version has been created: Use that. If not: Scale down the large version.
                 if ($size == "mini" || empty($size)) {
                     if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
-                        echo "mini/$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
-                    } else {
-                        echo "$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
-                    }
+                        echo "mini/";
+                    } 
+                    echo "$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 } else {
-                    echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width \" height=\"$large_image_height\" ";
+                    echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width\" height=\"$large_image_height\" ";
                 }
-                echo "$yyyymmddhhmmss.jpg\"/></a>\n";
+                echo "></a>\n";
                 $images_printed += 1; // Count the image just printed.
             }
         } else {
@@ -472,7 +463,7 @@ function print_full_year($year) {
                 if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
                     echo "mini/";
                 } 
-                echo "$yyyymmddhhmmss.jpg\"/></a>\n";
+                echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
                 $images_printed += 1;
             }
@@ -545,7 +536,7 @@ function print_all_years() {
                     if (file_exists("$year/$month/$monthly_dayy/mini/$yyyymmddhhmmss.jpg")) {
                         echo "mini/";
                     } 
-                    echo "$yyyymmddhhmmss.jpg\"/></a>\n";
+                    echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
                     $images_printed += 1;
                 }    
@@ -742,21 +733,30 @@ function print_single_image($image_filename, $last_image) {
     page_header($title, $previous, $next, $up, $down);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false);
     print_full_day_link($timestamp);
-    echo "<p>";
-    if ($previous_datepart) {
-        echo "<a href=\"$previous\">Previous: " . substr($previous_datepart, 8, 2) . ":" . substr($previous_datepart, 10, 2) . "</a>.\n";
+
+    if ($previous_datepart || $next_datepart) {
+        echo "<p>";
+        if ($previous_datepart) {
+            echo "<a href=\"$previous\">Previous: " . substr($previous_datepart, 8, 2) . ":" . substr($previous_datepart, 10, 2) . "</a>.\n";
+        }
+        if ($next_datepart) {
+            echo "<a href=\"$next\">Next: " . substr($next_datepart, 8, 2) . ":" . substr($next_datepart, 10, 2) . "</a>.\n";
+        }
+        echo "</p>\n\n";
     }
-    if ($next_datepart) {
-        echo "<a href=\"$next\">Next: " . substr($next_datepart, 8, 2) . ":" . substr($next_datepart, 10, 2) . "</a>.\n";
-    }
-    //debug("Showing image: $year/$month/$day/$image_filename");
-    echo "\n<p>";
+
+    echo "<p>\n";
     echo "<a href=\"?type=day&date=$year$month$day\">";
-    echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" title=\"$year-$month-$day $hour:$minute\" ";
-    echo "width=\"$large_image_width \" height=\"$large_image_height\" src=\"$year/$month/$day/$image_filename\"/>";
-    echo "</a>\n</p>";
+    echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
+    echo "title=\"$year-$month-$day $hour:$minute\" ";
+    echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
+    echo "src=\"$year/$month/$day/$image_filename\">";
+    echo "</a>\n";
+    echo "</p>\n\n";
+
     list($width, $height) = getimagesize("$year/$month/$day/$image_filename");
-    echo "</p><a href=\"$year/$month/$day/$image_filename\">Full size ($width x $height)</a></p>\n";
+    echo "<p>\n<a href=\"$year/$month/$day/$image_filename\">Full size ($width x $height)</a>\n</p>\n\n";
+
     footer($images_printed, $previous, $next, $up, $down);
 }
 
@@ -764,7 +764,7 @@ function print_single_image($image_filename, $last_image) {
 // ------------------------------------------------------------
 function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval) {
     global $monthly_day;
-    echo "<p>";
+    echo "\n\n<p>";
     if ($midnight_sun) {
         echo "Midnight sun &#9728;";
     } else if ($polar_night) {
@@ -776,8 +776,8 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
         echo ". Displaying photos taken between " . date('H:i', $dawn) . " and " . date('H:i', $dusk);
     } else if ($include_interval == "average") {
         echo " (calculated for " . date('M', $dawn) . " $monthly_day)";
+        //echo " with the newest images first";
     }
-    //echo " with the newest images first.</p>\n\n";
     echo ".</p>\n\n";
 }
 
@@ -978,7 +978,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                     echo "width=\"$mini_image_width\" ";
                     echo "height=\"$mini_image_height\" ";
                 }
-                echo "src=\"$imagePath$yyyymmddhhmmss.jpg\"/>";
+                echo "src=\"$imagePath$yyyymmddhhmmss.jpg\">";
 
                 //echo "<b>$hour:$minute</b>";
                 //echo "</div>";
