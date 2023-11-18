@@ -53,7 +53,6 @@ END2;
         echo "  <script>\n";
     
         function printArrowScript($keyCode, $url) {
-            //echo "    function ${keyCode}ArrowPressed() { window.location.href=\"$url\"; }\n";
             echo "    function {$keyCode}ArrowPressed() { window.location.href=\"$url\"; }\n";
         }
     
@@ -136,10 +135,10 @@ function footer($images_printed, $previous, $next, $up, $down) {
         var body = document.body;
         var hammer = new Hammer(body);
         hammer.on('swiperight', function() {
-            window.location.href = '{$next}';
+            window.location.href = '{$previous}';
         });
         hammer.on('swipeleft', function() {
-            window.location.href = '{$previous}';
+            window.location.href = '{$next}';
         });
     });
 </script>
