@@ -1,28 +1,30 @@
 body {
-  font-family: Helvetica, Verdana, Arial;
-  font-size: 14px;
-
-  width: 100%%;
-  margin-top: 2%;
-  margin-left: 5%;
-  margin-right: 5%;
-  margin-bottom: 5%;
-}
-
-a:link, a:visited {
-    color: black; 
-}
-
-a:hover {
+    font-family: 'Helvetica', 'Verdana', 'Arial', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    margin: 2% 5% 5%;
+  }
+  
+  a:link,
+  a:visited {
+    color: black;
+  }
+  
+  a:hover {
     color: white;
     background-color: black;
-}
-
-img {
+  }
+  
+  img {
     height: auto;
     max-width: 100%;
     max-height: 100%;
-    position: relative;
-    display: inline-block;
-    z-index: -1;
-}
+    display: inline-block; /* Display images as inline-block elements */
+    margin: 2px; /* Add margin for spacing between images */
+    transition: opacity 0.3s; /* Add a smooth transition for the opacity change */
+  }
+  
+  a:hover img {
+    opacity: 0.5; /* Make the image faded by 50% on hover */
+  }
+  
