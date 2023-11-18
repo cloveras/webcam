@@ -30,6 +30,9 @@ for webcam images stored in a directory structure like this:
 
 Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
 
+If you like this you can
+[buy me a coffee](https://www.buymeacoffee.com/superelectric) ☕️
+
 ## Todo
 
 * Add a CSS overlay to display `HH:MM` in the lower right corner on the mini images shown for days, months and years.
