@@ -59,12 +59,12 @@ for reorganizing thousands of images into `YYYY/MM/DD` directories.
 
 A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231117095251
 
-![Webcam example screenshot: Single image](webcam-example-single-image.png)
+![Webcam example screenshot: Single image](images/webcam-example-single-image.png)
 
 One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231117
 
-![Webcam example screenshot: Day](webcam-example-day.png)
+![Webcam example screenshot: Day](images/webcam-example-day.png)
 
 One full month: https://lilleviklofoten.no/webcam/?type=month&year=2023&month=11
 
-![Webcam example screensho: Month](webcam-example-month.png)
+![Webcam example screensho: Month](images/webcam-example-month.png)
