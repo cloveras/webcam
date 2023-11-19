@@ -14,6 +14,6 @@ for year_dir in "$src_dir"/*/; do
     echo "$year_dir"
     for month_dir in "$year_dir"/*/; do
         remote_dir="$ftp_remote_dir$(basename "$year_dir")"
-        $ftp_user -p $ftp_password $ftp_server $remote_dir $month_dincftpput -R -v -z -ur
+        ncftpput -R -v -z -u $ftp_user -p $ftp_password $ftp_server $remote_dir $month_dir
     done
 done
