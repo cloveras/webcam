@@ -25,7 +25,7 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
-  <link rel="stylesheet" type="text/css" href="webcam.css">
+  <link rel="stylesheet" type="text/css" href="css.php">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
