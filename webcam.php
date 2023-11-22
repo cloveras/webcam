@@ -25,6 +25,11 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
+  
+  <link rel="icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
+  <link rel="icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
+  <link rel="apple-touch-icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
+
   <link rel="stylesheet" type="text/css" href="css.php">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -129,7 +134,8 @@ function footer($images_printed, $previous, $next, $up, $down) {
     echo <<<TOUCH
 
 <!-- Touch gestures -->
-<script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
+<!-- script src="https://hammerjs.github.io/dist/hammer.min.js"></script -->
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var body = document.body;
@@ -142,15 +148,16 @@ function footer($images_printed, $previous, $next, $up, $down) {
         });
     });
 </script>
-
 TOUCH;
     }
 
     // Navigation links
-    echo "\n\n<p>Use ";
+    echo "\n\n<p>";
     if ($touch) {
-        echo "swipe gestures or ";
-    }   
+        echo "Swipe left/right or use ";
+    } else {
+        echo "Use ";
+    }  
     echo 'the arrow keys to navigate: ';
     if ($next) {
         echo "<a href=\"$next\">forward</a> (&rarr;), ";
@@ -573,10 +580,19 @@ function get_yyyymmddhhmmss($fullPath) {
 function find_latest_image() {
     // Find newest directory with the right name format
     list($year, $month, $day) = explode('-', date('Y-m-d'));
-    $latest_image = max(glob("$year/$month/$day/*.jpg"));
+    if (is_dir("$year/$month/$day")) {
+        debug("NORMAL: max(glob(\"$year/$month/$day/*.jpg\", GLOB_BRACE))");
+        $latest_image = max(glob("$year/$month/$day/*.jpg", GLOB_BRACE));   
+    } else if (is_dir("$year/$month")) {
+        debug("MONTH: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
+        $latest_image = max(glob("$year/$month/**/*.jpg", GLOB_BRACE));   
+    } else if (is_dir("$year/$month")) {
+        debug("YEAR: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
+        $latest_image = max(glob("$year/**/*.jpg", GLOB_BRACE));    
+    }
     $image = get_yyyymmddhhmmss($latest_image);
-    debug("image (datepart): $image");
-    // Now: 2015120209401200
+    debug("FOUND: image (datepart): $image");
+    // Now we have: 2015120209401200
     return $image;
 }
 
