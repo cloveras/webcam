@@ -26,16 +26,13 @@ for webcam images stored in a directory structure like this:
 * Finds sunrise, sunset, dawn, and dusk based on latitude and longitude.
 * Only shows images taken between dawn and dusk, handles midnight sun and polar night.
 * Navigation with touch gestures and arrow keys.
+* Shows the time (HH:MM) as a CSS overlay on thumbails when viewing a full day, month and year.
 * Data collection with Google Analytics and Microsoft Clarity
 
 Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
 
 If you like this you can
 [buy me a coffee](https://www.buymeacoffee.com/superelectric) ☕️
-
-## Todo
-
-* Add a CSS overlay to display `HH:MM` in the lower right corner on the mini images shown for days, months and years.
 
 ## Things that should be changed if you want to use this
 
@@ -79,8 +76,7 @@ A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231117095251
 
 One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231117
 
-![Webcam example screenshot: Day](images/webcam-example-day-1.png)
-![Webcam example screenshot: Day](images/webcam-example-day-2.png)
+![Webcam example screenshot: Day](images/webcam-example-day.png)
 
 One full month: https://lilleviklofoten.no/webcam/?type=month&year=2023&month=11
 

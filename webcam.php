@@ -341,6 +341,9 @@ function print_full_month($year, $month) {
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, "average");
     print_yesterday_tomorrow_links($timestamp, true);
 
+    // CSS overlay
+    echo "<div class=\"grid-container\">";
+
     $images_printed = 0;
     for ($i = 1; $i <= 31; $i+=1) { // Works for February and 30-day months too.
         $now = mktime($hour, $minute, $second, $month, $i, $year);
@@ -358,11 +361,11 @@ function print_full_month($year, $month) {
                 $yyyymmddhhmmss = get_yyyymmddhhmmss($image);
                 debug("Image datepart: $yyyymmddhhmmss<br/>");
                 list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($yyyymmddhhmmss);
-                // Print it!
-                if ($images_printed == 0) {
-                    echo "<p>\n";
-                }
                 // Print mini images, link to all images for that day.
+
+                // CSS overlay   
+                echo "<div class=\"grid-item\">";
+
                 echo "<a href=\"?type=day&date=$year$month$day\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
@@ -377,15 +380,22 @@ function print_full_month($year, $month) {
                     echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width\" height=\"$large_image_height\" ";
                 }
                 echo "></a>\n";
+
+                // CSS overlay    
+                echo "<span class=\"time\">$day</span>";
+                echo "</div>";
+
                 $images_printed += 1; // Count the image just printed.
             }
         } else {
             debug("Directory does not exist: $directory");
         }
     }
-    if ($images_printed > 0) {
-        echo "</p>\n";
-    } else {
+
+
+    // CSS overlay
+    echo "</div>\n";
+    if ($images_printed == 0) {
         // No pictures found for this month.
         echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n"; 
     }
@@ -437,6 +447,10 @@ function print_full_year($year) {
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
+
+    // CSS overlay
+    echo "<div class=\"grid-container\">";
+
     $days = range(1, 31);
     $images_printed = 0;
     $yyyymmddhhmmss = "";
@@ -456,11 +470,11 @@ function print_full_year($year) {
                 $minute = substr($yyyymmddhhmmss, 10, 2);
                 $image_filename = $year . "/" . $month . "/" . $day . "/" . $yyyymmddhhmmss . ".jpg";
                 debug($year . "/" . $month . "/" . $day . "/" . $yyyymmddhhmmss . ".jpg");
-                // Print it!
-                if ($images_printed == 0) {
-                    echo "<p>\n"; 
-                }
                 // Print mini images (never large images for full years), link to all images for that day.
+
+                // CSS overlay   
+                echo "<div class=\"grid-item\">";
+
                 echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
@@ -471,10 +485,17 @@ function print_full_year($year) {
                 } 
                 echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
+                // CSS overlay    
+                echo "<span class=\"time\">$year-$month-$day</span>";
+                echo "</div>";
+
                 $images_printed += 1;
             }
         }
     }
+    // CSS overlay
+    echo "</div>\n";
+
     if ($images_printed > 0) {
         echo "</p>\n";
     } else {
@@ -515,7 +536,10 @@ function print_all_years() {
         $image_filename = "";
 
         // Loop through all months for this year.
-        echo "<p>\n";
+ 
+        // CSS overlay
+        echo "<div class=\"grid-container\">";
+
         for ($month = 1; $month <= 12; $month++) {
             $month = sprintf("%02d", $month);
 
@@ -530,6 +554,10 @@ function print_all_years() {
                     $hour = substr($yyyymmddhhmmss, 8, 2);
                     $minute = substr($yyyymmddhhmmss, 10, 2);
                     // Print mini images (never large images for full years), link to all images for that day.
+
+                    // CSS overlay   
+                    echo "<div class=\"grid-item\">";
+
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
                     echo "<img alt=\"Lillevik Lofoten webcam: $year-$month--$monthly_day $hour:$minute\" ";
                     echo "title=\"$year-$month-$monthly_day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
@@ -540,10 +568,17 @@ function print_all_years() {
                     } 
                     echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
+                    // CSS overlay    
+                    echo "<span class=\"time\">$year-$month-$day</span>";
+                    echo "</div>";
+
                     $images_printed += 1;
                 }    
             } 
         }
+        // CSS overlay
+        echo "</div>\n";
+
         if ($images_printed == 0) {
             echo "(No photos to display for $year)\n";   
         }
@@ -954,7 +989,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     
     //echo "<p>\n";
 
-    // Overlay "HH:MM" with CSS
+    // CSS overlay
     echo "<div class=\"grid-container\">";
 
     if (file_exists($directory)) {
@@ -979,6 +1014,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 $imagePath = "$year/$month/$day/";
                 $imagePath .= ($image_size != "large" && file_exists("$imagePath/mini/$yyyymmddhhmmss.jpg")) ? "mini/" : "";
             
+                // CSS overlay   
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
@@ -994,7 +1030,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 echo "src=\"$imagePath$yyyymmddhhmmss.jpg\">";
                 echo "</a>\n";
 
-                // Overlay "HH:MM" with CSS    
+                // CSS overlay    
                 echo "<span class=\"time\">$hour:$minute</span>";
                 echo "</div>";
     
@@ -1017,7 +1053,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
         // No images for this day.
     }
 
-   // Overlay "HH:MM" with CSS
+   // CSS overlay
     echo "</div>\n";
 
     if ($images_printed > 0) {
