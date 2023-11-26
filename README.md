@@ -70,6 +70,8 @@ and can be a good _starting point_ for mass-uploading thousands of files.
 
 ## Example screenshots
 
+Resized to fit.
+
 A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231126151113
 
 ![Webcam example screenshot: Single image](images/webcam-example-single-image.png)
