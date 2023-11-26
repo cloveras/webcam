@@ -26,9 +26,9 @@ function page_header($title, $previous, $next, $up, $down) {
   <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
   
-  <link rel="icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
-  <link rel="icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
-  <link rel="apple-touch-icon" href="https://lilleviklofoten.no/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
+  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
+  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
+  <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
 
   <link rel="stylesheet" type="text/css" href="css.php">
 
@@ -947,14 +947,16 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 
-    // Streaming container div for all the mini images, so the CSS time overlay can be positioned relative to it.
-    //echo "<div class=\"streaming-container\">\n";
-
     // Get all *jpg images in "today's" image directory.
     $directory = date('Y/m/d', $timestamp);
     $images_printed = 0;
     debug("Getting images from directory: <a href=\"$directory\">$directory</a>");
-    echo "<p>\n";
+    
+    //echo "<p>\n";
+
+    // Overlay "HH:MM" with CSS
+    echo "<div class=\"grid-container\">";
+
     if (file_exists($directory)) {
         debug("Directory exists: ". $directory);  
         $images = glob("$directory/*.jpg");
@@ -976,7 +978,9 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
             
                 $imagePath = "$year/$month/$day/";
                 $imagePath .= ($image_size != "large" && file_exists("$imagePath/mini/$yyyymmddhhmmss.jpg")) ? "mini/" : "";
-                
+            
+                echo "<div class=\"grid-item\">";
+
                 echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
@@ -989,6 +993,10 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 }
                 echo "src=\"$imagePath$yyyymmddhhmmss.jpg\">";
                 echo "</a>\n";
+
+                // Overlay "HH:MM" with CSS    
+                echo "<span class=\"time\">$hour:$minute</span>";
+                echo "</div>";
     
                 if ($image_size == "large") {
                     // Large images: Print full size with linebreaks.
@@ -1009,8 +1017,8 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
         // No images for this day.
     }
 
-    // Close the streaming-container div.
-    //echo "</div>\n";
+   // Overlay "HH:MM" with CSS
+    echo "</div>\n";
 
     if ($images_printed > 0) {
         echo "</p>\n";
