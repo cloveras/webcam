@@ -70,11 +70,11 @@ and can be a good _starting point_ for mass-uploading thousands of files.
 
 ## Example screenshots
 
-A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231117095251
+A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231126151113
 
 ![Webcam example screenshot: Single image](images/webcam-example-single-image.png)
 
-One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231117
+One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231126
 
 ![Webcam example screenshot: Day](images/webcam-example-day.png)
 
