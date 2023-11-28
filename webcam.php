@@ -370,13 +370,14 @@ function print_full_month($year, $month) {
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
-                // If the mini version has been created: Use that. If not: Scale down the large version.
                 if ($size == "mini" || empty($size)) {
+                    // Mini. If the mini version has been created: Use that. If not: Scale down the large version.
                     if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
                         echo "mini/";
                     } 
                     echo "$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 } else {
+                    // Large.
                     echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width\" height=\"$large_image_height\" ";
                 }
                 echo "></a>\n";
@@ -990,7 +991,11 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     //echo "<p>\n";
 
     // CSS overlay
-    echo "<div class=\"grid-container\">";
+    if ($size == "mini" || empty($size)) {
+        echo "<div class=\"grid-container\">";
+    } else {
+        echo "<div class=\"grid-container-large\">";
+    }
 
     if (file_exists($directory)) {
         debug("Directory exists: ". $directory);  
@@ -1006,44 +1011,32 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
 
             // Check if the image is between dawn and dusk.
             if ($image_timestamp >= $dawn && $image_timestamp <= $dusk) {
-                if ($image_size == "large") {
-                    // Large images: Print full size with linebreaks.
-                    echo "<p>\n\n";
-                }
             
-                $imagePath = "$year/$month/$day/";
-                $imagePath .= ($image_size != "large" && file_exists("$imagePath/mini/$yyyymmddhhmmss.jpg")) ? "mini/" : "";
-            
+                // ------------------------------------------------------------
                 // CSS overlay   
                 echo "<div class=\"grid-item\">";
 
-                echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
+                echo "<a href=\"?type=day&date=$year$month$day\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
-                if ($image_size == "large") {
-                    echo "width=\"$large_image_width\" ";
-                    echo "height=\"$large_image_height\" ";
+                echo "src=\"$year/$month/$day/";
+                if ($size == "mini" || empty($size)) {
+                    // Mini. If the mini version has been created: Use that. If not: Scale down the large version.
+                    if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
+                        echo "mini/";
+                    } 
+                    echo "$yyyymmddhhmmss.jpg\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 } else {
-                    echo "width=\"$mini_image_width\" ";
-                    echo "height=\"$mini_image_height\" ";
+                    // Large.
+                    echo "$yyyymmddhhmmss.jpg\" width=\"$large_image_width\" height=\"$large_image_height\" ";
                 }
-                echo "src=\"$imagePath$yyyymmddhhmmss.jpg\">";
-                echo "</a>\n";
+                echo "></a>\n";
 
                 // CSS overlay    
                 echo "<span class=\"time\">$hour:$minute</span>";
                 echo "</div>";
-    
-                if ($image_size == "large") {
-                    // Large images: Print full size with linebreaks.
-                    echo "</p>\n\n";
-                }
-            
-                $images_printed++;
-                if ($images_printed >= $number_of_images) {
-                    echo "</p>\n\n";
-                    break;
-                }
+
+                $images_printed += 1; // Count the image just printed.
             } else {
                 debug("Outside dusk and dawn:" . date('H:i:s', $dawn) . "  / " . date('H:i:s', $image_timestamp) . " / " . date('H:i:s', $dusk));
             }

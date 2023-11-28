@@ -21,6 +21,12 @@ a:hover {
   gap: 4px; /* Adjust the gap between items as needed */
 }
 
+.grid-container-large {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(900px, 1fr)); /* Adjust the column width as needed */
+  gap: 4px; /* Adjust the gap between items as needed */
+}
+
 .grid-item {
   position: relative;
 }
