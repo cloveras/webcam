@@ -1016,7 +1016,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 // CSS overlay   
                 echo "<div class=\"grid-item\">";
 
-                echo "<a href=\"?type=day&date=$year$month$day\">";
+                echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
                 echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
