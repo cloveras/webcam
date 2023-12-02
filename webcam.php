@@ -368,7 +368,7 @@ function print_full_month($year, $month) {
 
                 echo "<a href=\"?type=day&date=$year$month$day\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
-                echo "title=\"$year-$month-$day $hour:$minute\" ";
+                //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {
                     // Mini. If the mini version has been created: Use that. If not: Scale down the large version.
@@ -478,7 +478,8 @@ function print_full_year($year) {
 
                 echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
-                echo "title=\"$year-$month-$day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
+                //echo "title=\"$year-$month-$day $hour:$minute\" ";
+                echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 echo "src=\"$year/$month/$day/";
                 // If the mini version has been created: Use that. If not: Scale down the full version.
                 if (file_exists("$year/$month/$day/mini/$yyyymmddhhmmss.jpg")) {
@@ -561,7 +562,8 @@ function print_all_years() {
 
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
                     echo "<img alt=\"Lillevik Lofoten webcam: $year-$month--$monthly_day $hour:$minute\" ";
-                    echo "title=\"$year-$month-$monthly_day $hour:$minute\" width=\"$mini_image_width\" height=\"$mini_image_height\" ";
+                    //echo "title=\"$year-$month-$monthly_day $hour:$minute\" ";
+                    echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                     echo "src=\"$year/$month/$monthly_day/";
                     // If the mini version has been created: Use that. If not: Scale down the full version.
                     if (file_exists("$year/$month/$monthly_dayy/mini/$yyyymmddhhmmss.jpg")) {
@@ -796,7 +798,7 @@ function print_single_image($image_filename, $last_image) {
     echo "<p>\n";
     echo "<a href=\"?type=day&date=$year$month$day\">";
     echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
-    echo "title=\"$year-$month-$day $hour:$minute\" ";
+    //echo "title=\"$year-$month-$day $hour:$minute\" ";
     echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
     echo "src=\"$year/$month/$day/$image_filename\">";
     echo "</a>\n";
@@ -1018,7 +1020,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
 
                 echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
                 echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
-                echo "title=\"$year-$month-$day $hour:$minute\" ";
+                //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {
                     // Mini. If the mini version has been created: Use that. If not: Scale down the large version.
