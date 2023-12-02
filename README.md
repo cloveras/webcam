@@ -33,6 +33,7 @@ Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&d
 
 If you like this you can
 [buy me a coffee](https://www.buymeacoffee.com/superelectric) ☕️
+(you'll be the first)
 
 ## Things that should be changed if you want to use this
 
