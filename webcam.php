@@ -42,10 +42,10 @@ END1;
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
     if ($previous) {
-        echo "  <link rel=\"prefetch\" as=\"document\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
     }
     if ($next) {
-        echo "  <link rel=\"prefetch\" as=\"document\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
     }
 
     print <<<END2
