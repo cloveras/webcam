@@ -99,6 +99,18 @@ END2;
     })(window, document, "clarity", "script", "brp4ocus57");
     </script>
 
+    <!-- Hotjar Tracking Code for https://lilleviklofoten.no -->
+    <script>
+    (function(h,o,t,j,a,r){
+        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+        h._hjSettings={hjid:3798467,hjsv:6};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    </script>
+
 </head>
 <body>
 
@@ -108,8 +120,8 @@ END2;
 <a href=".">Webcam</a>
 at
 <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>,
-<a href="https://maps.app.goo.gl/nZDV8TKvMUvEcLeQ7">Vik, Gimsøy, Lofoten, Norway</a>.
-See also: <a href="https://lilleviklofoten.no/webcams/">other webcams in Lofoten</a>.
+Vik, Gimsøy, Lofoten, Norway.
+See also: <a href="https://lilleviklofoten.no/webcams/">many other webcams in Lofoten</a>.
 </p>
 END3;
 }
