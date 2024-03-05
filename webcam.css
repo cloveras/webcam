@@ -5,26 +5,14 @@ body {
   margin: 2% 5% 5%;
 }
 
-/*
-a:link,
-a:visited {
-  color: black;
-}
-
-a:hover {
-  color: white;
-  background-color: black;
-}
-*/
 a {
-  text-decoration: none; /* Remove underline */
-  color: #dd8500; /* Set the default color to #dd8500 */
+  text-decoration: none;
+  color: #dd8500;
 }
 
 a:hover {
-  text-decoration: underline; /* Add underline on hover if desired */
-  color: #fff; /* Set text color to white on hover */
-  background-color: #000; /* Set background color to black on hover */
+  color: #fff;
+  background-color: #000;
 }
 
 .grid-container,
