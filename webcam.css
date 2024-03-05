@@ -5,6 +5,7 @@ body {
   margin: 2% 5% 5%;
 }
 
+/*
 a:link,
 a:visited {
   color: black;
@@ -13,6 +14,17 @@ a:visited {
 a:hover {
   color: white;
   background-color: black;
+}
+*/
+a {
+  text-decoration: none; /* Remove underline */
+  color: #dd8500; /* Set the default color to #dd8500 */
+}
+
+a:hover {
+  text-decoration: underline; /* Add underline on hover if desired */
+  color: #fff; /* Set text color to white on hover */
+  background-color: #000; /* Set background color to black on hover */
 }
 
 .grid-container,
@@ -52,3 +64,18 @@ img {
   background: black;
   opacity: 0.5;
 }
+
+
+/* Some orange stuff */
+
+.lillevik {
+  text-decoration: none; /* Remove underline */
+  color: #dd8500; /* Set the default color to #dd8500 */
+}
+
+.lillevik:hover {
+  text-decoration: underline; /* Add underline on hover if desired */
+  color: #fff; /* Set text color to white on hover */
+  background-color: #000; /* Set background color to black on hover */
+}
+
