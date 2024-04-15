@@ -827,7 +827,7 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
     if ($include_interval == "day") {
         echo ". Displaying photos taken between " . date('H:i', $dawn) . " and " . date('H:i', $dusk);
     } else if ($include_interval == "average") {
-        echo " (calculated for " . date('M', $dawn) . " $monthly_day)";
+        echo " (calculated for " . date('F', $dawn) . " $monthly_day)";
         //echo " with the newest images first";
     }
     echo ".</p>\n\n";
@@ -865,16 +865,16 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month) {
     if ($is_full_month) {
         // No links to yesterday and tomorrow, but the the previous and next months. Easy.
         list($year_previous, $month_previous, $year_next, $month_next) = find_previous_and_next_month(date('Y', $timestamp), date('m', $timestamp));
-        echo "<p><a href=\"?type=month&year=$year_previous&month=$month_previous\">Previous: " . date("M", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>. \n";
-        echo "<a href=\"?type=month&year=$year_next&month=$month_next\">Next: " .  date("M", mktime(0, 0, 0, $month_next, 1, $year_previous)) . "</a>. \n";
+        echo "<p><a href=\"?type=month&year=$year_previous&month=$month_previous\">Previous: " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>. \n";
+        echo "<a href=\"?type=month&year=$year_next&month=$month_next\">Next: " .  date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . "</a>. \n";
 
         $requested_month = date('Y-m', $timestamp);
         $this_month = date('Y-m'); // 2023-11
         $previous_month = date('Y-m', time() - 60 * 60 * 24 * 30); // 2023-10
         if ($requested_month != $this_month) {
-            echo "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("M") .  "</a>. \n";
+            echo "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("F") .  "</a>. \n";
         }
-        echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
+        echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("F d") . "</a>, \n";
         echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
         //echo "<a href=\"?type=last\">Latest image</a>.\n";
     } else {
@@ -882,25 +882,25 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month) {
 
         // Previous: Yesterday always exists.
         $yesterday_timestamp = $timestamp - 60 * 60 * 24;
-        echo "<p>\n<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("M d", $yesterday_timestamp). "</a>.\n";
+        echo "<p>\n<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("F d", $yesterday_timestamp). "</a>.\n";
 
         // Next: Is there a tomorrow, based on the selected day?
         if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
             // The $timestamp is today, so there is no tomorrow.
         } else {
             $tomorrow_timestamp = $timestamp + 60 * 60 * 24; // Add 24 hours for the "Next" link.
-            echo "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("M d", $tomorrow_timestamp) . "</a>.\n";
+            echo "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("F d", $tomorrow_timestamp) . "</a>.\n";
         }   
 
         // Today: Only if this is the day before yesterday, or earlier.
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
-            echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
+            echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("F d") . "</a>, \n";
         } 
         //echo "<a href=\"?type=last\">Latest image</a>.\n";
 
         // Link to the full month and year - and everything.
         //------------------------------------------------------------
-        echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("M", $timestamp) . "</a>.\n";
+        echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>.\n";
         echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
     }
     echo "<a href=\"?type=last\">Latest image</a>.\n";
