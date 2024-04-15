@@ -224,6 +224,8 @@ function polar_night($timestamp, $latitude, $longitude) {
 function find_sun_times($timestamp) {
     // Return timestamps for everything.
 
+    debug("find_sun_times($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
+
     // Default values
     $sunrise = $sunset = $dawn = $dusk = 0;
     $midnight_sun = $polar_night = false;
@@ -279,19 +281,10 @@ function find_sun_times($timestamp) {
 
     // At the beginning and end of the midnight sun and polar night periods,
     // the dawn and dusk may be set to the wrong day because of the adjustments above.
-    // Check if dawn/dusk are have been set too early or late above, and reset to start or end of the day.
-    $day_start = mktime(0, 0, 0, date('m', $timestamp), date('d', $timestamp), date('Y', $timestamp)); // 00:00:00
-    $day_end = mktime(23, 59, 59, date('m', $timestamp), date('d', $timestamp), date('Y', $timestamp)); // 23:59:59
-    if ($sunrise - $adjust_dawn_dusk_seconds < $day_start) {
-        // The time from 00:00:00 to sunrise is less than the adjustment time. Set dawn to start of day.
-        debug("Dawn was before the start of this day: Adjusting dawn to be midnight (00:00:00)");
-        $dawn = $day_start;
-    }
-    if ($sunset + $adjust_dawn_dusk_seconds > $day_end) {
-        // The time from sunset to 23:59:59 is less than the adjustment time. Set dusk to end of day.
-        debug("Sunset was after the end of this day: Adjusting it to be 23:59:50");
-        $dusk = $day_end;
-    }
+    // So: Fix dawn and dusk to be the same day as sunrise and sunset.
+    $dawn = mktime(date('H', $sunrise), date('i', $sunrise), date('s', $sunrise), $month, $day, $year);
+    $dusk = mktime(date('H', $sunset), date('i', $sunset), date('s', $sunset), $month, $day, $year);
+    debug("FIXED: Dawn and dusk adjusted to be the same day as sunrise and sunset: Dawn: " . date('Y-m-d H:i', $dawn) . ", Dusk: " . date('Y-m-d H:i', $dusk) . ")");
 
     debug("<br/>find_sun_times($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
     debug("midnight_sun: $midnight_sun");
@@ -382,8 +375,10 @@ function print_full_month($year, $month) {
                 }
                 echo "></a>\n";
 
-                // CSS overlay    
-                echo "<span class=\"time\">$day</span>";
+                // CSS overlay 
+                if ($size == "mini" || empty($size)) {   
+                    echo "<span class=\"time\">$day</span>";
+                }
                 echo "</div>";
 
                 $images_printed += 1; // Count the image just printed.
@@ -488,7 +483,10 @@ function print_full_year($year) {
                 echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
                 // CSS overlay    
-                echo "<span class=\"time\">$year-$month-$day</span>";
+                if  ($size == "mini" || empty($size)) {   
+                    echo "<span class=\"time\">$year-$month-$day</span>";
+                }
+                //echo "<span class=\"time\">$year-$month-$day</span>";
                 echo "</div>";
 
                 $images_printed += 1;
@@ -572,7 +570,9 @@ function print_all_years() {
                     echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
                     // CSS overlay    
-                    echo "<span class=\"time\">$year-$month-$day</span>";
+                    if ($size == "mini" || empty($size)) {   
+                        echo "<span class=\"time\">$year-$month-$day</span>";
+                    }
                     echo "</div>";
 
                     $images_printed += 1;
@@ -702,12 +702,13 @@ function find_first_image_after_time($year, $month, $day, $hour, $minute, $secon
     $image = "";
     $imagePattern = sprintf("%s/%s/%s/%s%s%s%s*", $year, $month, $day, $year, $month, $day, $hour);
     
+    debug("Looking in directory $year/$month/$day with pattern: $imagePattern"); 
+    
     $images = glob($imagePattern);
     
-    debug("Looking in directory: $imagePattern"); 
-
     if (!empty($images)) {
         $image = get_yyyymmddhhmmss($images[0]);
+        debug("image found: $image");
     } else {
         debug("No images found in directory: $imagePattern");
     }
@@ -813,6 +814,7 @@ function print_single_image($image_filename, $last_image) {
 // Print details about the sun, and what images are shown.
 // ------------------------------------------------------------
 function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval) {
+    debug("<br/>print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval)");
     global $monthly_day;
     echo "\n\n<p>";
     if ($midnight_sun) {
@@ -955,6 +957,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
     list($dawn, $dusk) = roundDawnAndDusk($dawn, $dusk);
+    debug("Sunrise: " . date('H:i', $sunrise) . " Sunset: " . date('H:i', $sunset) . " Dawn: " . date('H:i', $dawn) . " Dusk: " . date('H:i', $dusk));
 
     // Set the navigation (we need $dusk from above).
     // Previous: The previous day.
@@ -1034,8 +1037,10 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
                 }
                 echo "></a>\n";
 
-                // CSS overlay    
-                echo "<span class=\"time\">$hour:$minute</span>";
+                // CSS overlay 
+                if ($size == "mini" || empty($size)) {     
+                    echo "<span class=\"time\">$hour:$minute</span>";
+                }
                 echo "</div>";
 
                 $images_printed += 1; // Count the image just printed.
