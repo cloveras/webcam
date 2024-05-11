@@ -233,16 +233,16 @@ function find_sun_times($timestamp) {
     // When to start showing images during the polar night.
     $polar_night_fake_sunrise_hour = 8; 
     $polar_night_fake_sunset_hour = 15; 
-    $adjust_dawn_dusk_hours = 1; // How much before/after sunrise/sunset is dawn/dusk.
+    $adjust_dawn_dusk_hours = 2; // How much before/after sunrise/sunset is dawn/dusk.
     $adjust_dawn_dusk_seconds = $adjust_dawn_dusk_hours * 60 * 60; // How much before/after sunrise/sunset is dawn/dusk.
    
     $polar_night_fake_dawn_hour = $polar_night_fake_sunrise_hour - $adjust_dawn_dusk_hours;
     $polar_night_fake_dusk_hour = $polar_night_fake_sunset_hour + $adjust_dawn_dusk_hours;
     $polar_night_hours = 30; // Adding this to the hours below.
 
-    // Where: Årstrandveien 663, 8314 Gimsøysand: 68.33007, 14.09165
-    $latitude = 68.33007; // North
-    $longditude = 14.09165 ; // East
+    // Where: Årstrandveien 663, 8314 Gimsøysand.
+    $latitude = 68.3300814; // North
+    $longitude = 14.0917529 ; // East
 
     // We will need these below.
     $year = date('Y', $timestamp);
@@ -254,8 +254,7 @@ function find_sun_times($timestamp) {
         debug("MIIDNIGHT SUN!");
         $midnight_sun = true;
         // We still need to show a few images, so: faking sunrise and sunset.
-
-        $sunrise = mktime(0, 1, 0, $month, $day, $year);    // 00:01:00, One minute after midnight
+        $sunrise = mktime(0, 0, 1, $month, $day, $year);    // 00:00:01, One second after midnight
         $sunset  = mktime(23, 59, 59, $month, $day, $year); // 23:59:59
         $dawn    = $sunrise;
         $dusk    = $sunset;
@@ -269,24 +268,72 @@ function find_sun_times($timestamp) {
         $dusk    = mktime($polar_night_fake_dusk_hour,    0, 0, $month, $day, $year);
     } else {
         // Do the math! Use the $timestamp passed as a parameter.
-        debug("NORMAL SUN! timestamp: $timestamp, human-readable: " . date('Y-m-d H:i:s', $timestamp));
+        debug("NOT MIDNIGHT SUN OR POLAR NIGHT! timestamp: $timestamp, human-readable timestamp: " . date('Y-m-d H:i:s', $timestamp));
 
         // Get all sun info with PHP 8's built-in functionality.
         $sun_info = date_sun_info($timestamp, $latitude, $longitude);
-        $sunrise = $sun_info['sunrise'] ?: mktime(0, 0, 0, $month, $day, $year); // Midnight
-        $sunset = $sun_info['sunset'] ?: mktime(23, 59, 59, $month, $day, $year); // Almost midnight again
-        $dawn = $sun_info['nautical_twilight_begin'] ?: $sunset - 1; // One second later
-        $dusk = $sun_info['nautical_twilight_end'] ?: $sunset + 1; // One second later
+        debug("date_sun_info($timestamp, $latitude, $longitude");
+        foreach ($sun_info as $key=>$val) {
+            debug("$key: [$val]" . date("Y-m-d H:i'", $val));
+        }
+
+        $sunrise = $sun_info['sunrise'];
+        $sunset = $sun_info['sunset'];
+
+        debug("<br/>STEP 1: find_sun_times($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
+        debug("sunrise: $sunrise (" . date('Y-m-d H:i', $sunrise) . ")");
+        debug("sunset: $sunset (" . date('Y-m-d H:i', $sunset) . ")");
+        
+        // Find sunrise, and fix it if we don't get a time for it.
+        if ($sunrise == 1 or $sunrise == 1715464868 or ! $sunrise) {
+            debug("Sunrise TO FIX: " . date('Y-m-d H:i', $sunrise));
+            $sunrise = mktime(0, 0, 0, $month, $day, $year); // Midnight
+            debug("Sunrise FIXDED: " . date('Y-m-d H:i', $sunrise));
+        }
+
+        // Find sunset, and fix it if we don't get a time for it.
+        if ($sunset == 1 or $sunset == 1715464868 or ! $sunset) {
+            debug("Sunset TO FIX: " . date('Y-m-d H:i', $sunset));
+            $sunset = mktime(23, 59, 59, $month, $day, $year); // Almost midnight again
+            debug("Sunset FIXED: " . date('Y-m-d H:i', $sunset));
+        }
+
+        // At the beginning and end of the midnight sun and polar night periods,
+        // the dawn and dusk need a bit of extra work.
+
+        // Find dawn
+        $dawn = $sun_info['nautical_twilight_begin'];
+        debug("Dawn 1: $dawn ( " . date('Y-m-d H:i', $dawn) . ")"); 
+        if ($dawn == 1715464868 or ! $dawn) {
+            debug("No nautical_twilight_begin, setting dawn to: sunrise - $adjust_dawn_dusk_seconds seconds");
+            // Set dawn to the fixed time before sunrise.
+            $dawn = $sunrise - $adjust_dawn_dusk_seconds;
+            // If dawn was set to the day before: Fix it.
+            if (date('d', $dawn) != $day) {
+                // Set dawn to 00:00:00
+                debug("Set dawn to 00:00:00");
+                $dawn = mktime(0, 0, 0, $month, $day, $year);
+            }
+            debug("Dawn 2: $dawn ( " . date('Y-m-d H:i', $dawn) . ")"); 
+        }
+
+        // Find dusk
+        $dusk = $sun_info['nautical_twilight_end'];
+        debug("Dusk 1: $dusk ( " . date('Y-m-d H:i', $dusk) . ")");
+        if ($dusk == 1715464868 or ! $dusk) {
+            debug("No nautical_twilight_end, setting dusk to: sunset + $adjust_dawn_dusk_seconds seconds");
+            // Set dawn to the fixed time after sunset.
+            $dusk = $sunset + $adjust_dawn_dusk_seconds;
+            if (date('d', $dusk) != $day) {
+                // Set dusk to 23:59:59
+                debug("Set dusk to 23:59:59");
+                $dusk = mktime(23, 59, 59, $month, $day, $year);
+            }
+            debug("Dusk 2: $dusk ( " . date('Y-m-d H:i', $dusk) . ")");
+        }
     }
 
-    // At the beginning and end of the midnight sun and polar night periods,
-    // the dawn and dusk may be set to the wrong day because of the adjustments above.
-    // So: Fix dawn and dusk to be the same day as sunrise and sunset.
-    $dawn = mktime(date('H', $sunrise), date('i', $sunrise), date('s', $sunrise), $month, $day, $year);
-    $dusk = mktime(date('H', $sunset), date('i', $sunset), date('s', $sunset), $month, $day, $year);
-    debug("FIXED: Dawn and dusk adjusted to be the same day as sunrise and sunset: Dawn: " . date('Y-m-d H:i', $dawn) . ", Dusk: " . date('Y-m-d H:i', $dusk) . ")");
-
-    debug("<br/>find_sun_times($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
+    debug("<br/>STEP 2: find_sun_times($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
     debug("midnight_sun: $midnight_sun");
     debug("polar_night: $polar_night");
     debug("dawn: $dawn (" . date('Y-m-d H:i', $dawn) . ")");
@@ -956,7 +1003,10 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
     debug("print_full_day($timestamp, $image_size, $number_of_images)");
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
-    list($dawn, $dusk) = roundDawnAndDusk($dawn, $dusk);
+    // TODO
+    //list($dawn, $dusk) = roundDawnAndDusk($dawn, $dusk);
+
+    debug("IN: print_full_day(" . $timestamp . "," . $image_size . "," . $number_of_images . ")");
     debug("Sunrise: " . date('H:i', $sunrise) . " Sunset: " . date('H:i', $sunset) . " Dawn: " . date('H:i', $dawn) . " Dusk: " . date('H:i', $dusk));
 
     // Set the navigation (we need $dusk from above).
@@ -1111,7 +1161,8 @@ if ($_SERVER['QUERY_STRING'] == 1) {
     $parse_output['image'] = "";
     $parse_output['last_image'] = "";
     parse_str($_SERVER['QUERY_STRING'], $parse_output);
-    debug("PARSE");
+    debug("WORK IN PROGRESS!");
+    debug("Parse:");
     $type  = $parse_output['type'];
     $date  = $parse_output['date'];
     $year  = $parse_output['year'];
