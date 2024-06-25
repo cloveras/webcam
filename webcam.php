@@ -485,7 +485,7 @@ function print_full_year($year) {
     print $formattedMonthLinks . ".\n";
 
     // Link to today.
-    echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>, \n";
+    echo "<a href=\"?type=day&date=" .  date('Ymd') . "\">Today: " . date("M d") . "</a>.\n";
     echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "</p>\n\n";
 
@@ -958,9 +958,11 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month) {
 // Print link to all images for the day specified with a timestamp.
 // ------------------------------------------------------------
 function print_full_day_link($timestamp) {
-    $date = date('Ymd', $timestamp);
-    $link = "?type=day&date=$date";
-    echo "<p><a href=\"$link\">The whole day</a>.</p>\n\n";
+    echo "<p>";
+    echo "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">The whole day</a>.\n";
+    echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>.\n";
+    echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
+    echo "</p>\n\n";
 }
 
 // Rename files in case there are new ones that have not been handles by cron yet.
