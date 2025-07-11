@@ -21,18 +21,69 @@ function page_header($title, $previous, $next, $up, $down) {
 <html lang="en-US">
 <head>
   <meta charset="utf-8">
+
   <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
-  
+
+  <meta property="og:title" content="Lillevik Lofoten Webcam">
+
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
   <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
 
+  <link rel="canonical" href="https://lilleviklofoten.no/webcam/">
+
   <link rel="stylesheet" type="text/css" href="css.php">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://lilleviklofoten.no/webcam/#webpage",
+    "url": "https://lilleviklofoten.no/webcam/",
+    "name": "Live Webcam – Lillevik Lofoten, Gimsøysand, Norway",
+    "description": "Webcam from Lillevik Lofoten on Gimsøy in Lofoten, Norway. See the midnight sun in summer and northern lights in winter. Image updates every 10 minutes.",
+    "inLanguage": "en",
+    "publisher": {
+      "@type": "Organization",
+      "@id": "https://lilleviklofoten.no/#organization",
+      "name": "Lillevik Lofoten",
+      "url": "https://lilleviklofoten.no/",
+      "email": "post@lofotenvacation.no",
+      "telephone": "+4741130944",
+      "logo": "https://lilleviklofoten.no/logo/lillevik-logo-1000.jpg",
+      "image": "https://lilleviklofoten.no/logo/lillevik-logo-1000.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Årstrandveien 663",
+        "postalCode": "8314",
+        "addressLocality": "Gimsøysand",
+        "addressRegion": "Nordland",
+        "addressCountry": "NO"
+      },
+      "sameAs": [
+        "https://facebook.com/lilleviklofoten",
+        "https://instagram.com/lilleviklofoten",
+        "https://www.tiktok.com/@lilleviklofoten"
+      ]
+    },
+    "primaryImageOfPage": {
+      "@type": "ImageObject",
+      "@id": "https://lilleviklofoten.no/webcam/latest.jpg",
+      "contentUrl": "https://lilleviklofoten.no/webcam/latest.jpg",
+      "url": "https://lilleviklofoten.no/webcam/latest.jpg",
+      "caption": "Lillevik Lofoten live webcam - Gimsøy, Lofoten, Norway",
+      "width": 2560,
+      "height": 1920,
+      "license": "https://lilleviklofoten.no/"
+    },
+    "image": "https://lilleviklofoten.no/webcam/latest.jpg"
+  }
+  </script>
 
 END1;
 
@@ -127,7 +178,7 @@ function debug($txt) {
 // Footer
 // ------------------------------------------------------------
 function footer($images_printed, $previous, $next, $up, $down) {
- 
+        
     $touch = true;
 
     if ($touch) {
@@ -172,6 +223,10 @@ TOUCH;
         echo "and <a href=\"$down\">down</a> (&darr;)\n";
     }
     echo ".</p>\n\n";
+
+    
+    print_lillevik_images_and_links(); 
+    
     echo "<p style=\"color: rgb(200, 200, 200);\" >Made with <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
     
     echo "</body>\n</html>\n";
@@ -1114,6 +1169,60 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
         echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n";
     }
     footer($images_printed, $previous, $next, $up, $down);
+}
+
+// Print Lillevik images and links
+// ------------------------------------------------------------
+function print_lillevik_images_and_links() {
+    $dir = __DIR__ . '/lillevik-photos';
+    $url_base = 'lillevik-photos';
+
+    // Get all JPEG files in the directory
+    $images = glob($dir . '/*.jpeg');
+
+    if (!$images || count($images) < 10) {
+        echo "<!-- Not enough images to display -->\n";
+        return;
+    }
+
+    // Randomly select 10 images
+    shuffle($images);
+    $selected = array_slice($images, 0, 10);
+
+    // Output HTML
+    echo "<!-- Lillevik images and links -->\n";
+    echo "<h3>Lillevik Lofoten: More photos</h3>\n";
+    echo "<p>";
+    echo "The photos below are taken at <a href=\"https://lilleviklofoten.no?utm_source=webcam\">Lillevik Lofoten</a>, or nearby on Gimsøy.\n";
+    echo "Information and booking: <a href=\"https://lilleviklofoten.no?utm_source=webcam\">lilleviklofoten.no</a>.\n";
+    echo "For new photos: <a href=\"#\" onclick=\"location.reload(); return false;\">Reload</a>.\n";
+    echo "</p>\n\n";
+
+    // Responsive flex container
+    echo "<div style=\"max-width: 980px; display: flex; flex-wrap: wrap; gap: 10px;\">\n";
+
+    $width = "166px";
+    $width = "166px";
+    foreach ($selected as $path) {
+        $filename = basename($path);
+        $img_url = $url_base . '/' . urlencode($filename);
+        $utm_url = "https://lilleviklofoten.no/?utm_source=webcam&utm_medium=thumbnail&utm_campaign=lillevik_photos&utm_content=" . urlencode($filename);
+        echo "  <a href=\"$utm_url\" style=\"flex: 1 0 30%; max-width: $width;\">\n";
+        echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" style=\"width: $width; height: $height; object-fit: cover; display: block;\" />\n";
+        echo "  </a>\n";
+    }
+
+    /*
+    foreach ($selected as $path) {
+        $filename = basename($path);
+        $img_url = $url_base . '/' . urlencode($filename);
+        echo "  <a href=\"https://lilleviklofoten.no\">\n";
+        echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" style=\"width: 164px; height: 164px; object-fit: cover;\" />\n";
+        echo "  </a>\n";
+    }
+    */
+    
+    echo "</div>\n";
 }
 
 // Action below
