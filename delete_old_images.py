@@ -514,7 +514,12 @@ class ImageCleaner:
                 
                 if self.dry_run:
                     # In dry run, don't actually compress
-                    pass
+                    # Also track mini image size for estimation
+                    mini_path = self._get_mini_path(image_path)
+                    if os.path.exists(mini_path):
+                        mini_size = os.path.getsize(mini_path)
+                        self.stats['size_before_compress'] += mini_size
+                        self.stats['files_to_compress'] += 1
                 else:
                     # Open and re-save with lower quality
                     img = Image.open(image_path)
@@ -530,8 +535,15 @@ class ImageCleaner:
                     # Also compress corresponding mini image if it exists
                     mini_path = self._get_mini_path(image_path)
                     if os.path.exists(mini_path):
+                        mini_original_size = os.path.getsize(mini_path)
+                        self.stats['size_before_compress'] += mini_original_size
+                        self.stats['files_to_compress'] += 1
+                        
                         mini_img = Image.open(mini_path)
                         mini_img.save(mini_path, 'JPEG', quality=self.compress_quality, optimize=True)
+                        
+                        mini_new_size = os.path.getsize(mini_path)
+                        self.stats['size_after_compress'] += mini_new_size
             except Exception as e:
                 print(f"Error compressing {image_path}: {e}", file=sys.stderr)
     
