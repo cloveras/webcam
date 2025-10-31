@@ -525,15 +525,19 @@ class ImageCleaner:
                     print(f"  {image_path} ({self._format_size(file_size)})")
                 except Exception:
                     pass
-            # Show ellipsis
-            print(f"  ... ({total_to_delete - 20} more files) ...")
-            # Show last 10
-            for image_path in images_to_delete[-10:]:
-                try:
-                    file_size = os.path.getsize(image_path)
-                    print(f"  {image_path} ({self._format_size(file_size)})")
-                except Exception:
-                    pass
+            # Show ellipsis and last 10 only if there are more than 20 files total
+            if total_to_delete > 20:
+                print(f"  ... ({total_to_delete - 20} more files) ...")
+                # Show last 10
+                for image_path in images_to_delete[-10:]:
+                    try:
+                        file_size = os.path.getsize(image_path)
+                        print(f"  {image_path} ({self._format_size(file_size)})")
+                    except Exception:
+                        pass
+            else:
+                # For 101-120 files, just show the remaining files
+                print(f"  ... ({total_to_delete - 10} more files) ...")
             print("-" * 70)
         
         for image_path in images_to_delete:
