@@ -1311,7 +1311,10 @@ if ($_SERVER['QUERY_STRING'] == 1) {
 //debug("type: $type<br/>date: $date<br/>year: $year</br>month: $month</br>size: $size<br/>image: $image<br/>last_image: $last_image");
 
 // Handle files not yet processed by cron
-check_and_rename_files_hack(WebcamConfig::FILENAME_PREFIX_TO_RENAME);
+// Old webcam:
+check_and_rename_files_hack("Lillevik Lofoten_01_");
+// 2025 webcam:
+check_and_rename_files_hack("Lillevik Lofoten_00_");
 
 // Determine which page type to display and render it
 // ------------------------------------------------------------
