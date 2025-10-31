@@ -134,6 +134,11 @@ class SunCalculator:
         """
         Get actual calculated sun times for normal days.
         Uses NOAA solar calculator algorithm.
+        
+        Note: Uses a fixed UTC+1 offset for timezone conversion. This doesn't
+        account for daylight saving time (Norway uses UTC+2 in summer), but
+        provides sufficient accuracy for the purpose of identifying images
+        outside the display interval for deletion.
         """
         lat = self.latitude
         lon = self.longitude
@@ -367,7 +372,7 @@ class ImageCleaner:
             
             for image_path in images:
                 # Skip mini directory images (we'll handle them separately)
-                if '/mini/' in image_path:
+                if os.path.sep + 'mini' + os.path.sep in image_path:
                     continue
                 
                 self.stats['total_files'] += 1
