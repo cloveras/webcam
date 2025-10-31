@@ -484,7 +484,9 @@ class ImageCleaner:
                 self.stats['size_to_delete'] += file_size
                 
                 if self.dry_run:
-                    pass  # Don't print individual files in dry run
+                    # In dry run, show what would be deleted (but limit output for large numbers)
+                    if self.stats['files_to_delete'] <= 100:
+                        print(f"Would delete: {image_path} ({self._format_size(file_size)})")
                 else:
                     os.remove(image_path)
                     print(f"Deleted: {image_path} ({self._format_size(file_size)})")
@@ -509,17 +511,21 @@ class ImageCleaner:
             try:
                 # Get original file size
                 original_size = os.path.getsize(image_path)
-                self.stats['size_before_compress'] += original_size
-                self.stats['files_to_compress'] += 1
+                
+                # Check for mini image
+                mini_path = self._get_mini_path(image_path)
+                mini_original_size = 0
+                has_mini = os.path.exists(mini_path)
+                if has_mini:
+                    mini_original_size = os.path.getsize(mini_path)
+                
+                # Track sizes
+                self.stats['size_before_compress'] += original_size + mini_original_size
+                self.stats['files_to_compress'] += 1 + (1 if has_mini else 0)
                 
                 if self.dry_run:
                     # In dry run, don't actually compress
-                    # Also track mini image size for estimation
-                    mini_path = self._get_mini_path(image_path)
-                    if os.path.exists(mini_path):
-                        mini_size = os.path.getsize(mini_path)
-                        self.stats['size_before_compress'] += mini_size
-                        self.stats['files_to_compress'] += 1
+                    pass
                 else:
                     # Open and re-save with lower quality
                     img = Image.open(image_path)
@@ -533,12 +539,7 @@ class ImageCleaner:
                     print(f"Compressed: {image_path} ({self._format_size(original_size)} → {self._format_size(new_size)}, saved {self._format_size(saved)})")
                     
                     # Also compress corresponding mini image if it exists
-                    mini_path = self._get_mini_path(image_path)
-                    if os.path.exists(mini_path):
-                        mini_original_size = os.path.getsize(mini_path)
-                        self.stats['size_before_compress'] += mini_original_size
-                        self.stats['files_to_compress'] += 1
-                        
+                    if has_mini:
                         mini_img = Image.open(mini_path)
                         mini_img.save(mini_path, 'JPEG', quality=self.compress_quality, optimize=True)
                         
@@ -568,10 +569,17 @@ class ImageCleaner:
         if self.compress_quality:
             print(f"\nFiles to compress: {self.stats['files_to_compress']}")
             if self.dry_run:
-                # Estimate compression savings (assume ~50% reduction for quality 80)
-                estimated_savings = int(self.stats['size_before_compress'] * 0.5)
-                print(f"Estimated space to save via compression: {self._format_size(estimated_savings)}")
-                print(f"Total estimated space savings: {self._format_size(self.stats['size_to_delete'] + estimated_savings)}")
+                # Conservative estimate based on quality setting
+                # Quality 80-90: ~20-30% savings, Quality 70-80: ~30-40% savings, below 70: ~40-50%
+                if self.compress_quality >= 80:
+                    reduction_factor = 0.25  # Conservative 25% savings
+                elif self.compress_quality >= 70:
+                    reduction_factor = 0.35  # 35% savings
+                else:
+                    reduction_factor = 0.45  # 45% savings
+                estimated_savings = int(self.stats['size_before_compress'] * reduction_factor)
+                print(f"Estimated space to save via compression: ~{self._format_size(estimated_savings)} (estimate)")
+                print(f"Total estimated space savings: ~{self._format_size(self.stats['size_to_delete'] + estimated_savings)}")
             else:
                 compress_saved = self.stats['size_before_compress'] - self.stats['size_after_compress']
                 print(f"Space saved via compression: {self._format_size(compress_saved)}")
