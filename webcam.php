@@ -768,13 +768,22 @@ function print_single_image($image_filename, $last_image) {
     global $large_image_width;
     global $large_image_height;
   
+    // Validate input
+    if (empty($image_filename)) {
+        page_header("Error", false, false, false, false);
+        echo "<p>No image found.</p>\n";
+        echo "<p><a href=\".\">Back to webcam</a></p>\n";
+        footer(0, false, false, false, false);
+        return;
+    }
+  
     // Find the date and time for the image.
     debug("split_image_filename($image_filename)");
     list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($image_filename);
 
     // Make a timestamp for the image's date and time.
     debug(" mktime($hour, $minute, 0, $month, $day, $year)");
-    $timestamp = mktime($hour, $minute, 0, $month, $day, $year); // Using 0 for minutes to get the one(s) before too.  
+    $timestamp = mktime((int)$hour, (int)$minute, 0, (int)$month, (int)$day, (int)$year);
     
     // Calculate the sun times for the image's timestamp.
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
@@ -1091,7 +1100,7 @@ function print_full_day($timestamp, $image_size, $number_of_images) {
             list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($yyyymmddhhmmss);
             
             // Create timestamp to check if this image is from between dawn and dusk.
-            $image_timestamp = mktime($hour, $minute, $seconds, $month, $day, $year);
+            $image_timestamp = mktime((int)$hour, (int)$minute, (int)$seconds, (int)$month, (int)$day, (int)$year);
 
             // Check if the image is between dawn and dusk.
             if ($image_timestamp >= $dawn && $image_timestamp <= $dusk) {
@@ -1278,7 +1287,7 @@ if ($type == "last") {
 } else if ($type == "day") {
     // All images for the specified date either in $date parameter or created below: 20151130.
     if ($date) {
-        $timestamp = mktime(0, 0, 0, substr($date, 4, 2), substr($date, 6, 2), $year = substr($date, 0, 4));
+        $timestamp = mktime(0, 0, 0, (int)substr($date, 4, 2), (int)substr($date, 6, 2), (int)substr($date, 0, 4));
     } // If $date is undefined, we use existing $timestamp.
     print_full_day($timestamp, $size, $max_images);
 } else if ($type == "month") {
