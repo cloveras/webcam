@@ -28,6 +28,7 @@ import glob
 import argparse
 from datetime import datetime, timedelta
 import math
+import time
 from collections import defaultdict
 try:
     from PIL import Image
@@ -295,11 +296,22 @@ class ImageCleaner:
             'size_before_compress': 0,
             'size_after_compress': 0
         }
+        self.start_time = None
+        self.last_progress_time = 0
     
     def should_process_year(self, year):
         """Check if year is old enough to process"""
         current_year = datetime.now().year
         return int(year) <= current_year - self.min_age_years
+    
+    def _print_progress(self, message, force=False):
+        """Print progress message with rate limiting (every 2 seconds unless forced)"""
+        current_time = time.time()
+        if force or (current_time - self.last_progress_time) >= 2.0:
+            elapsed = current_time - self.start_time if self.start_time else 0
+            elapsed_str = f"[{int(elapsed)}s]" if elapsed > 0 else ""
+            print(f"{elapsed_str} {message}", flush=True)
+            self.last_progress_time = current_time
     
     def parse_image_filename(self, filename):
         """
@@ -343,6 +355,7 @@ class ImageCleaner:
         """
         images_to_delete = []
         images_to_compress = []
+        days_processed = 0
         
         if year_month_filter:
             # Process only specified year/month
@@ -366,10 +379,22 @@ class ImageCleaner:
                     day_pattern = os.path.join(month_dir, "??")
                     day_dirs.extend(glob.glob(day_pattern))
         
+        total_days = len([d for d in day_dirs if os.path.isdir(d)])
+        
         # Process each day directory
         for day_dir in sorted(day_dirs):
             if not os.path.isdir(day_dir):
                 continue
+            
+            days_processed += 1
+            
+            # Show progress periodically
+            if total_days > 0:
+                self._print_progress(
+                    f"Scanning: {days_processed}/{total_days} days "
+                    f"({100*days_processed//total_days}%), "
+                    f"found {self.stats['files_to_delete']} files to delete so far..."
+                )
             
             # Parse the directory path to get date
             parts = day_dir.split(os.sep)
@@ -462,6 +487,14 @@ class ImageCleaner:
                         if image_path not in images_to_delete:
                             images_to_compress.append(image_path)
         
+        # Final progress update
+        if total_days > 0:
+            self._print_progress(
+                f"Scanning complete: {days_processed}/{total_days} days processed, "
+                f"found {self.stats['files_to_delete']} files to delete.",
+                force=True
+            )
+        
         return images_to_delete, images_to_compress
     
     def _get_mini_path(self, image_path):
@@ -478,20 +511,63 @@ class ImageCleaner:
         Args:
             images_to_delete: list of file paths to delete
         """
+        total_to_delete = len(images_to_delete)
+        deleted_count = 0
+        
+        # In dry-run mode with many files, show a sample of what would be deleted
+        if self.dry_run and total_to_delete > 100:
+            print("\nSample of files that would be deleted (showing first 10 and last 10):")
+            print("-" * 70)
+            sample_files = images_to_delete[:10] + images_to_delete[-10:]
+            for image_path in sample_files[:10]:
+                try:
+                    file_size = os.path.getsize(image_path)
+                    print(f"  {image_path} ({self._format_size(file_size)})")
+                except Exception:
+                    pass
+            if total_to_delete > 20:
+                print(f"  ... ({total_to_delete - 20} more files) ...")
+                for image_path in sample_files[10:]:
+                    try:
+                        file_size = os.path.getsize(image_path)
+                        print(f"  {image_path} ({self._format_size(file_size)})")
+                    except Exception:
+                        pass
+            print("-" * 70)
+        
         for image_path in images_to_delete:
             try:
                 file_size = os.path.getsize(image_path)
                 self.stats['size_to_delete'] += file_size
                 
                 if self.dry_run:
-                    # In dry run, show what would be deleted (but limit output for large numbers)
-                    if self.stats['files_to_delete'] <= 100:
+                    # In dry run with few files, show all
+                    if total_to_delete <= 100:
                         print(f"Would delete: {image_path} ({self._format_size(file_size)})")
                 else:
+                    deleted_count += 1
                     os.remove(image_path)
-                    print(f"Deleted: {image_path} ({self._format_size(file_size)})")
+                    
+                    # Show progress for large deletions
+                    if total_to_delete > 100:
+                        self._print_progress(
+                            f"Deleting: {deleted_count}/{total_to_delete} files "
+                            f"({100*deleted_count//total_to_delete}%), "
+                            f"freed {self._format_size(self.stats['size_to_delete'])} so far..."
+                        )
+                    else:
+                        # For small numbers, show each file
+                        print(f"Deleted: {image_path} ({self._format_size(file_size)})")
             except Exception as e:
                 print(f"Error processing {image_path}: {e}", file=sys.stderr)
+        
+        # Final update for delete mode
+        if not self.dry_run and total_to_delete > 0:
+            self._print_progress(
+                f"Deletion complete: {deleted_count}/{total_to_delete} files deleted, "
+                f"freed {self._format_size(self.stats['size_to_delete'])} total.",
+                force=True
+            )
     
     def compress_images(self, images_to_compress):
         """
@@ -506,6 +582,9 @@ class ImageCleaner:
         
         if not self.compress_quality:
             return
+        
+        total_to_compress = len(images_to_compress)
+        compressed_count = 0
         
         for image_path in images_to_compress:
             try:
@@ -524,6 +603,8 @@ class ImageCleaner:
                 self.stats['files_to_compress'] += 1 + (1 if has_mini else 0)
                 
                 if not self.dry_run:
+                    compressed_count += 1
+                    
                     # Open and re-save with lower quality
                     img = Image.open(image_path)
                     # Save with specified quality, optimize for smaller size
@@ -533,7 +614,15 @@ class ImageCleaner:
                     new_size = os.path.getsize(image_path)
                     self.stats['size_after_compress'] += new_size
                     saved = original_size - new_size
-                    print(f"Compressed: {image_path} ({self._format_size(original_size)} → {self._format_size(new_size)}, saved {self._format_size(saved)})")
+                    
+                    # Show progress for large compressions
+                    if total_to_compress > 100:
+                        self._print_progress(
+                            f"Compressing: {compressed_count}/{total_to_compress} files "
+                            f"({100*compressed_count//total_to_compress}%)..."
+                        )
+                    else:
+                        print(f"Compressed: {image_path} ({self._format_size(original_size)} → {self._format_size(new_size)}, saved {self._format_size(saved)})")
                     
                     # Also compress corresponding mini image if it exists
                     if has_mini:
@@ -544,6 +633,15 @@ class ImageCleaner:
                         self.stats['size_after_compress'] += mini_new_size
             except Exception as e:
                 print(f"Error compressing {image_path}: {e}", file=sys.stderr)
+        
+        # Final update for compression
+        if not self.dry_run and total_to_compress > 0:
+            compress_saved = self.stats['size_before_compress'] - self.stats['size_after_compress']
+            self._print_progress(
+                f"Compression complete: {compressed_count} files compressed, "
+                f"saved {self._format_size(compress_saved)} total.",
+                force=True
+            )
     
     def _format_size(self, size_bytes):
         """Format file size in human-readable format"""
@@ -555,6 +653,8 @@ class ImageCleaner:
     
     def print_summary(self):
         """Print summary statistics"""
+        elapsed = time.time() - self.start_time if self.start_time else 0
+        
         print("\n" + "=" * 70)
         print("SUMMARY")
         print("=" * 70)
@@ -581,6 +681,9 @@ class ImageCleaner:
                 compress_saved = self.stats['size_before_compress'] - self.stats['size_after_compress']
                 print(f"Space saved via compression: {self._format_size(compress_saved)}")
                 print(f"Total space saved: {self._format_size(self.stats['size_to_delete'] + compress_saved)}")
+        
+        if elapsed > 0:
+            print(f"\nElapsed time: {int(elapsed)} seconds")
         
         if self.dry_run:
             print("\nRun with --delete flag to actually delete these files.")
@@ -704,6 +807,9 @@ Examples:
         print(f"Compression: ENABLED (quality {args.compress_quality})")
     print("=" * 70)
     print()
+    
+    # Start timing
+    cleaner.start_time = time.time()
     
     # Find images to delete
     print("Scanning for images...")
