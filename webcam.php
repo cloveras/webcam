@@ -597,7 +597,7 @@ function print_all_years() {
                     echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                     echo "src=\"$year/$month/$monthly_day/";
                     // If the mini version has been created: Use that. If not: Scale down the full version.
-                    if (file_exists("$year/$month/$monthly_dayy/mini/$yyyymmddhhmmss.jpg")) {
+                    if (file_exists("$year/$month/$monthly_day/mini/$yyyymmddhhmmss.jpg")) {
                         echo "mini/";
                     } 
                     echo "$yyyymmddhhmmss.jpg\"></a>\n";
@@ -675,7 +675,7 @@ function find_latest_image() {
         debug("MONTH: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
         $latest_image = max(glob("$year/$month/**/*.jpg", GLOB_BRACE));   
     } else if (is_dir("$year")) {
-        debug("YEAR: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
+        debug("YEAR: max(glob(\"$year/**/*.jpg\", GLOB_BRACE))");
         $latest_image = max(glob("$year/**/*.jpg", GLOB_BRACE));    
     }
     $image = get_yyyymmddhhmmss($latest_image);
