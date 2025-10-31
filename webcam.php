@@ -1204,7 +1204,7 @@ function print_lillevik_images_and_links()
     $url_base = 'lillevik-photos';
 
     // Get all JPEG files in the directory
-    $images = glob($dir . '/*.jpeg');
+    $images = glob($dir . '/*.jpg');
 
     if (!$images || count($images) < 10) {
         echo "<!-- Not enough images to display -->\n";
@@ -1228,7 +1228,7 @@ function print_lillevik_images_and_links()
     echo "<div style=\"max-width: 980px; display: flex; flex-wrap: wrap; gap: 10px;\">\n";
 
     $width = "166px";
-    $width = "166px";
+    $height = "166px";
     foreach ($selected as $path) {
         $filename = basename($path);
         $img_url = $url_base . '/' . urlencode($filename);
