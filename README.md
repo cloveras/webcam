@@ -49,11 +49,27 @@ If you like this you can
 * Change the code for Google and Analytics Microsoft Clarity.
 * Update the HTML meta tags.
 
-For verbose feedback for debugging: `$debug = 1`.
+For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
 
-Please note: The script started as a simple hack, then grew into this much larger
-and barely maintainable hack.  It works well, but the code is not super elegant.
-PRs are welcome.
+## Code Structure (October 2025 Refactoring)
+
+The code has been refactored for better maintainability while preserving 100% backward compatibility:
+
+* **`WebcamConfig.php`** - All configuration constants (location, periods, display settings)
+* **`SunCalculator.php`** - Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
+* **`ImageFileManager.php`** - File system operations for finding and organizing images
+* **`NavigationHelper.php`** - Navigation and URL generation utilities
+* **`webcam.php`** - Main entry point with page rendering functions (now with PHPDoc comments)
+
+See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation of the refactored code structure.
+
+**Key improvements:**
+- Clear separation of concerns
+- Centralized configuration
+- Well-documented classes and functions
+- Easier customization and maintenance
+- No external dependencies
+- All original behavior preserved
 
 ## Got lots of images you need to sort and upload?
 
