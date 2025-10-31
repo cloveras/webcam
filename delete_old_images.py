@@ -6,13 +6,20 @@ For each day, this script calculates the dawn and dusk times (the display interv
 shown on the website) and identifies images that fall outside this interval.
 These images are not displayed on the website and can be safely deleted to save disk space.
 
+Additional space-saving features:
+- Keep only one photo per hour (closest to the whole hour)
+- Reduce JPG quality to save space
+
 Usage:
     python3 delete_old_images.py [--delete] [--year-filter YYYY/MM] [--min-age-years N]
+                                 [--one-per-hour] [--compress-quality QUALITY]
 
 Options:
     --delete              Actually delete files (default is dry-run mode)
     --year-filter YYYY/MM Only process images in this year/month (e.g., "2018/03")
     --min-age-years N     Only process images older than N years (default: 5)
+    --one-per-hour        Keep only one photo per hour (closest to whole hour)
+    --compress-quality Q  Compress remaining images to quality Q (1-100, e.g., 80)
 """
 
 import os
@@ -21,6 +28,12 @@ import glob
 import argparse
 from datetime import datetime, timedelta
 import math
+from collections import defaultdict
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 
 class WebcamConfig:
@@ -262,10 +275,13 @@ class SunCalculator:
 class ImageCleaner:
     """Main class for finding and deleting old images outside display intervals"""
     
-    def __init__(self, base_dir=".", dry_run=True, min_age_years=5):
+    def __init__(self, base_dir=".", dry_run=True, min_age_years=5, 
+                 one_per_hour=False, compress_quality=None):
         self.base_dir = base_dir
         self.dry_run = dry_run
         self.min_age_years = min_age_years
+        self.one_per_hour = one_per_hour
+        self.compress_quality = compress_quality
         self.sun_calculator = SunCalculator(
             WebcamConfig.LATITUDE,
             WebcamConfig.LONGITUDE
@@ -273,8 +289,11 @@ class ImageCleaner:
         self.stats = {
             'total_files': 0,
             'files_to_delete': 0,
+            'files_to_compress': 0,
             'total_size': 0,
-            'size_to_delete': 0
+            'size_to_delete': 0,
+            'size_before_compress': 0,
+            'size_after_compress': 0
         }
     
     def should_process_year(self, year):
@@ -314,14 +333,16 @@ class ImageCleaner:
     def find_images_to_delete(self, year_month_filter=None):
         """
         Find all images that fall outside the display interval.
+        Optionally keep only one image per hour (closest to whole hour).
         
         Args:
             year_month_filter: Optional "YYYY/MM" string to filter by
         
         Returns:
-            list of file paths to delete
+            tuple: (list of file paths to delete, list of file paths to compress)
         """
         images_to_delete = []
+        images_to_compress = []
         
         if year_month_filter:
             # Process only specified year/month
@@ -370,6 +391,10 @@ class ImageCleaner:
             image_pattern = os.path.join(day_dir, "*.jpg")
             images = glob.glob(image_pattern)
             
+            # Group images by hour for one-per-hour processing
+            if self.one_per_hour:
+                images_by_hour = defaultdict(list)
+            
             for image_path in images:
                 # Skip mini directory images (we'll handle them separately)
                 if os.path.sep + 'mini' + os.path.sep in image_path:
@@ -388,17 +413,63 @@ class ImageCleaner:
                     self.stats['files_to_delete'] += 1
                     
                     # Also check for corresponding mini image
-                    # Construct mini path by inserting 'mini' directory
-                    dir_name = os.path.dirname(image_path)
-                    file_name = os.path.basename(image_path)
-                    mini_dir = os.path.join(dir_name, "mini")
-                    mini_path = os.path.join(mini_dir, file_name)
-                    
+                    mini_path = self._get_mini_path(image_path)
                     if os.path.exists(mini_path):
                         images_to_delete.append(mini_path)
                         self.stats['files_to_delete'] += 1
+                elif self.one_per_hour:
+                    # Group by hour for later processing
+                    hour_key = (image_dt.year, image_dt.month, image_dt.day, image_dt.hour)
+                    images_by_hour[hour_key].append((image_path, image_dt))
+            
+            # Process one-per-hour logic
+            if self.one_per_hour:
+                for hour_key, hour_images in images_by_hour.items():
+                    if len(hour_images) <= 1:
+                        # Only one image in this hour, keep it for compression
+                        if self.compress_quality and hour_images:
+                            images_to_compress.append(hour_images[0][0])
+                        continue
+                    
+                    # Find image closest to the whole hour
+                    target_time = datetime(hour_key[0], hour_key[1], hour_key[2], hour_key[3], 0, 0)
+                    closest_image = min(hour_images, 
+                                       key=lambda x: abs((x[1] - target_time).total_seconds()))
+                    
+                    # Mark closest image for compression (if enabled)
+                    if self.compress_quality:
+                        images_to_compress.append(closest_image[0])
+                    
+                    # Delete all others
+                    for image_path, image_dt in hour_images:
+                        if image_path != closest_image[0]:
+                            images_to_delete.append(image_path)
+                            self.stats['files_to_delete'] += 1
+                            
+                            # Also delete corresponding mini image
+                            mini_path = self._get_mini_path(image_path)
+                            if os.path.exists(mini_path):
+                                images_to_delete.append(mini_path)
+                                self.stats['files_to_delete'] += 1
+            elif self.compress_quality:
+                # If not doing one-per-hour but compression is enabled,
+                # compress all images within display interval
+                for image_path in images:
+                    if os.path.sep + 'mini' + os.path.sep in image_path:
+                        continue
+                    image_dt = self.parse_image_filename(image_path)
+                    if image_dt and dawn <= image_dt <= dusk:
+                        if image_path not in images_to_delete:
+                            images_to_compress.append(image_path)
         
-        return images_to_delete
+        return images_to_delete, images_to_compress
+    
+    def _get_mini_path(self, image_path):
+        """Get the corresponding mini image path"""
+        dir_name = os.path.dirname(image_path)
+        file_name = os.path.basename(image_path)
+        mini_dir = os.path.join(dir_name, "mini")
+        return os.path.join(mini_dir, file_name)
     
     def delete_images(self, images_to_delete):
         """
@@ -413,12 +484,56 @@ class ImageCleaner:
                 self.stats['size_to_delete'] += file_size
                 
                 if self.dry_run:
-                    print(f"Would delete: {image_path} ({self._format_size(file_size)})")
+                    pass  # Don't print individual files in dry run
                 else:
                     os.remove(image_path)
                     print(f"Deleted: {image_path} ({self._format_size(file_size)})")
             except Exception as e:
                 print(f"Error processing {image_path}: {e}", file=sys.stderr)
+    
+    def compress_images(self, images_to_compress):
+        """
+        Compress the specified images to the target quality.
+        
+        Args:
+            images_to_compress: list of file paths to compress
+        """
+        if not PIL_AVAILABLE:
+            print("Warning: PIL/Pillow not available, skipping compression", file=sys.stderr)
+            return
+        
+        if not self.compress_quality:
+            return
+        
+        for image_path in images_to_compress:
+            try:
+                # Get original file size
+                original_size = os.path.getsize(image_path)
+                self.stats['size_before_compress'] += original_size
+                self.stats['files_to_compress'] += 1
+                
+                if self.dry_run:
+                    # In dry run, don't actually compress
+                    pass
+                else:
+                    # Open and re-save with lower quality
+                    img = Image.open(image_path)
+                    # Save with specified quality, optimize for smaller size
+                    img.save(image_path, 'JPEG', quality=self.compress_quality, optimize=True)
+                    
+                    # Get new file size
+                    new_size = os.path.getsize(image_path)
+                    self.stats['size_after_compress'] += new_size
+                    saved = original_size - new_size
+                    print(f"Compressed: {image_path} ({self._format_size(original_size)} → {self._format_size(new_size)}, saved {self._format_size(saved)})")
+                    
+                    # Also compress corresponding mini image if it exists
+                    mini_path = self._get_mini_path(image_path)
+                    if os.path.exists(mini_path):
+                        mini_img = Image.open(mini_path)
+                        mini_img.save(mini_path, 'JPEG', quality=self.compress_quality, optimize=True)
+            except Exception as e:
+                print(f"Error compressing {image_path}: {e}", file=sys.stderr)
     
     def _format_size(self, size_bytes):
         """Format file size in human-readable format"""
@@ -437,6 +552,18 @@ class ImageCleaner:
         print(f"Total files examined: {self.stats['total_files']}")
         print(f"Files to delete: {self.stats['files_to_delete']}")
         print(f"Space to free: {self._format_size(self.stats['size_to_delete'])}")
+        
+        if self.compress_quality:
+            print(f"\nFiles to compress: {self.stats['files_to_compress']}")
+            if self.dry_run:
+                # Estimate compression savings (assume ~50% reduction for quality 80)
+                estimated_savings = int(self.stats['size_before_compress'] * 0.5)
+                print(f"Estimated space to save via compression: {self._format_size(estimated_savings)}")
+                print(f"Total estimated space savings: {self._format_size(self.stats['size_to_delete'] + estimated_savings)}")
+            else:
+                compress_saved = self.stats['size_before_compress'] - self.stats['size_after_compress']
+                print(f"Space saved via compression: {self._format_size(compress_saved)}")
+                print(f"Total space saved: {self._format_size(self.stats['size_to_delete'] + compress_saved)}")
         
         if self.dry_run:
             print("\nRun with --delete flag to actually delete these files.")
@@ -463,6 +590,15 @@ Examples:
 
   # Delete images from January 2018
   python3 delete_old_images.py --delete --year-filter 2018/01
+  
+  # Keep only one photo per hour (closest to whole hour)
+  python3 delete_old_images.py --one-per-hour
+  
+  # Compress remaining images to quality 80%
+  python3 delete_old_images.py --compress-quality 80
+  
+  # Combine: delete outside interval, keep one per hour, and compress at 80%
+  python3 delete_old_images.py --delete --one-per-hour --compress-quality 80
         """
     )
     
@@ -494,6 +630,19 @@ Examples:
         help='Base directory containing webcam images (default: current directory)'
     )
     
+    parser.add_argument(
+        '--one-per-hour',
+        action='store_true',
+        help='Keep only one photo per hour (closest to whole hour), delete others'
+    )
+    
+    parser.add_argument(
+        '--compress-quality',
+        type=int,
+        metavar='Q',
+        help='Compress remaining images to quality Q (1-100, e.g., 80)'
+    )
+    
     args = parser.parse_args()
     
     # Validate year-filter format if provided
@@ -504,11 +653,24 @@ Examples:
                   file=sys.stderr)
             sys.exit(1)
     
+    # Validate compress-quality if provided
+    if args.compress_quality is not None:
+        if args.compress_quality < 1 or args.compress_quality > 100:
+            print("Error: --compress-quality must be between 1 and 100", 
+                  file=sys.stderr)
+            sys.exit(1)
+        if not PIL_AVAILABLE:
+            print("Error: PIL/Pillow is required for compression. Install with: pip install Pillow", 
+                  file=sys.stderr)
+            sys.exit(1)
+    
     # Create cleaner instance
     cleaner = ImageCleaner(
         base_dir=args.base_dir,
         dry_run=not args.delete,
-        min_age_years=args.min_age_years
+        min_age_years=args.min_age_years,
+        one_per_hour=args.one_per_hour,
+        compress_quality=args.compress_quality
     )
     
     print("=" * 70)
@@ -519,21 +681,32 @@ Examples:
     print(f"Minimum age: {args.min_age_years} years")
     if args.year_filter:
         print(f"Year/Month filter: {args.year_filter}")
+    if args.one_per_hour:
+        print("One-per-hour mode: ENABLED (keeping only image closest to whole hour)")
+    if args.compress_quality:
+        print(f"Compression: ENABLED (quality {args.compress_quality})")
     print("=" * 70)
     print()
     
     # Find images to delete
-    print("Scanning for images outside display intervals...")
-    images_to_delete = cleaner.find_images_to_delete(args.year_filter)
+    print("Scanning for images...")
+    images_to_delete, images_to_compress = cleaner.find_images_to_delete(args.year_filter)
     
-    if not images_to_delete:
-        print("No images found to delete.")
+    if not images_to_delete and not images_to_compress:
+        print("No images found to process.")
         return
     
-    print(f"\nFound {len(images_to_delete)} images to delete.\n")
+    print(f"\nFound {len(images_to_delete)} images to delete.")
+    if images_to_compress:
+        print(f"Found {len(images_to_compress)} images to compress.")
+    print()
     
     # Delete (or list) images
     cleaner.delete_images(images_to_delete)
+    
+    # Compress images
+    if images_to_compress:
+        cleaner.compress_images(images_to_compress)
     
     # Print summary
     cleaner.print_summary()
