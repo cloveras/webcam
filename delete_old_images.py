@@ -100,7 +100,7 @@ class SunCalculator:
     
     def _get_midnight_sun_times(self, date, midnight_sun, polar_night):
         """Get fake sun times for midnight sun period"""
-        dawn = datetime.combine(date, datetime.min.time())  # 00:00:00
+        dawn = datetime.combine(date, datetime.min.time()).replace(second=1)  # 00:00:01
         dusk = datetime.combine(date, datetime.max.time()).replace(microsecond=0)  # 23:59:59
         return (dawn, dusk, midnight_sun, polar_night)
     
@@ -111,10 +111,22 @@ class SunCalculator:
         sunrise_hour = WebcamConfig.POLAR_NIGHT_FAKE_SUNRISE_HOUR
         sunset_hour = WebcamConfig.POLAR_NIGHT_FAKE_SUNSET_HOUR
         
-        dawn = datetime.combine(date, datetime.min.time()).replace(
-            hour=sunrise_hour - adjust_hours)
-        dusk = datetime.combine(date, datetime.min.time()).replace(
-            hour=sunset_hour + adjust_hours, minute=59, second=59)
+        # Calculate dawn and dusk hours
+        dawn_hour = sunrise_hour - adjust_hours
+        dusk_hour = sunset_hour + adjust_hours
+        
+        # Handle negative dawn hour (would be on previous day)
+        if dawn_hour < 0:
+            dawn = datetime.combine(date, datetime.min.time())  # 00:00:00
+        else:
+            dawn = datetime.combine(date, datetime.min.time()).replace(hour=dawn_hour)
+        
+        # Handle dusk hour overflow (would be on next day)
+        if dusk_hour >= 24:
+            dusk = datetime.combine(date, datetime.max.time()).replace(microsecond=0)  # 23:59:59
+        else:
+            dusk = datetime.combine(date, datetime.min.time()).replace(
+                hour=dusk_hour, minute=59, second=59)
         
         return (dawn, dusk, midnight_sun, polar_night)
     
@@ -371,10 +383,12 @@ class ImageCleaner:
                     self.stats['files_to_delete'] += 1
                     
                     # Also check for corresponding mini image
-                    mini_path = image_path.replace(
-                        f"/{year:04d}/{month:02d}/{day:02d}/",
-                        f"/{year:04d}/{month:02d}/{day:02d}/mini/"
-                    )
+                    # Construct mini path by inserting 'mini' directory
+                    dir_name = os.path.dirname(image_path)
+                    file_name = os.path.basename(image_path)
+                    mini_dir = os.path.join(dir_name, "mini")
+                    mini_path = os.path.join(mini_dir, file_name)
+                    
                     if os.path.exists(mini_path):
                         images_to_delete.append(mini_path)
                         self.stats['files_to_delete'] += 1
