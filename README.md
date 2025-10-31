@@ -79,11 +79,44 @@ The Bash script
 can be a good _starting point_
 for reorganizing thousands of images into `YYYY/MM/DD` directories.
 
-To Bash script
+The Bash script
 [`util/nctpput-all-images.sh`](https://github.com/cloveras/webcam/blob/main/util/nctpput-all-images.sh)
 uses
 [`ncftp`](https://www.ncftp.com)
 and can be a good _starting point_ for mass-uploading thousands of files.
+
+## Need to delete old images to save disk space?
+
+The Python script
+[`delete_old_images.py`](https://github.com/cloveras/webcam/blob/main/delete_old_images.py)
+can help you delete old webcam images that fall outside the display interval (dawn to dusk).
+These images are not shown on the website and can be safely deleted to free up disk space.
+
+**Features:**
+- Calculates sunrise/sunset/dawn/dusk times for each day based on your location
+- Identifies images that fall outside the display interval
+- Dry-run mode by default (lists files without deleting)
+- Can filter by specific year/month (e.g., `2018/03`)
+- Can filter by minimum age (e.g., only process images older than 5 years)
+- Handles both full-size and mini images
+
+**Usage examples:**
+```bash
+# Dry run: List files to delete for all years older than 5 years
+python3 delete_old_images.py
+
+# Actually delete files for all years older than 5 years
+python3 delete_old_images.py --delete
+
+# Process only images from March 2018
+python3 delete_old_images.py --year-filter 2018/03
+
+# Process images older than 3 years
+python3 delete_old_images.py --min-age-years 3
+
+# Delete images from January 2018
+python3 delete_old_images.py --delete --year-filter 2018/01
+```
 
 ## Example screenshots
 

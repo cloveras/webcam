@@ -16,3 +16,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
