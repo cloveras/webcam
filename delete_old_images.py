@@ -523,10 +523,7 @@ class ImageCleaner:
                 self.stats['size_before_compress'] += original_size + mini_original_size
                 self.stats['files_to_compress'] += 1 + (1 if has_mini else 0)
                 
-                if self.dry_run:
-                    # In dry run, don't actually compress
-                    pass
-                else:
+                if not self.dry_run:
                     # Open and re-save with lower quality
                     img = Image.open(image_path)
                     # Save with specified quality, optimize for smaller size
