@@ -95,6 +95,8 @@ These images are not shown on the website and can be safely deleted to free up d
 **Features:**
 - Calculates sunrise/sunset/dawn/dusk times for each day based on your location
 - Identifies images that fall outside the display interval
+- **NEW:** Keep only one photo per hour (closest to whole hour) to significantly reduce storage
+- **NEW:** Compress remaining images to save additional space (e.g., 80% quality)
 - Dry-run mode by default (lists files without deleting)
 - Can filter by specific year/month (e.g., `2018/03`)
 - Can filter by minimum age (e.g., only process images older than 5 years)
@@ -116,6 +118,20 @@ python3 delete_old_images.py --min-age-years 3
 
 # Delete images from January 2018
 python3 delete_old_images.py --delete --year-filter 2018/01
+
+# Keep only one photo per hour (closest to whole hour) for old images
+python3 delete_old_images.py --one-per-hour
+
+# Compress remaining images to quality 80% to save additional space
+python3 delete_old_images.py --compress-quality 80
+
+# Combine all space-saving features for maximum storage reduction
+python3 delete_old_images.py --delete --one-per-hour --compress-quality 80
+```
+
+**Note:** Image compression requires the Pillow library. Install it with:
+```bash
+pip3 install Pillow
 ```
 
 ## Example screenshots
