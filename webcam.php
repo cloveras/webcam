@@ -30,8 +30,9 @@ require_once 'NavigationHelper.php';
  * @param string|false $next URL for next navigation (false if none)
  * @param string|false $up URL for up navigation (false if none)
  * @param string|false $down URL for down navigation (false if none)
+ * @param array $prefetch_images Optional array of image paths to prefetch
  */
-function page_header($title, $previous, $next, $up, $down)
+function page_header($title, $previous, $next, $up, $down, $prefetch_images = array())
 {
 
     print <<<END1
@@ -117,11 +118,28 @@ END1;
         $_SERVER['SERVER_NAME'] = "lilleviklofoten.no";
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
+    
+    // DNS prefetch and preconnect for external resources
+    echo "  <link rel=\"dns-prefetch\" href=\"//www.googletagmanager.com\">\n";
+    echo "  <link rel=\"dns-prefetch\" href=\"//www.clarity.ms\">\n";
+    echo "  <link rel=\"dns-prefetch\" href=\"//cdn.jsdelivr.net\">\n";
+    echo "  <link rel=\"preconnect\" href=\"https://www.googletagmanager.com\" crossorigin>\n";
+    echo "  <link rel=\"preconnect\" href=\"https://cdn.jsdelivr.net\" crossorigin>\n";
+    
+    // Prefetch navigation pages
     if ($previous) {
         echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
     }
     if ($next) {
         echo "  <link rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
+    }
+    if ($up) {
+        echo "  <link rel=\"prefetch\" title=\"Up\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$up\">\n";
+    }
+    
+    // Prefetch images if provided (for faster loading)
+    foreach ($prefetch_images as $img_path) {
+        echo "  <link rel=\"prefetch\" as=\"image\" href=\"$img_path\">\n";
     }
 
     print <<<END2
@@ -381,7 +399,33 @@ function print_full_month($year, $month)
     $second = 0;
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
     $title = "Lillevik Lofoten webcam: " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
-    page_header($title, $previous, $next, $up, $down);
+    
+    // Collect first few images to prefetch for better performance
+    $prefetch_images = array();
+    $prefetch_count = 0;
+    for ($i = 1; $i <= 31 && $prefetch_count < 5; $i += 1) {
+        $i_padded = sprintf("%02d", $i);
+        $directory = $year . "/" . $month . "/" . $i_padded;
+        if (file_exists($directory)) {
+            $image = get_latest_image_in_directory_by_date_hour($directory, $monthly_hour);
+            if ($image) {
+                $yyyymmddhhmmss = get_yyyymmddhhmmss($image);
+                list($img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds) = split_image_filename($yyyymmddhhmmss);
+                if ($size == "mini" || empty($size)) {
+                    if (file_exists("$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg")) {
+                        $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg";
+                    } else {
+                        $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
+                    }
+                } else {
+                    $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
+                }
+                $prefetch_count++;
+            }
+        }
+    }
+    
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, "average");
@@ -865,12 +909,23 @@ function print_single_image($image_filename, $last_image)
 
     debug("PREV: $previous<br/>NEXT: $next<br/>UP: $up<br/>DOWN: $down<br/>");
 
+    // Collect images to prefetch
+    $prefetch_images = array();
+    // Prefetch the current image
+    $prefetch_images[] = "$year/$month/$day/$image_filename";
+    // Prefetch next image if available
+    if ($next_image) {
+        $next_img_datepart = get_yyyymmddhhmmss($next_image);
+        list($next_year, $next_month, $next_day, $next_hour, $next_minute, $next_seconds) = split_image_filename($next_img_datepart);
+        $prefetch_images[] = "$next_year/$next_month/$next_day/$next_img_datepart.jpg";
+    }
+
     // Print!
     $title = "Lillevik Lofoten webcam";
     if (!$last_image) {
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
-    page_header($title, $previous, $next, $up, $down);
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false);
     print_full_day_link($timestamp);
 
@@ -1107,6 +1162,32 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     // Down. The first image after dawn for this day.
     $down = "?type=one&image=" . find_first_image_after_time(date('Y', $timestamp), date('m', $timestamp), date('d', $timestamp), date('H', $dawn), 0, 0);
 
+    // Collect first few images to prefetch for better performance
+    $prefetch_images = array();
+    $directory = date('Y/m/d', $timestamp);
+    if (file_exists($directory)) {
+        $all_images = glob("$directory/*.jpg");
+        $prefetch_count = 0;
+        foreach (array_reverse($all_images) as $img) {
+            if ($prefetch_count >= 5) break; // Prefetch first 5 images
+            $img_yyyymmddhhmmss = get_yyyymmddhhmmss($img);
+            list($img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds) = split_image_filename($img_yyyymmddhhmmss);
+            $img_timestamp = mktime((int) $img_hour, (int) $img_minute, (int) $img_seconds, (int) $img_month, (int) $img_day, (int) $img_year);
+            if ($img_timestamp >= $dawn && $img_timestamp <= $dusk) {
+                if ($size == "mini" || empty($size)) {
+                    if (file_exists("$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg")) {
+                        $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg";
+                    } else {
+                        $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
+                    }
+                } else {
+                    $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
+                }
+                $prefetch_count++;
+            }
+        }
+    }
+
     // Print header now that we have the details for it.
     $title = "Lillevik Lofoten webcam: " . date('Y-m-d', $timestamp);
     if ($number_of_images == 1) {
@@ -1114,7 +1195,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
         $title .= date('H', $timestamp) . ":" . date('i', $timestamp);
     }
 
-    page_header($title, $previous, $next, $up, $down);
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1);
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
