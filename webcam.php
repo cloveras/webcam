@@ -1017,7 +1017,7 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
 
         $requested_month = date('Y-m', $timestamp);
         $this_month = date('Y-m'); // 2023-11
-        $previous_month = date('Y-m', time() - 60 * 60 * 24 * 30); // 2023-10
+        $previous_month = date('Y-m', strtotime('-30 days')); // 2023-10
         if ($requested_month != $this_month) {
             echo "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("F") . "</a>. \n";
         }
@@ -1028,14 +1028,14 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
         // Not showing a full month: Work hard to find the days.
 
         // Previous: Yesterday always exists.
-        $yesterday_timestamp = $timestamp - 60 * 60 * 24;
+        $yesterday_timestamp = strtotime('-1 day', $timestamp);
         echo "<p>\n<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("F d", $yesterday_timestamp) . "</a>.\n";
 
         // Next: Is there a tomorrow, based on the selected day?
         if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
             // The $timestamp is today, so there is no tomorrow.
         } else {
-            $tomorrow_timestamp = $timestamp + 60 * 60 * 24; // Add 24 hours for the "Next" link.
+            $tomorrow_timestamp = strtotime('+1 day', $timestamp);
             echo "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("F d", $tomorrow_timestamp) . "</a>.\n";
         }
 
@@ -1130,9 +1130,9 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
     // Set the navigation (we need $dusk from above).
     // Previous: The previous day.
-    $previous = "?type=day&date=" . date('Ymd', $timestamp - 60 * 60 * 24) . "&size=$size";
+    $previous = "?type=day&date=" . date('Ymd', strtotime('-1 day', $timestamp)) . "&size=$size";
     // Next: The next day, but not if it's tomorrow.
-    $next_date = date('Ymd', $timestamp + 60 * 60 * 24); // Add 24 hours.
+    $next_date = date('Ymd', strtotime('+1 day', $timestamp));
     if (date('Ymd') != date('Ymd', $timestamp)) {
         // We are showing image for today, so no need for a link to tomorrow (no images there yet).
         $next = "?type=day&date=$next_date&size=$size";
