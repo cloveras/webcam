@@ -185,6 +185,112 @@ class ImageFileManager {
     }
     
     /**
+     * Collect images to prefetch for performance optimization
+     * 
+     * @param string $type Type of prefetch: 'month', 'day', or 'single'
+     * @param array $params Parameters specific to the type
+     * @return array Array of image paths to prefetch
+     */
+    public function collectPrefetchImages(string $type, array $params): array {
+        $prefetch_images = [];
+        
+        switch ($type) {
+            case 'month':
+                // Prefetch first 5 images of the month
+                $year = $params['year'];
+                $month = $params['month'];
+                $monthly_hour = $params['monthly_hour'] ?? 12;
+                $size = $params['size'] ?? 'mini';
+                
+                $directories = glob("$year/$month/*", GLOB_ONLYDIR);
+                if ($directories) {
+                    sort($directories);
+                    $count = 0;
+                    foreach ($directories as $directory) {
+                        if ($count >= 5) break;
+                        $image = $this->getLatestImageInDirectoryByDateHour($directory, $monthly_hour);
+                        if ($image) {
+                            $yyyymmddhhmmss = $this->getYYYYMMDDHHMMSS($image);
+                            [$img_year, $img_month, $img_day] = $this->splitImageFilename($yyyymmddhhmmss);
+                            
+                            if ($size == "mini" || empty($size)) {
+                                if (file_exists("$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg")) {
+                                    $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg";
+                                } else {
+                                    $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
+                                }
+                            } else {
+                                $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
+                            }
+                            $count++;
+                        }
+                    }
+                }
+                break;
+                
+            case 'day':
+                // Prefetch first 5 images of the day
+                $directory = $params['directory'];
+                $dawn = $params['dawn'];
+                $dusk = $params['dusk'];
+                $size = $params['size'] ?? 'mini';
+                
+                if (file_exists($directory)) {
+                    $all_images = glob("$directory/*.jpg");
+                    // Get last 10 images, then filter
+                    $recent_images = array_slice($all_images, -10);
+                    rsort($recent_images);
+                    $count = 0;
+                    
+                    foreach ($recent_images as $img) {
+                        if ($count >= 5) break;
+                        $img_yyyymmddhhmmss = $this->getYYYYMMDDHHMMSS($img);
+                        [$img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds] = 
+                            $this->splitImageFilename($img_yyyymmddhhmmss);
+                        
+                        $img_timestamp = mktime((int)$img_hour, (int)$img_minute, (int)$img_seconds,
+                                               (int)$img_month, (int)$img_day, (int)$img_year);
+                        
+                        if ($img_timestamp >= $dawn && $img_timestamp <= $dusk) {
+                            if ($size == "mini" || empty($size)) {
+                                if (file_exists("$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg")) {
+                                    $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg";
+                                } else {
+                                    $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
+                                }
+                            } else {
+                                $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
+                            }
+                            $count++;
+                        }
+                    }
+                }
+                break;
+                
+            case 'single':
+                // Prefetch current and next image
+                $year = $params['year'];
+                $month = $params['month'];
+                $day = $params['day'];
+                $image_filename = $params['image_filename'];
+                $next_image = $params['next_image'] ?? null;
+                
+                // Prefetch the current image
+                $prefetch_images[] = "$year/$month/$day/$image_filename";
+                
+                // Prefetch next image if available
+                if ($next_image) {
+                    $next_img_datepart = $this->getYYYYMMDDHHMMSS($next_image);
+                    [$next_year, $next_month, $next_day] = $this->splitImageFilename($next_img_datepart);
+                    $prefetch_images[] = "$next_year/$next_month/$next_day/$next_img_datepart.jpg";
+                }
+                break;
+        }
+        
+        return $prefetch_images;
+    }
+    
+    /**
      * Debug logging helper
      */
     private function debugLog(string $message): void {

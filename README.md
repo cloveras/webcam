@@ -27,6 +27,7 @@ for webcam images stored in a directory structure like this:
 * Navigation with touch gestures and arrow keys.
 * Shows the time (HH:MM) as a CSS overlay on thumbails when viewing a full day, month and year.
 * Data collection with Google Analytics and Microsoft Clarity
+* **Performance optimizations**: Client-side caching, resource prefetching, and optimized loading (see [PERFORMANCE.md](PERFORMANCE.md))
 
 Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
 

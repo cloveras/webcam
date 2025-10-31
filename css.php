@@ -2,10 +2,9 @@
 // Set the content type to CSS
 header("Content-type: text/css");
 
-// Prevent caching
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
+// Enable caching for CSS (1 day)
+header("Cache-Control: public, max-age=86400");
+header("Expires: " . gmdate("D, d M Y H:i:s", time() + 86400) . " GMT");
 
 // The CSS file
 $css = 'webcam.css';

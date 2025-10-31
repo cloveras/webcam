@@ -1,0 +1,51 @@
+# Webcam Performance Optimizations
+# Apache configuration for improved caching and performance
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+</IfModule>
+
+# Set cache control headers for different file types
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images - cache for 30 days (except latest.jpg which is handled by latest.php)
+    ExpiresByType image/jpeg "access plus 30 days"
+    
+    # CSS - cache for 1 day
+    ExpiresByType text/css "access plus 1 day"
+    
+    # JavaScript - cache for 1 day
+    ExpiresByType application/javascript "access plus 1 day"
+    ExpiresByType text/javascript "access plus 1 day"
+    
+    # HTML - no caching (dynamic content)
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Cache control for images - except latest.jpg
+    <FilesMatch "\.(jpg|jpeg)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+    
+    # Override for latest.jpg - no caching
+    <Files "latest.jpg">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+    </Files>
+    
+    # CSS files
+    <FilesMatch "\.css$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+    
+    # JavaScript files
+    <FilesMatch "\.js$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+</IfModule>
+
+# ETags for validation
+FileETag MTime Size

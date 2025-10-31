@@ -30,8 +30,9 @@ require_once 'NavigationHelper.php';
  * @param string|false $next URL for next navigation (false if none)
  * @param string|false $up URL for up navigation (false if none)
  * @param string|false $down URL for down navigation (false if none)
+ * @param array $prefetch_images Optional array of image paths to prefetch
  */
-function page_header($title, $previous, $next, $up, $down)
+function page_header($title, $previous, $next, $up, $down, $prefetch_images = array())
 {
 
     print <<<END1
@@ -117,11 +118,28 @@ END1;
         $_SERVER['SERVER_NAME'] = "lilleviklofoten.no";
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
+    
+    // DNS prefetch and preconnect for external resources
+    echo "  <link rel=\"dns-prefetch\" href=\"//www.googletagmanager.com\">\n";
+    echo "  <link rel=\"dns-prefetch\" href=\"//www.clarity.ms\">\n";
+    echo "  <link rel=\"dns-prefetch\" href=\"//cdn.jsdelivr.net\">\n";
+    echo "  <link rel=\"preconnect\" href=\"https://www.googletagmanager.com\" crossorigin>\n";
+    echo "  <link rel=\"preconnect\" href=\"https://cdn.jsdelivr.net\" crossorigin>\n";
+    
+    // Prefetch navigation pages
     if ($previous) {
-        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
     }
     if ($next) {
-        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
+    }
+    if ($up) {
+        echo "  <link rel=\"prefetch\" title=\"Up\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$up\">\n";
+    }
+    
+    // Prefetch images if provided (for faster loading)
+    foreach ($prefetch_images as $img_path) {
+        echo "  <link rel=\"prefetch\" as=\"image\" href=\"$img_path\">\n";
     }
 
     print <<<END2
@@ -381,7 +399,17 @@ function print_full_month($year, $month)
     $second = 0;
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
     $title = "Lillevik Lofoten webcam: " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
-    page_header($title, $previous, $next, $up, $down);
+    
+    // Collect images to prefetch for better performance
+    global $imageManager;
+    $prefetch_images = $imageManager->collectPrefetchImages('month', [
+        'year' => $year,
+        'month' => $month,
+        'monthly_hour' => $monthly_hour,
+        'size' => $size
+    ]);
+    
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, "average");
@@ -865,12 +893,22 @@ function print_single_image($image_filename, $last_image)
 
     debug("PREV: $previous<br/>NEXT: $next<br/>UP: $up<br/>DOWN: $down<br/>");
 
+    // Collect images to prefetch
+    global $imageManager;
+    $prefetch_images = $imageManager->collectPrefetchImages('single', [
+        'year' => $year,
+        'month' => $month,
+        'day' => $day,
+        'image_filename' => $image_filename,
+        'next_image' => $next_image
+    ]);
+
     // Print!
     $title = "Lillevik Lofoten webcam";
     if (!$last_image) {
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
-    page_header($title, $previous, $next, $up, $down);
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false);
     print_full_day_link($timestamp);
 
@@ -1107,6 +1145,16 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     // Down. The first image after dawn for this day.
     $down = "?type=one&image=" . find_first_image_after_time(date('Y', $timestamp), date('m', $timestamp), date('d', $timestamp), date('H', $dawn), 0, 0);
 
+    // Collect images to prefetch for better performance
+    global $imageManager;
+    $directory = date('Y/m/d', $timestamp);
+    $prefetch_images = $imageManager->collectPrefetchImages('day', [
+        'directory' => $directory,
+        'dawn' => $dawn,
+        'dusk' => $dusk,
+        'size' => $size
+    ]);
+
     // Print header now that we have the details for it.
     $title = "Lillevik Lofoten webcam: " . date('Y-m-d', $timestamp);
     if ($number_of_images == 1) {
@@ -1114,7 +1162,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
         $title .= date('H', $timestamp) . ":" . date('i', $timestamp);
     }
 
-    page_header($title, $previous, $next, $up, $down);
+    page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1);
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
