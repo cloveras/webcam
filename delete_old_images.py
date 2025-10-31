@@ -518,21 +518,22 @@ class ImageCleaner:
         if self.dry_run and total_to_delete > 100:
             print("\nSample of files that would be deleted (showing first 10 and last 10):")
             print("-" * 70)
-            sample_files = images_to_delete[:10] + images_to_delete[-10:]
-            for image_path in sample_files[:10]:
+            # Show first 10
+            for image_path in images_to_delete[:10]:
                 try:
                     file_size = os.path.getsize(image_path)
                     print(f"  {image_path} ({self._format_size(file_size)})")
                 except Exception:
                     pass
-            if total_to_delete > 20:
-                print(f"  ... ({total_to_delete - 20} more files) ...")
-                for image_path in sample_files[10:]:
-                    try:
-                        file_size = os.path.getsize(image_path)
-                        print(f"  {image_path} ({self._format_size(file_size)})")
-                    except Exception:
-                        pass
+            # Show ellipsis
+            print(f"  ... ({total_to_delete - 20} more files) ...")
+            # Show last 10
+            for image_path in images_to_delete[-10:]:
+                try:
+                    file_size = os.path.getsize(image_path)
+                    print(f"  {image_path} ({self._format_size(file_size)})")
+                except Exception:
+                    pass
             print("-" * 70)
         
         for image_path in images_to_delete:
