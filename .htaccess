@@ -12,7 +12,6 @@
     
     # Images - cache for 30 days (except latest.jpg which is handled by latest.php)
     ExpiresByType image/jpeg "access plus 30 days"
-    ExpiresByType image/jpg "access plus 30 days"
     
     # CSS - cache for 1 day
     ExpiresByType text/css "access plus 1 day"

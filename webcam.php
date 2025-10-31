@@ -128,13 +128,13 @@ END1;
     
     // Prefetch navigation pages
     if ($previous) {
-        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$previous\">\n";
     }
     if ($next) {
-        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Next\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$next\">\n";
     }
     if ($up) {
-        echo "  <link rel=\"prefetch\" title=\"Up\" href=\"http://" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$up\">\n";
+        echo "  <link rel=\"prefetch\" title=\"Up\" href=\"//" . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . "$up\">\n";
     }
     
     // Prefetch images if provided (for faster loading)
@@ -402,11 +402,12 @@ function print_full_month($year, $month)
     
     // Collect first few images to prefetch for better performance
     $prefetch_images = array();
-    $prefetch_count = 0;
-    for ($i = 1; $i <= 31 && $prefetch_count < 5; $i += 1) {
-        $i_padded = sprintf("%02d", $i);
-        $directory = $year . "/" . $month . "/" . $i_padded;
-        if (file_exists($directory)) {
+    $directories = glob("$year/$month/*", GLOB_ONLYDIR);
+    if ($directories) {
+        sort($directories); // Ensure chronological order
+        $prefetch_count = 0;
+        foreach ($directories as $directory) {
+            if ($prefetch_count >= 5) break;
             $image = get_latest_image_in_directory_by_date_hour($directory, $monthly_hour);
             if ($image) {
                 $yyyymmddhhmmss = get_yyyymmddhhmmss($image);
@@ -1167,8 +1168,11 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     $directory = date('Y/m/d', $timestamp);
     if (file_exists($directory)) {
         $all_images = glob("$directory/*.jpg");
+        // Get last 10 images (reversed), then check first 5 that match dawn/dusk criteria
+        $recent_images = array_slice($all_images, -10);
+        rsort($recent_images); // Sort in reverse chronological order
         $prefetch_count = 0;
-        foreach (array_reverse($all_images) as $img) {
+        foreach ($recent_images as $img) {
             if ($prefetch_count >= 5) break; // Prefetch first 5 images
             $img_yyyymmddhhmmss = get_yyyymmddhhmmss($img);
             list($img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds) = split_image_filename($img_yyyymmddhhmmss);
