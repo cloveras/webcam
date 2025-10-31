@@ -1280,6 +1280,12 @@ $sunCalculator = new SunCalculator(WebcamConfig::LATITUDE, WebcamConfig::LONGITU
 $imageManager = new ImageFileManager($debug);
 $navHelper = new NavigationHelper();
 
+// Handle files not yet processed by cron - must be done early before finding latest image
+// Old webcam:
+check_and_rename_files_hack("Lillevik Lofoten_01_");
+// 2025 webcam:
+check_and_rename_files_hack("Lillevik Lofoten_00_");
+
 // Parse query string to determine what to show
 // ------------------------------------------------------------
 if ($_SERVER['QUERY_STRING'] == 1) {
@@ -1309,12 +1315,6 @@ if ($_SERVER['QUERY_STRING'] == 1) {
 }
 //debug("QUERY_STRING: " . $_SERVER['QUERY_STRING']);
 //debug("type: $type<br/>date: $date<br/>year: $year</br>month: $month</br>size: $size<br/>image: $image<br/>last_image: $last_image");
-
-// Handle files not yet processed by cron
-// Old webcam:
-check_and_rename_files_hack("Lillevik Lofoten_01_");
-// 2025 webcam:
-check_and_rename_files_hack("Lillevik Lofoten_00_");
 
 // Determine which page type to display and render it
 // ------------------------------------------------------------
