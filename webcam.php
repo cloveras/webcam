@@ -400,31 +400,14 @@ function print_full_month($year, $month)
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
     $title = "Lillevik Lofoten webcam: " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
     
-    // Collect first few images to prefetch for better performance
-    $prefetch_images = array();
-    $directories = glob("$year/$month/*", GLOB_ONLYDIR);
-    if ($directories) {
-        sort($directories); // Ensure chronological order
-        $prefetch_count = 0;
-        foreach ($directories as $directory) {
-            if ($prefetch_count >= 5) break;
-            $image = get_latest_image_in_directory_by_date_hour($directory, $monthly_hour);
-            if ($image) {
-                $yyyymmddhhmmss = get_yyyymmddhhmmss($image);
-                list($img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds) = split_image_filename($yyyymmddhhmmss);
-                if ($size == "mini" || empty($size)) {
-                    if (file_exists("$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg")) {
-                        $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$yyyymmddhhmmss.jpg";
-                    } else {
-                        $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
-                    }
-                } else {
-                    $prefetch_images[] = "$img_year/$img_month/$img_day/$yyyymmddhhmmss.jpg";
-                }
-                $prefetch_count++;
-            }
-        }
-    }
+    // Collect images to prefetch for better performance
+    global $imageManager;
+    $prefetch_images = $imageManager->collectPrefetchImages('month', [
+        'year' => $year,
+        'month' => $month,
+        'monthly_hour' => $monthly_hour,
+        'size' => $size
+    ]);
     
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
 
@@ -911,15 +894,14 @@ function print_single_image($image_filename, $last_image)
     debug("PREV: $previous<br/>NEXT: $next<br/>UP: $up<br/>DOWN: $down<br/>");
 
     // Collect images to prefetch
-    $prefetch_images = array();
-    // Prefetch the current image
-    $prefetch_images[] = "$year/$month/$day/$image_filename";
-    // Prefetch next image if available
-    if ($next_image) {
-        $next_img_datepart = get_yyyymmddhhmmss($next_image);
-        list($next_year, $next_month, $next_day, $next_hour, $next_minute, $next_seconds) = split_image_filename($next_img_datepart);
-        $prefetch_images[] = "$next_year/$next_month/$next_day/$next_img_datepart.jpg";
-    }
+    global $imageManager;
+    $prefetch_images = $imageManager->collectPrefetchImages('single', [
+        'year' => $year,
+        'month' => $month,
+        'day' => $day,
+        'image_filename' => $image_filename,
+        'next_image' => $next_image
+    ]);
 
     // Print!
     $title = "Lillevik Lofoten webcam";
@@ -1163,34 +1145,15 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     // Down. The first image after dawn for this day.
     $down = "?type=one&image=" . find_first_image_after_time(date('Y', $timestamp), date('m', $timestamp), date('d', $timestamp), date('H', $dawn), 0, 0);
 
-    // Collect first few images to prefetch for better performance
-    $prefetch_images = array();
+    // Collect images to prefetch for better performance
+    global $imageManager;
     $directory = date('Y/m/d', $timestamp);
-    if (file_exists($directory)) {
-        $all_images = glob("$directory/*.jpg");
-        // Get last 10 images (reversed), then check first 5 that match dawn/dusk criteria
-        $recent_images = array_slice($all_images, -10);
-        rsort($recent_images); // Sort in reverse chronological order
-        $prefetch_count = 0;
-        foreach ($recent_images as $img) {
-            if ($prefetch_count >= 5) break; // Prefetch first 5 images
-            $img_yyyymmddhhmmss = get_yyyymmddhhmmss($img);
-            list($img_year, $img_month, $img_day, $img_hour, $img_minute, $img_seconds) = split_image_filename($img_yyyymmddhhmmss);
-            $img_timestamp = mktime((int) $img_hour, (int) $img_minute, (int) $img_seconds, (int) $img_month, (int) $img_day, (int) $img_year);
-            if ($img_timestamp >= $dawn && $img_timestamp <= $dusk) {
-                if ($size == "mini" || empty($size)) {
-                    if (file_exists("$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg")) {
-                        $prefetch_images[] = "$img_year/$img_month/$img_day/mini/$img_yyyymmddhhmmss.jpg";
-                    } else {
-                        $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
-                    }
-                } else {
-                    $prefetch_images[] = "$img_year/$img_month/$img_day/$img_yyyymmddhhmmss.jpg";
-                }
-                $prefetch_count++;
-            }
-        }
-    }
+    $prefetch_images = $imageManager->collectPrefetchImages('day', [
+        'directory' => $directory,
+        'dawn' => $dawn,
+        'dusk' => $dusk,
+        'size' => $size
+    ]);
 
     // Print header now that we have the details for it.
     $title = "Lillevik Lofoten webcam: " . date('Y-m-d', $timestamp);
