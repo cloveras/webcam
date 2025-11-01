@@ -721,9 +721,6 @@ class ImageCleaner:
         # Calculate files that are kept (within display interval)
         files_kept = self.stats['total_files'] - self.stats['files_to_delete']
         
-        if files_kept == 0:
-            return
-        
         # Estimate average file size from files to delete
         if self.stats['files_to_delete'] > 0 and self.stats['size_to_delete'] > 0:
             avg_file_size = self.stats['size_to_delete'] / self.stats['files_to_delete']
@@ -735,9 +732,11 @@ class ImageCleaner:
         print("-" * 70)
         
         total_additional = 0
+        has_recommendations = False
         
         # Recommendation 0: Process more years
         if self.min_age_years > 0:
+            has_recommendations = True
             skipped_years = sorted(self.available_years - self.processed_years)
             if skipped_years:
                 # Estimate savings from skipped years based on avg per year from processed years
@@ -756,55 +755,66 @@ class ImageCleaner:
                 print(f"• Currently processing all available years")
                 print()
         
-        # Recommendation 1: One per hour
-        if not self.one_per_hour and files_kept > 0:
-            # Webcams typically take 6 images per hour (every 10 minutes)
-            # Keeping one per hour would delete 5/6 of the kept images
-            images_per_hour = 6
-            estimated_one_per_hour_deletes = files_kept * (images_per_hour - 1) / images_per_hour
-            estimated_one_per_hour_savings = int(estimated_one_per_hour_deletes * avg_file_size)
-            total_additional += estimated_one_per_hour_savings
+        # Only show file-based recommendations if we have files to work with
+        if files_kept == 0:
+            if not has_recommendations:
+                print("No additional recommendations available.")
+                print("-" * 70)
+                return
+            # Skip to final command
+        else:
+            # Recommendation 1: One per hour
+            if not self.one_per_hour and files_kept > 0:
+                has_recommendations = True
+                # Webcams typically take 6 images per hour (every 10 minutes)
+                # Keeping one per hour would delete 5/6 of the kept images
+                images_per_hour = 6
+                estimated_one_per_hour_deletes = files_kept * (images_per_hour - 1) / images_per_hour
+                estimated_one_per_hour_savings = int(estimated_one_per_hour_deletes * avg_file_size)
+                total_additional += estimated_one_per_hour_savings
+                
+                print(f"• Use --one-per-hour to keep only 1 image per hour")
+                print(f"  Estimated additional files to delete: ~{int(estimated_one_per_hour_deletes):,}")
+                print(f"  Estimated additional space freed: ~{self._format_size(estimated_one_per_hour_savings)}")
+                print()
             
-            print(f"• Use --one-per-hour to keep only 1 image per hour")
-            print(f"  Estimated additional files to delete: ~{int(estimated_one_per_hour_deletes):,}")
-            print(f"  Estimated additional space freed: ~{self._format_size(estimated_one_per_hour_savings)}")
-            print()
-        
-        # Recommendation 2: Compression
-        if not self.compress_quality:
-            # Estimate how many files would remain after one-per-hour (if recommended)
-            if self.one_per_hour:
-                files_to_compress = files_kept
-            else:
-                # If user would also use one-per-hour
-                files_to_compress = files_kept / 6 if not self.one_per_hour else files_kept
-            
-            # Quality 70 typically saves 35% of file size
-            compression_savings = int(files_to_compress * avg_file_size * 0.35)
-            total_additional += compression_savings
-            
-            print(f"• Use --compress-quality 70 to compress remaining images")
-            print(f"  Estimated files to compress: ~{int(files_to_compress):,}")
-            print(f"  Estimated space saved via compression: ~{self._format_size(compression_savings)}")
-            print()
+            # Recommendation 2: Compression
+            if not self.compress_quality:
+                has_recommendations = True
+                # Estimate how many files would remain after one-per-hour (if recommended)
+                if self.one_per_hour:
+                    files_to_compress = files_kept
+                else:
+                    # If user would also use one-per-hour
+                    files_to_compress = files_kept / 6 if not self.one_per_hour else files_kept
+                
+                # Quality 70 typically saves 35% of file size
+                compression_savings = int(files_to_compress * avg_file_size * 0.35)
+                total_additional += compression_savings
+                
+                print(f"• Use --compress-quality 70 to compress remaining images")
+                print(f"  Estimated files to compress: ~{int(files_to_compress):,}")
+                print(f"  Estimated space saved via compression: ~{self._format_size(compression_savings)}")
+                print()
         
         # Show total potential
-        if total_additional > 0:
-            total_potential = self.stats['size_to_delete'] + total_additional
-            print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
-            print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
-            print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
-            if self.min_age_years > 0 and (self.available_years - self.processed_years):
-                print(f"  (Multiply by ~{1 + len(self.available_years - self.processed_years) / len(self.processed_years):.1f}x if you also include skipped years)")
-            print()
+        if has_recommendations:
+            if total_additional > 0:
+                total_potential = self.stats['size_to_delete'] + total_additional
+                print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
+                print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
+                print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
+                if self.min_age_years > 0 and (self.available_years - self.processed_years):
+                    print(f"  (Multiply by ~{1 + len(self.available_years - self.processed_years) / len(self.processed_years):.1f}x if you also include skipped years)")
+                print()
             
             # Build example command
             example_cmd = "python3 delete_old_images.py"
             if self.min_age_years > 0:
                 example_cmd += " --min-age-years 0"
-            if not self.one_per_hour:
+            if not self.one_per_hour and files_kept > 0:
                 example_cmd += " --one-per-hour"
-            if not self.compress_quality:
+            if not self.compress_quality and files_kept > 0:
                 example_cmd += " --compress-quality 70"
             
             print(f"Example command to maximize space savings:")
