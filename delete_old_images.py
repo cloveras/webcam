@@ -738,10 +738,23 @@ class ImageCleaner:
         
         # Recommendation 0: Process more years
         if self.min_age_years > 0:
-            print(f"• Use --min-age-years 0 to process ALL years (currently: {self.min_age_years})")
-            print(f"  This will include images from more recent years")
-            print(f"  Could significantly increase space savings")
-            print()
+            skipped_years = sorted(self.available_years - self.processed_years)
+            if skipped_years:
+                # Estimate savings from skipped years based on avg per year from processed years
+                if self.processed_years:
+                    num_processed_years = len(self.processed_years)
+                    num_skipped_years = len(skipped_years)
+                    # Estimate: similar amount per year
+                    estimated_additional_space = (self.stats['size_to_delete'] / num_processed_years) * num_skipped_years
+                    
+                    print(f"• Use --min-age-years 0 to process ALL years (currently: {self.min_age_years})")
+                    print(f"  Years skipped: {', '.join(map(str, skipped_years))}")
+                    print(f"  Estimated additional space from skipped years: ~{self._format_size(int(estimated_additional_space))}")
+                    print(f"  (Plus more from --one-per-hour and compression on those years)")
+                    print()
+            else:
+                print(f"• Currently processing all available years")
+                print()
         
         # Recommendation 1: One per hour
         if not self.one_per_hour and files_kept > 0:
@@ -780,9 +793,9 @@ class ImageCleaner:
             total_potential = self.stats['size_to_delete'] + total_additional
             print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
             print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
-            print(f"  With recommendations: ~{self._format_size(total_potential)}")
-            if self.min_age_years > 0:
-                print(f"  (Plus more if --min-age-years is reduced)")
+            print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
+            if self.min_age_years > 0 and (self.available_years - self.processed_years):
+                print(f"  (Multiply by ~{1 + len(self.available_years - self.processed_years) / len(self.processed_years):.1f}x if you also include skipped years)")
             print()
             
             # Build example command
