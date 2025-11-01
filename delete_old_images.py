@@ -276,6 +276,12 @@ class SunCalculator:
 class ImageCleaner:
     """Main class for finding and deleting old images outside display intervals"""
     
+    # Constants for space savings estimates
+    IMAGES_PER_HOUR = 6  # Typical webcam frequency (one image every 10 minutes)
+    COMPRESSION_QUALITY_70_SAVINGS = 0.35  # 35% file size savings at quality 70
+    COMPRESSION_QUALITY_80_SAVINGS = 0.25  # 25% file size savings at quality 80
+    COMPRESSION_QUALITY_LOW_SAVINGS = 0.45  # 45% file size savings below quality 70
+    
     def __init__(self, base_dir=".", dry_run=True, min_age_years=5, 
                  one_per_hour=False, compress_quality=None):
         self.base_dir = base_dir
@@ -296,6 +302,8 @@ class ImageCleaner:
             'size_before_compress': 0,
             'size_after_compress': 0
         }
+        self.available_years = set()
+        self.processed_years = set()
         self.start_time = None
         self.last_progress_time = 0
     
@@ -366,11 +374,20 @@ class ImageCleaner:
             year_pattern = os.path.join(self.base_dir, "????")
             year_dirs = glob.glob(year_pattern)
             
+            # Track all available years
+            for year_dir in year_dirs:
+                year = os.path.basename(year_dir)
+                if year.isdigit() and os.path.isdir(year_dir):
+                    self.available_years.add(int(year))
+            
             day_dirs = []
             for year_dir in sorted(year_dirs):
                 year = os.path.basename(year_dir)
                 if not year.isdigit() or not self.should_process_year(year):
                     continue
+                
+                # Track which years we're actually processing
+                self.processed_years.add(int(year))
                 
                 month_pattern = os.path.join(year_dir, "??")
                 month_dirs = glob.glob(month_pattern)
@@ -660,6 +677,17 @@ class ImageCleaner:
         print("SUMMARY")
         print("=" * 70)
         print(f"Mode: {'DRY RUN (no files deleted)' if self.dry_run else 'DELETE MODE'}")
+        
+        # Show year information if we have it
+        if self.available_years and self.processed_years:
+            skipped_years = sorted(self.available_years - self.processed_years)
+            if skipped_years:
+                print(f"Years available: {min(self.available_years)}-{max(self.available_years)}")
+                print(f"Years processed: {', '.join(map(str, sorted(self.processed_years)))}")
+                print(f"Years skipped: {', '.join(map(str, skipped_years))}")
+            else:
+                print(f"Years processed: {', '.join(map(str, sorted(self.processed_years)))}")
+        
         print(f"Total files examined: {self.stats['total_files']}")
         print(f"Files to delete: {self.stats['files_to_delete']}")
         print(f"Space to free: {self._format_size(self.stats['size_to_delete'])}")
@@ -670,11 +698,11 @@ class ImageCleaner:
                 # Conservative estimate based on quality setting
                 # Quality 80-90: ~20-30% savings, Quality 70-80: ~30-40% savings, below 70: ~40-50%
                 if self.compress_quality >= 80:
-                    reduction_factor = 0.25  # Conservative 25% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_80_SAVINGS
                 elif self.compress_quality >= 70:
-                    reduction_factor = 0.35  # 35% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_70_SAVINGS
                 else:
-                    reduction_factor = 0.45  # 45% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_LOW_SAVINGS
                 estimated_savings = int(self.stats['size_before_compress'] * reduction_factor)
                 print(f"Estimated space to save via compression: ~{self._format_size(estimated_savings)} (estimate)")
                 print(f"Total estimated space savings: ~{self._format_size(self.stats['size_to_delete'] + estimated_savings)}")
@@ -683,12 +711,124 @@ class ImageCleaner:
                 print(f"Space saved via compression: {self._format_size(compress_saved)}")
                 print(f"Total space saved: {self._format_size(self.stats['size_to_delete'] + compress_saved)}")
         
+        # Show recommendations for additional space savings
+        if self.dry_run and (not self.one_per_hour or not self.compress_quality):
+            self._print_recommendations()
+        
         if elapsed > 0:
             print(f"\nElapsed time: {int(elapsed)} seconds")
         
         if self.dry_run:
             print("\nRun with --delete flag to actually delete these files.")
         print("=" * 70)
+    
+    def _print_recommendations(self):
+        """Print recommendations for additional space savings"""
+        # Calculate files that are kept (within display interval)
+        files_kept = self.stats['total_files'] - self.stats['files_to_delete']
+        
+        # Estimate average file size from files to delete
+        if self.stats['files_to_delete'] > 0 and self.stats['size_to_delete'] > 0:
+            avg_file_size = self.stats['size_to_delete'] / self.stats['files_to_delete']
+        else:
+            avg_file_size = 30 * 1024  # Default estimate: 30KB
+        
+        print("\n" + "-" * 70)
+        print("RECOMMENDATIONS FOR ADDITIONAL SPACE SAVINGS")
+        print("-" * 70)
+        
+        total_additional = 0
+        has_recommendations = False
+        
+        # Recommendation 0: Process more years
+        if self.min_age_years > 0:
+            has_recommendations = True
+            skipped_years = sorted(self.available_years - self.processed_years)
+            if skipped_years:
+                # Estimate savings from skipped years based on avg per year from processed years
+                if self.processed_years:
+                    num_processed_years = len(self.processed_years)
+                    num_skipped_years = len(skipped_years)
+                    # Estimate: similar amount per year
+                    estimated_additional_space = (self.stats['size_to_delete'] / num_processed_years) * num_skipped_years
+                    
+                    print(f"• Use --min-age-years 0 to process ALL years (currently: {self.min_age_years})")
+                    print(f"  Years skipped: {', '.join(map(str, skipped_years))}")
+                    print(f"  Estimated additional space from skipped years: ~{self._format_size(int(estimated_additional_space))}")
+                    print(f"  (Plus more from --one-per-hour and compression on those years)")
+                    print()
+            else:
+                print(f"• Currently processing all available years")
+                print()
+        
+        # Only show file-based recommendations if we have files to work with
+        if files_kept == 0:
+            if not has_recommendations:
+                print("No additional recommendations available.")
+                print("-" * 70)
+                return
+            # Skip to final command
+        else:
+            # Recommendation 1: One per hour
+            if not self.one_per_hour and files_kept > 0:
+                has_recommendations = True
+                # Webcams typically take IMAGES_PER_HOUR images per hour (every 10 minutes)
+                # Keeping one per hour would delete (IMAGES_PER_HOUR-1)/IMAGES_PER_HOUR of the kept images
+                estimated_one_per_hour_deletes = files_kept * (self.IMAGES_PER_HOUR - 1) / self.IMAGES_PER_HOUR
+                estimated_one_per_hour_savings = int(estimated_one_per_hour_deletes * avg_file_size)
+                total_additional += estimated_one_per_hour_savings
+                
+                print(f"• Use --one-per-hour to keep only 1 image per hour")
+                print(f"  Estimated additional files to delete: ~{int(estimated_one_per_hour_deletes):,}")
+                print(f"  Estimated additional space freed: ~{self._format_size(estimated_one_per_hour_savings)}")
+                print()
+            
+            # Recommendation 2: Compression
+            if not self.compress_quality:
+                has_recommendations = True
+                # Estimate how many files would remain after one-per-hour (if recommended)
+                if self.one_per_hour:
+                    # User is already using one-per-hour, so files_kept is the right number
+                    files_to_compress = files_kept
+                else:
+                    # User is not using one-per-hour, so estimate files after one-per-hour
+                    files_to_compress = files_kept // self.IMAGES_PER_HOUR
+                
+                # Quality 70 typically saves COMPRESSION_QUALITY_70_SAVINGS of file size
+                compression_savings = int(files_to_compress * avg_file_size * self.COMPRESSION_QUALITY_70_SAVINGS)
+                total_additional += compression_savings
+                
+                print(f"• Use --compress-quality 70 to compress remaining images")
+                print(f"  Estimated files to compress: ~{int(files_to_compress):,}")
+                print(f"  Estimated space saved via compression: ~{self._format_size(compression_savings)}")
+                print()
+        
+        # Show total potential
+        if has_recommendations:
+            if total_additional > 0:
+                total_potential = self.stats['size_to_delete'] + total_additional
+                print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
+                print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
+                print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
+                skipped_years_set = self.available_years - self.processed_years
+                if self.min_age_years > 0 and len(skipped_years_set) > 0 and len(self.processed_years) > 0:
+                    multiplier = 1 + len(skipped_years_set) / len(self.processed_years)
+                    print(f"  (Multiply by ~{multiplier:.1f}x if you also include skipped years)")
+                print()
+            
+            # Build example command
+            example_cmd = "python3 delete_old_images.py"
+            if self.min_age_years > 0:
+                example_cmd += " --min-age-years 0"
+            if not self.one_per_hour and files_kept > 0:
+                example_cmd += " --one-per-hour"
+            if not self.compress_quality and files_kept > 0:
+                example_cmd += " --compress-quality 70"
+            
+            print(f"Example command to maximize space savings:")
+            print(f"  {example_cmd}")
+        
+        print("-" * 70)
 
 
 def main():
