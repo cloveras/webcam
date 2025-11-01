@@ -276,6 +276,12 @@ class SunCalculator:
 class ImageCleaner:
     """Main class for finding and deleting old images outside display intervals"""
     
+    # Constants for space savings estimates
+    IMAGES_PER_HOUR = 6  # Typical webcam frequency (one image every 10 minutes)
+    COMPRESSION_QUALITY_70_SAVINGS = 0.35  # 35% file size savings at quality 70
+    COMPRESSION_QUALITY_80_SAVINGS = 0.25  # 25% file size savings at quality 80
+    COMPRESSION_QUALITY_LOW_SAVINGS = 0.45  # 45% file size savings below quality 70
+    
     def __init__(self, base_dir=".", dry_run=True, min_age_years=5, 
                  one_per_hour=False, compress_quality=None):
         self.base_dir = base_dir
@@ -692,11 +698,11 @@ class ImageCleaner:
                 # Conservative estimate based on quality setting
                 # Quality 80-90: ~20-30% savings, Quality 70-80: ~30-40% savings, below 70: ~40-50%
                 if self.compress_quality >= 80:
-                    reduction_factor = 0.25  # Conservative 25% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_80_SAVINGS
                 elif self.compress_quality >= 70:
-                    reduction_factor = 0.35  # 35% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_70_SAVINGS
                 else:
-                    reduction_factor = 0.45  # 45% savings
+                    reduction_factor = self.COMPRESSION_QUALITY_LOW_SAVINGS
                 estimated_savings = int(self.stats['size_before_compress'] * reduction_factor)
                 print(f"Estimated space to save via compression: ~{self._format_size(estimated_savings)} (estimate)")
                 print(f"Total estimated space savings: ~{self._format_size(self.stats['size_to_delete'] + estimated_savings)}")
@@ -766,10 +772,9 @@ class ImageCleaner:
             # Recommendation 1: One per hour
             if not self.one_per_hour and files_kept > 0:
                 has_recommendations = True
-                # Webcams typically take 6 images per hour (every 10 minutes)
-                # Keeping one per hour would delete 5/6 of the kept images
-                images_per_hour = 6
-                estimated_one_per_hour_deletes = files_kept * (images_per_hour - 1) / images_per_hour
+                # Webcams typically take IMAGES_PER_HOUR images per hour (every 10 minutes)
+                # Keeping one per hour would delete (IMAGES_PER_HOUR-1)/IMAGES_PER_HOUR of the kept images
+                estimated_one_per_hour_deletes = files_kept * (self.IMAGES_PER_HOUR - 1) / self.IMAGES_PER_HOUR
                 estimated_one_per_hour_savings = int(estimated_one_per_hour_deletes * avg_file_size)
                 total_additional += estimated_one_per_hour_savings
                 
@@ -787,10 +792,10 @@ class ImageCleaner:
                     files_to_compress = files_kept
                 else:
                     # User is not using one-per-hour, so estimate files after one-per-hour
-                    files_to_compress = files_kept / 6
+                    files_to_compress = files_kept / self.IMAGES_PER_HOUR
                 
-                # Quality 70 typically saves 35% of file size
-                compression_savings = int(files_to_compress * avg_file_size * 0.35)
+                # Quality 70 typically saves COMPRESSION_QUALITY_70_SAVINGS of file size
+                compression_savings = int(files_to_compress * avg_file_size * self.COMPRESSION_QUALITY_70_SAVINGS)
                 total_additional += compression_savings
                 
                 print(f"• Use --compress-quality 70 to compress remaining images")
@@ -805,8 +810,9 @@ class ImageCleaner:
                 print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
                 print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
                 print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
-                if self.min_age_years > 0 and (self.available_years - self.processed_years):
-                    print(f"  (Multiply by ~{1 + len(self.available_years - self.processed_years) / len(self.processed_years):.1f}x if you also include skipped years)")
+                if self.min_age_years > 0 and (self.available_years - self.processed_years) and self.processed_years:
+                    multiplier = 1 + len(self.available_years - self.processed_years) / len(self.processed_years)
+                    print(f"  (Multiply by ~{multiplier:.1f}x if you also include skipped years)")
                 print()
             
             # Build example command
