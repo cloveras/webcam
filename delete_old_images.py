@@ -706,7 +706,7 @@ class ImageCleaner:
                 print(f"Total space saved: {self._format_size(self.stats['size_to_delete'] + compress_saved)}")
         
         # Show recommendations for additional space savings
-        if self.dry_run and not self.one_per_hour or not self.compress_quality:
+        if self.dry_run and (not self.one_per_hour or not self.compress_quality):
             self._print_recommendations()
         
         if elapsed > 0:
@@ -783,10 +783,11 @@ class ImageCleaner:
                 has_recommendations = True
                 # Estimate how many files would remain after one-per-hour (if recommended)
                 if self.one_per_hour:
+                    # User is already using one-per-hour, so files_kept is the right number
                     files_to_compress = files_kept
                 else:
-                    # If user would also use one-per-hour
-                    files_to_compress = files_kept / 6 if not self.one_per_hour else files_kept
+                    # User is not using one-per-hour, so estimate files after one-per-hour
+                    files_to_compress = files_kept / 6
                 
                 # Quality 70 typically saves 35% of file size
                 compression_savings = int(files_to_compress * avg_file_size * 0.35)
