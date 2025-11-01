@@ -792,7 +792,7 @@ class ImageCleaner:
                     files_to_compress = files_kept
                 else:
                     # User is not using one-per-hour, so estimate files after one-per-hour
-                    files_to_compress = files_kept / self.IMAGES_PER_HOUR
+                    files_to_compress = files_kept // self.IMAGES_PER_HOUR
                 
                 # Quality 70 typically saves COMPRESSION_QUALITY_70_SAVINGS of file size
                 compression_savings = int(files_to_compress * avg_file_size * self.COMPRESSION_QUALITY_70_SAVINGS)
@@ -810,8 +810,9 @@ class ImageCleaner:
                 print(f"ESTIMATED TOTAL SPACE SAVINGS WITH RECOMMENDATIONS:")
                 print(f"  Current plan: {self._format_size(self.stats['size_to_delete'])}")
                 print(f"  With --one-per-hour and --compress-quality 70: ~{self._format_size(total_potential)}")
-                if self.min_age_years > 0 and (self.available_years - self.processed_years) and self.processed_years:
-                    multiplier = 1 + len(self.available_years - self.processed_years) / len(self.processed_years)
+                skipped_years_set = self.available_years - self.processed_years
+                if self.min_age_years > 0 and len(skipped_years_set) > 0 and len(self.processed_years) > 0:
+                    multiplier = 1 + len(skipped_years_set) / len(self.processed_years)
                     print(f"  (Multiply by ~{multiplier:.1f}x if you also include skipped years)")
                 print()
             
