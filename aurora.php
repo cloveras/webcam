@@ -223,7 +223,7 @@ foreach ($month_images as $img) {
     $src       = file_exists($mini_path) ? $mini_path : "$y/$m/$d/$ts.jpg";
     $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi";
     $link      = "webcam.php?type=one&image=$ts";
-    $label     = "$d " . number_format($score, 2);
+    $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
     echo "  <div class=\"grid-item\">\n";
     echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" width=\"$mini_w\" height=\"$mini_h\"></a>\n";
