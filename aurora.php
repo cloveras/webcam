@@ -265,7 +265,7 @@ if ($prev_url && $prev_label) echo "<a href=\"$prev_url\">$prev_label</a> (&larr
 echo ".</p>\n\n";
 
 echo "<p style=\"color: rgb(200, 200, 200);\">Northern lights detection by "
-   . "<a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/aurora\">aurora_scan.py</a>. "
+   . "<a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">aurora_scan.py</a>. "
    . "Score overlay: day + aurora likelihood score.</p>\n\n";
 
 echo "</body>\n</html>\n";

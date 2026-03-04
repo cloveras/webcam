@@ -13,10 +13,27 @@ PHP gallery for webcam images stored as `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`. No buil
 - `ImageFileManager.php` — filesystem operations for finding/organizing images
 - `NavigationHelper.php` — navigation URL generation
 - `webcam.php` — main entry point and HTML rendering
+- `aurora.php` — northern lights gallery (reads `aurora.json`, same navigation style as webcam.php)
+- `aurora_scan.py` — scans image directories and scores each image for aurora likelihood
 
 ## Debug mode
 
 Set `$debug = 1` in `webcam.php`.
+
+## Northern lights (aurora)
+
+`aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). Run it to regenerate `aurora.json`, which `aurora.php` reads:
+
+```bash
+python3 aurora_scan.py /path/to/images --threshold 0.3 --night \
+  --json-output /path/to/webcam/aurora.json
+```
+
+- `--threshold` — minimum score to include (tune to taste; 0.3 is a reasonable starting point)
+- `--night` — only scan images between 18:00 and 08:00
+- `--limit N` — cap the stdout report at N results (does not affect JSON output)
+
+Dependencies: `opencv-python`, `numpy` (install in a venv).
 
 ## Image maintenance
 
