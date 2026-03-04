@@ -24,11 +24,14 @@ Set `$debug = 1` in `webcam.php`.
 
 `aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). `aurora.php` automatically loads all `aurora-YYYY.json` files it finds in the same directory.
 
-Run once per year to generate or refresh its JSON file:
+Run per month (fast) or per year (full rebuild). When the output file already exists, the scanned month(s) are replaced and the rest is kept:
 
 ```bash
-python3 aurora_scan.py /path/to/images/YYYY --night --threshold 0.15 \
-  --json-output aurora-YYYY.json
+# Update a single month (fast)
+python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output aurora-2026.json
+
+# Full year scan (slow, use for initial build)
+python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output aurora-2026.json
 ```
 
 - `--threshold` — minimum score to include (0.15 is a reasonable starting point)

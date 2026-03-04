@@ -135,10 +135,19 @@ if __name__ == "__main__":
 
     if args.json_output:
         import json
-        data = sorted(
+        new_data = sorted(
             [{"timestamp": path.stem, "score": round(score, 4)} for score, path in results],
             key=lambda x: x["timestamp"]
         )
-        Path(args.json_output).write_text(json.dumps(data, indent=2))
-        print(f"\nJSON written to {args.json_output} ({len(data)} entries)")
+        output_path = Path(args.json_output)
+        if output_path.exists() and new_data:
+            existing = json.loads(output_path.read_text())
+            scanned_months = {x["timestamp"][:6] for x in new_data}
+            kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
+            merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
+            output_path.write_text(json.dumps(merged, indent=2))
+            print(f"\nJSON merged into {args.json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
+        else:
+            output_path.write_text(json.dumps(new_data, indent=2))
+            print(f"\nJSON written to {args.json_output} ({len(new_data)} entries)")
 
