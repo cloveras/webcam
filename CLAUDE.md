@@ -9,7 +9,6 @@ This workspace contains several independent hobby projects, all related to the [
 | Directory | Language | Purpose |
 |-----------|----------|---------|
 | `aurora/` | Python | Detect aurora borealis in webcam images using OpenCV |
-| `enode-link-ios/` | Swift | Enode iOS SDK demo apps (UIKit + SwiftUI) |
 | `lovdata2/` | Python + YAML | Norwegian law REST API prototype + MCP server for Claude Desktop |
 | `webcam/` | PHP | Webcam image gallery generator (lilleviklofoten.no) |
 | `webcam-people/` | Python | People detection in webcam images using HOG+SVM |
@@ -28,12 +27,6 @@ python aurora_scan.py <folder> [--limit 50] [--threshold 0.1] [--night]
 ```
 
 **Dependencies:** `opencv-python`, `numpy`. Images must follow the `YYYYMMDDHHMMSS.jpg` naming convention. Mini-images (paths containing "mini") are skipped.
-
----
-
-## enode-link-ios
-
-Three Xcode demo apps demonstrating Enode's LinkKit iOS SDK: `Demo-UIKit`, `Demo-SwiftUI`, and `Demo-SwiftUI-PackageManager` (SPM integration). Requires Xcode 14+ and iOS 16+. Open `Demo.xcworkspace` or `Package.swift` depending on the demo. Refer to [developers.enode.com/docs/link-sdks](https://developers.enode.com/docs/link-sdks).
 
 ---
 
