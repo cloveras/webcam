@@ -182,7 +182,7 @@ echo "<a href=\".\">Webcam</a>\n";
 echo "at\n";
 echo "<a href=\"https://lilleviklofoten.no\">Lillevik Lofoten</a>,\n";
 echo "Vik, Gimsøy, Lofoten, Norway.\n";
-echo "See also: <a href=\"https://lilleviklofoten.no/webcams/\">many other webcams in Lofoten</a>.\n";
+echo "See also: <a href=\"https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/\">Northern lights at Lillevik Lofoten</a>.\n";
 echo "</p>\n\n";
 
 // ============================================================
