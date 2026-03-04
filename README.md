@@ -72,6 +72,23 @@ See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation of the r
 - No external dependencies
 - All original behavior preserved
 
+## Aurora borealis gallery
+
+`aurora_scan.py` scans a year's worth of webcam images and scores each one for aurora likelihood using OpenCV (aurora-green hue, local contrast, and connected-component structure). The results are saved as `aurora-YYYY.json` and displayed by `aurora.php` at `/webcam/aurora.php`.
+
+Run once per year (requires `opencv-python` and `numpy`):
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install opencv-python numpy
+
+python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output aurora-2026.json
+```
+
+`aurora.php` automatically loads every `aurora-YYYY.json` file present in the same directory, so adding a new year is as simple as dropping in the JSON file.
+
+Example: [Northern lights — February 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=02)
+
 ## Got lots of images you need to sort and upload?
 
 The Bash script

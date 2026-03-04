@@ -22,14 +22,16 @@ Set `$debug = 1` in `webcam.php`.
 
 ## Northern lights (aurora)
 
-`aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). Run it to regenerate `aurora.json`, which `aurora.php` reads:
+`aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). `aurora.php` automatically loads all `aurora-YYYY.json` files it finds in the same directory.
+
+Run once per year to generate or refresh its JSON file:
 
 ```bash
-python3 aurora_scan.py /path/to/images --threshold 0.3 --night \
-  --json-output /path/to/webcam/aurora.json
+python3 aurora_scan.py /path/to/images/YYYY --night --threshold 0.15 \
+  --json-output aurora-YYYY.json
 ```
 
-- `--threshold` — minimum score to include (tune to taste; 0.3 is a reasonable starting point)
+- `--threshold` — minimum score to include (0.15 is a reasonable starting point)
 - `--night` — only scan images between 18:00 and 08:00
 - `--limit N` — cap the stdout report at N results (does not affect JSON output)
 
