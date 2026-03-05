@@ -212,7 +212,7 @@ END2;
 at
 <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>,
 Vik, Gimsøy, Lofoten, Norway.
-See also: <a href="https://lilleviklofoten.no/webcams/">many other webcams in Lofoten</a>.
+See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>
 </p>
 END3;
 }
