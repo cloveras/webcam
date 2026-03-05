@@ -1105,13 +1105,36 @@ function print_weather_info()
     $temp       = $details['air_temperature'] ?? null;
     $wind_speed = $details['wind_speed'] ?? null;
     $wind_dir   = $details['wind_from_direction'] ?? null;
+    $humidity   = $details['relative_humidity'] ?? null;
     $symbol     = $entry['data']['next_1_hours']['summary']['symbol_code']
                ?? $entry['data']['next_6_hours']['summary']['symbol_code']
                ?? null;
 
     if ($temp === null) { echo "</p>\n\n"; return; }
 
-    $parts = [round($temp) . '°C'];
+    // Feels-like: JAG/TI 2001 wind chill (T < 10°C, wind > 1.33 m/s)
+    // or Rothfusz heat index (T > 26°C, RH > 40%) — same logic as Yr.
+    $feels_like = null;
+    if ($wind_speed !== null && $temp < 10 && $wind_speed > 1.33) {
+        $v_kmh = $wind_speed * 3.6;
+        $feels_like = 13.12 + 0.6215 * $temp
+                    - 11.37 * pow($v_kmh, 0.16)
+                    + 0.3965 * $temp * pow($v_kmh, 0.16);
+    } elseif ($humidity !== null && $temp > 26 && $humidity > 40) {
+        $tf = $temp * 9/5 + 32;
+        $rh = $humidity;
+        $hi = -42.379 + 2.04901523*$tf + 10.14333127*$rh
+            - 0.22475541*$tf*$rh - 0.00683783*$tf*$tf
+            - 0.05481717*$rh*$rh + 0.00122874*$tf*$tf*$rh
+            + 0.00085282*$tf*$rh*$rh - 0.00000199*$tf*$tf*$rh*$rh;
+        $feels_like = ($hi - 32) * 5/9;
+    }
+
+    $temp_str = round($temp) . '°C';
+    if ($feels_like !== null && round($feels_like) !== round($temp)) {
+        $temp_str .= ' (feels like ' . round($feels_like) . '°C)';
+    }
+    $parts = [$temp_str];
     if ($wind_speed !== null) {
         $wind_str = round($wind_speed) . ' m/s';
         if ($wind_dir !== null) {
@@ -1475,7 +1498,11 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1, true);
-    print_openmeteo_weather_info($timestamp);
+    if (date('Y-m-d', $timestamp) === date('Y-m-d')) {
+        print_weather_info();
+    } else {
+        print_openmeteo_weather_info($timestamp);
+    }
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 
