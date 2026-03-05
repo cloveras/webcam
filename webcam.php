@@ -1196,7 +1196,7 @@ function print_openmeteo_weather_info($timestamp)
 
     if (empty($parts)) { echo "</p>\n\n"; return; }
 
-    echo '<br>Weather at Gimsøy: ' . implode(', ', $parts) . '. '
+    echo '<br>Weather: ' . implode(', ', $parts) . '. '
        . 'Source: <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
 }
 
