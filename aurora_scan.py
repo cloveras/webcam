@@ -124,7 +124,7 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
     num_workers = workers if workers is not None else multiprocessing.cpu_count()
     try:
         with multiprocessing.Pool(processes=num_workers) as pool:
-            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=4):
+            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=1):
                 scanned += 1
                 tick += 1
                 if score >= threshold:
