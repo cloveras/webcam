@@ -35,7 +35,7 @@ python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-outp
 ```
 
 - `--threshold` — minimum score to include (0.15 is a reasonable starting point)
-- `--night` — only scan images between 18:00 and 08:00
+- `--night` — only scan images taken during darkness (before nautical dawn / after nautical dusk, accounts for midnight sun and polar night)
 - `--limit N` — cap the stdout report at N results (does not affect JSON output)
 
 Dependencies: `opencv-python`, `numpy`, `astral` (install in a venv).
