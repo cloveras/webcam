@@ -1106,11 +1106,14 @@ function print_weather_info()
 
     $now   = time();
     $entry = $timeseries[0];
+    $best_diff = PHP_INT_MAX;
     foreach ($timeseries as $ts) {
-        if (strtotime($ts['time']) <= $now) {
+        $diff = abs(strtotime($ts['time']) - $now);
+        if ($diff < $best_diff) {
+            $best_diff = $diff;
             $entry = $ts;
         } else {
-            break;
+            break; // timeseries is chronological; once distance grows, we're done
         }
     }
 
