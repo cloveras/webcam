@@ -192,7 +192,7 @@ echo '<p>';
 if ($prev_url && $prev_label) {
     echo "<a href=\"$prev_url\">&larr; $prev_label</a> &nbsp;|&nbsp; ";
 }
-echo '<strong>' . date('F Y', $title_ts) . '</strong>';
+echo date('F Y', $title_ts);
 if ($next_url && $next_label) {
     echo " &nbsp;|&nbsp; <a href=\"$next_url\">$next_label &rarr;</a>";
 }
