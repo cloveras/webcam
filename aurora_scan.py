@@ -116,7 +116,7 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
                 if score >= threshold:
                     results.append((score, path))
                 spin = spinner[scanned % 4]
-                    print(f"\r  {spin} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
+                print(f"\r  {spin} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
     except KeyboardInterrupt:
         print(f"\n\nInterrupted after {scanned}/{total} images.")
 
