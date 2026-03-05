@@ -54,28 +54,68 @@ For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
 
 ## Code structure
 
-* **`WebcamConfig.php`** - All configuration constants (location, periods, display settings)
-* **`SunCalculator.php`** - Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
-* **`ImageFileManager.php`** - File system operations for finding and organizing images
-* **`NavigationHelper.php`** - Navigation and URL generation utilities
-* **`webcam.php`** - Main entry point with page rendering functions
+* **`WebcamConfig.php`** — All configuration constants (location, periods, display settings)
+* **`SunCalculator.php`** — Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
+* **`ImageFileManager.php`** — File system operations for finding and organizing images
+* **`NavigationHelper.php`** — Navigation and URL generation utilities
+* **`webcam.php`** — Main entry point with page rendering functions
+* **`aurora.php`** — Northern lights gallery, reads `aurora-YYYY.json` files
+* **`aurora_scan.py`** — Scans images and scores each for aurora likelihood
+* **`sun_calculator.py`** — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py`
 
 See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation.
 
 ## Aurora borealis gallery
 
-`aurora_scan.py` scans a year's worth of webcam images and scores each one for aurora likelihood using OpenCV (aurora-green hue, local contrast, and connected-component structure). The results are saved as `aurora-YYYY.json` and displayed by `aurora.php` at `/webcam/aurora.php`.
+`aurora_scan.py` scans webcam images and scores each one for aurora likelihood using OpenCV (aurora-green hue, local contrast, and connected-component structure). Scores above `--threshold` are saved as `aurora-YYYY.json` and displayed by `aurora.php`.
 
-Run once per year (requires `opencv-python` and `numpy`):
+`aurora.php` automatically loads every `aurora-YYYY.json` file in the same directory, so adding a new year requires only dropping in the JSON file.
+
+### Setup
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
-pip install opencv-python numpy
+pip install opencv-python numpy astral
+```
 
+### Scanning
+
+**Update a single month** (fast — good for routine updates):
+
+```bash
+python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output data/aurora-2026.json
+```
+
+When `aurora-2026.json` already exists, only the months present in the scan are replaced; all other months are kept. This means you can re-scan January without touching February–December.
+
+**Full year scan** (slow — use for initial build or full rebuild):
+
+```bash
 python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
 ```
 
-`aurora.php` automatically loads every `aurora-YYYY.json` file present in the same directory, so adding a new year is as simple as dropping in the JSON file.
+**Incremental / daily scan** using `--append` (upserts individual timestamps instead of replacing the whole month):
+
+```bash
+python3 aurora_scan.py /path/to/images/2026/03/15 --night --threshold 0.15 --append --json-output data/aurora-2026.json
+```
+
+### Key options
+
+| Option | Description |
+|---|---|
+| `--threshold N` | Minimum score to include (0.15 is a reasonable starting point) |
+| `--night` | Only scan images taken during darkness (before nautical dawn / after nautical dusk, accounting for midnight sun and polar night) |
+| `--limit N` | Cap the stdout report at N results (does not affect JSON output) |
+| `--workers N` | Number of parallel workers (default: all CPU cores; try 1–2 for network drives) |
+| `--append` | Upsert individual timestamps instead of replacing scanned months |
+
+### Live forecast on aurora.php
+
+When viewing the **current month**, `aurora.php` also shows:
+
+* **Yr aurora forecast** — tonight and tomorrow night, with activity level and cloud cover. Fetched from the Yr API and cached for 30 minutes in `/tmp/yr_aurora_forecast.json`.
+* **NOAA/SWPC animated forecast** — the last 24 frames (2 hours at 5-minute intervals) cycling as an animation.
 
 Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=01)
 
@@ -93,55 +133,6 @@ The Bash script
 uses
 [`ncftp`](https://www.ncftp.com)
 and can be a good _starting point_ for mass-uploading thousands of files.
-
-## Need to delete old images to save disk space?
-
-The Python script
-[`delete_old_images.py`](https://github.com/cloveras/webcam/blob/main/delete_old_images.py)
-can help you delete old webcam images that fall outside the display interval (dawn to dusk).
-These images are not shown on the website and can be safely deleted to free up disk space.
-
-**Features:**
-- Calculates sunrise/sunset/dawn/dusk times for each day based on your location
-- Identifies images that fall outside the display interval
-- **NEW:** Keep only one photo per hour (closest to whole hour) to significantly reduce storage
-- **NEW:** Compress remaining images to save additional space (e.g., 80% quality)
-- Dry-run mode by default (lists files without deleting)
-- Can filter by specific year/month (e.g., `2018/03`)
-- Can filter by minimum age (e.g., only process images older than 5 years)
-- Handles both full-size and mini images
-
-**Usage examples:**
-```bash
-# Dry run: List files to delete for all years older than 5 years
-python3 delete_old_images.py
-
-# Actually delete files for all years older than 5 years
-python3 delete_old_images.py --delete
-
-# Process only images from March 2018
-python3 delete_old_images.py --year-filter 2018/03
-
-# Process images older than 3 years
-python3 delete_old_images.py --min-age-years 3
-
-# Delete images from January 2018
-python3 delete_old_images.py --delete --year-filter 2018/01
-
-# Keep only one photo per hour (closest to whole hour) for old images
-python3 delete_old_images.py --one-per-hour
-
-# Compress remaining images to quality 80% to save additional space
-python3 delete_old_images.py --compress-quality 80
-
-# Combine all space-saving features for maximum storage reduction
-python3 delete_old_images.py --delete --one-per-hour --compress-quality 80
-```
-
-**Note:** Image compression requires the Pillow library. Install it with:
-```bash
-pip3 install Pillow
-```
 
 ## Example screenshots
 
