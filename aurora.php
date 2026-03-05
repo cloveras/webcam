@@ -22,7 +22,7 @@ date_default_timezone_set(WebcamConfig::TIMEZONE);
 // ============================================================
 
 $all_images = [];
-foreach (glob(__DIR__ . '/aurora-*.json') as $json_file) {
+foreach (glob(__DIR__ . '/data/aurora-*.json') as $json_file) {
     $decoded = json_decode(file_get_contents($json_file), true);
     if (is_array($decoded)) {
         $all_images = array_merge($all_images, $decoded);

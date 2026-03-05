@@ -72,7 +72,7 @@ Run once per year (requires `opencv-python` and `numpy`):
 python3 -m venv venv && source venv/bin/activate
 pip install opencv-python numpy
 
-python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
 ```
 
 `aurora.php` automatically loads every `aurora-YYYY.json` file present in the same directory, so adding a new year is as simple as dropping in the JSON file.

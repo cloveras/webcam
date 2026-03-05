@@ -28,10 +28,10 @@ Run per month (fast) or per year (full rebuild). When the output file already ex
 
 ```bash
 # Update a single month (fast)
-python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output data/aurora-2026.json
 
 # Full year scan (slow, use for initial build)
-python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
 ```
 
 - `--threshold` — minimum score to include (0.15 is a reasonable starting point)
