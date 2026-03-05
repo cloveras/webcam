@@ -910,6 +910,9 @@ function print_single_image($image_filename, $last_image)
     }
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false);
+    if ($last_image) {
+        print_weather_info();
+    }
     print_full_day_link($timestamp);
 
     if ($previous_datepart || $next_datepart) {
@@ -971,8 +974,155 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
 }
 
 /**
+ * Fetch current weather from api.met.no, cached to a temp file.
+ * Returns the first timeseries entry at or before the current time, or null on failure.
+ */
+function get_weather_data()
+{
+    $cache_file = sys_get_temp_dir() . '/webcam_weather_cache.json';
+
+    if (file_exists($cache_file)) {
+        $cached = json_decode(file_get_contents($cache_file), true);
+        if ($cached && isset($cached['expires']) && time() < $cached['expires']) {
+            return $cached['data'];
+        }
+    }
+
+    $lat = number_format(WebcamConfig::LATITUDE, 4, '.', '');
+    $lon = number_format(WebcamConfig::LONGITUDE, 4, '.', '');
+    $url = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={$lat}&lon={$lon}";
+
+    $context = stream_context_create(['http' => [
+        'header'  => "User-Agent: lilleviklofoten-webcam/1.0 https://github.com/cloveras/webcam\r\n",
+        'timeout' => 5,
+    ]]);
+
+    $response = @file_get_contents($url, false, $context);
+    if ($response === false) {
+        return null;
+    }
+
+    $expires = time() + 1800;
+    foreach ($http_response_header as $header) {
+        if (stripos($header, 'Expires:') === 0) {
+            $exp = strtotime(substr($header, 9));
+            if ($exp > time()) $expires = $exp;
+        }
+    }
+
+    $data = json_decode($response, true);
+    if (!$data) return null;
+
+    @file_put_contents($cache_file, json_encode(['expires' => $expires, 'data' => $data]));
+    return $data;
+}
+
+function weather_degrees_to_cardinal($deg)
+{
+    $dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    return $dirs[intval(round($deg / 45)) % 8];
+}
+
+function weather_symbol_to_text($code)
+{
+    $base = preg_replace('/_(day|night|polartwilight)$/', '', $code);
+    $map = [
+        'clearsky'                        => 'Clear sky',
+        'fair'                            => 'Fair',
+        'partlycloudy'                    => 'Partly cloudy',
+        'cloudy'                          => 'Cloudy',
+        'fog'                             => 'Fog',
+        'lightrain'                       => 'Light rain',
+        'rain'                            => 'Rain',
+        'heavyrain'                       => 'Heavy rain',
+        'lightrainshowers'                => 'Light rain showers',
+        'rainshowers'                     => 'Rain showers',
+        'heavyrainshowers'                => 'Heavy rain showers',
+        'lightsleet'                      => 'Light sleet',
+        'sleet'                           => 'Sleet',
+        'heavysleet'                      => 'Heavy sleet',
+        'lightsleetshowers'               => 'Light sleet showers',
+        'sleetshowers'                    => 'Sleet showers',
+        'heavysleetshowers'               => 'Heavy sleet showers',
+        'lightsnow'                       => 'Light snow',
+        'snow'                            => 'Snow',
+        'heavysnow'                       => 'Heavy snow',
+        'lightsnowshowers'                => 'Light snow showers',
+        'snowshowers'                     => 'Snow showers',
+        'heavysnowshowers'                => 'Heavy snow showers',
+        'thunder'                         => 'Thunder',
+        'lightrainandthunder'             => 'Light rain and thunder',
+        'rainandthunder'                  => 'Rain and thunder',
+        'heavyrainandthunder'             => 'Heavy rain and thunder',
+        'lightsleetandthunder'            => 'Light sleet and thunder',
+        'sleetandthunder'                 => 'Sleet and thunder',
+        'heavysleetandthunder'            => 'Heavy sleet and thunder',
+        'lightsnowandthunder'             => 'Light snow and thunder',
+        'snowandthunder'                  => 'Snow and thunder',
+        'heavysnowandthunder'             => 'Heavy snow and thunder',
+        'lightrainshowersandthunder'      => 'Light rain showers and thunder',
+        'rainshowersandthunder'           => 'Rain showers and thunder',
+        'heavyrainshowersandthunder'      => 'Heavy rain showers and thunder',
+        'lightsleetshowersandthunder'     => 'Light sleet showers and thunder',
+        'sleetshowersandthunder'          => 'Sleet showers and thunder',
+        'heavysleetshowersandthunder'     => 'Heavy sleet showers and thunder',
+        'lightsnowshowersandthunder'      => 'Light snow showers and thunder',
+        'snowshowersandthunder'           => 'Snow showers and thunder',
+        'heavysnowshowersandthunder'      => 'Heavy snow showers and thunder',
+    ];
+    return $map[$base] ?? null;
+}
+
+/**
+ * Print current weather from api.met.no (only shown on the latest image page).
+ */
+function print_weather_info()
+{
+    $data = get_weather_data();
+    if (!$data) return;
+
+    $timeseries = $data['properties']['timeseries'] ?? [];
+    if (empty($timeseries)) return;
+
+    $now   = time();
+    $entry = $timeseries[0];
+    foreach ($timeseries as $ts) {
+        if (strtotime($ts['time']) <= $now) {
+            $entry = $ts;
+        } else {
+            break;
+        }
+    }
+
+    $details    = $entry['data']['instant']['details'] ?? [];
+    $temp       = $details['air_temperature'] ?? null;
+    $wind_speed = $details['wind_speed'] ?? null;
+    $wind_dir   = $details['wind_from_direction'] ?? null;
+    $symbol     = $entry['data']['next_1_hours']['summary']['symbol_code']
+               ?? $entry['data']['next_6_hours']['summary']['symbol_code']
+               ?? null;
+
+    if ($temp === null) return;
+
+    $parts = [round($temp) . '°C'];
+    if ($wind_speed !== null) {
+        $wind_str = round($wind_speed) . ' m/s';
+        if ($wind_dir !== null) {
+            $wind_str .= ' ' . weather_degrees_to_cardinal($wind_dir);
+        }
+        $parts[] = $wind_str;
+    }
+    if ($symbol) {
+        $readable = weather_symbol_to_text($symbol);
+        if ($readable) $parts[] = $readable;
+    }
+
+    echo '<p>Weather: ' . implode(', ', $parts) . ".</p>\n\n";
+}
+
+/**
  * Find previous and next month, handling year boundaries
- * 
+ *
  * @deprecated Use NavigationHelper::findPreviousAndNextMonth() instead
  * @param string|int $year
  * @param string|int $month
