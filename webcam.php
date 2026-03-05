@@ -412,7 +412,8 @@ function print_full_month($year, $month)
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
-    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, "average");
+    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, "average", true);
+    print_openmeteo_monthly_weather_info($year, $month);
     print_yesterday_tomorrow_links($timestamp, true);
 
     // CSS overlay
@@ -1192,6 +1193,84 @@ function print_openmeteo_weather_info($timestamp)
     }
     if ($obs['precip'] !== null && $obs['precip'] > 0) {
         $parts[] = round($obs['precip'], 1) . ' mm';
+    }
+
+    if (empty($parts)) { echo "</p>\n\n"; return; }
+
+    echo '<br>Weather: ' . implode(', ', $parts) . '. '
+       . 'Source: <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
+}
+
+/**
+ * Fetch monthly weather summary from Open-Meteo (min/max temp, max wind).
+ * Fetches all daily values for the month and aggregates them.
+ * Cached permanently for past months, 1 hour for the current month.
+ */
+function get_openmeteo_monthly_weather($year, $month)
+{
+    $month_str  = sprintf('%04d-%02d', $year, $month);
+    $cache_file = sys_get_temp_dir() . '/openmeteo_weather_' . $month_str . '.json';
+    $is_current = ($month_str === date('Y-m'));
+
+    if (file_exists($cache_file)) {
+        $cached = json_decode(file_get_contents($cache_file), true);
+        if ($cached) {
+            if (!$is_current) return $cached;
+            if (isset($cached['_cached_at']) && time() - $cached['_cached_at'] < 3600) return $cached;
+        }
+    }
+
+    $start    = sprintf('%04d-%02d-01', $year, $month);
+    $last_day = date('t', mktime(0, 0, 0, $month, 1, $year));
+    $end      = sprintf('%04d-%02d-%02d', $year, $month, $last_day);
+    if ($end > date('Y-m-d')) $end = date('Y-m-d'); // cap at today
+    if ($end < $start) return null;                 // month hasn't started yet
+
+    $lat = number_format(WebcamConfig::LATITUDE,  4, '.', '');
+    $lon = number_format(WebcamConfig::LONGITUDE, 4, '.', '');
+    $url = 'https://archive-api.open-meteo.com/v1/archive?'
+         . 'latitude=' . $lat . '&longitude=' . $lon
+         . '&start_date=' . $start . '&end_date=' . $end
+         . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max'
+         . '&timezone=' . urlencode(WebcamConfig::TIMEZONE);
+
+    $context  = stream_context_create(['http' => ['timeout' => 5]]);
+    $response = @file_get_contents($url, false, $context);
+    if ($response === false) return null;
+
+    $data  = json_decode($response, true);
+    $daily = $data['daily'] ?? null;
+    if (!$daily || empty($daily['time'])) return null;
+
+    $temp_mins  = array_values(array_filter($daily['temperature_2m_min'], fn($v) => $v !== null));
+    $temp_maxes = array_values(array_filter($daily['temperature_2m_max'], fn($v) => $v !== null));
+    $wind_maxes = array_values(array_filter($daily['wind_speed_10m_max'], fn($v) => $v !== null));
+
+    $result = [
+        'temp_min' => !empty($temp_mins)  ? min($temp_mins)  : null,
+        'temp_max' => !empty($temp_maxes) ? max($temp_maxes) : null,
+        'wind_max' => !empty($wind_maxes) ? max($wind_maxes) : null, // km/h
+        '_cached_at' => time(),
+    ];
+
+    @file_put_contents($cache_file, json_encode($result));
+    return $result;
+}
+
+/**
+ * Print monthly weather summary. Closes the <p> left open by print_sunrise_sunset_info.
+ */
+function print_openmeteo_monthly_weather_info($year, $month)
+{
+    $obs = get_openmeteo_monthly_weather($year, $month);
+    if (!$obs) { echo "</p>\n\n"; return; }
+
+    $parts = [];
+    if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
+        $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+    }
+    if ($obs['wind_max'] !== null) {
+        $parts[] = 'max wind ' . round($obs['wind_max'] / 3.6) . ' m/s';
     }
 
     if (empty($parts)) { echo "</p>\n\n"; return; }
