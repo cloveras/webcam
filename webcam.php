@@ -1117,7 +1117,8 @@ function print_weather_info()
         if ($readable) $parts[] = $readable;
     }
 
-    echo '<p style="margin-top: 0">Weather: ' . implode(', ', $parts) . ".</p>\n\n";
+    $yr_url = 'https://www.yr.no/en/forecast/daily-table/1-279560/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
+    echo '<p style="margin-top: 0">Weather: ' . implode(', ', $parts) . '. Source: <a href="' . $yr_url . '">Yr</a>.</p>' . "\n\n";
 }
 
 /**
