@@ -909,7 +909,7 @@ function print_single_image($image_filename, $last_image)
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
-    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false);
+    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, $last_image);
     if ($last_image) {
         print_weather_info();
     }
@@ -952,7 +952,7 @@ function print_single_image($image_filename, $last_image)
  * @param bool $polar_night Whether it's polar night period
  * @param string|bool $include_interval Whether to include time interval ("day", "average", or false)
  */
-function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval)
+function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval, $leave_open = false)
 {
     debug("<br/>print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval)");
     global $monthly_day;
@@ -970,7 +970,11 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
         echo " (calculated for " . date('F', $dawn) . " $monthly_day)";
         //echo " with the newest images first";
     }
-    echo ".</p>\n\n";
+    if ($leave_open) {
+        echo ".";
+    } else {
+        echo ".</p>\n\n";
+    }
 }
 
 /**
@@ -1118,7 +1122,7 @@ function print_weather_info()
     }
 
     $yr_url = 'https://www.yr.no/en/forecast/daily-table/1-279560/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
-    echo '<p style="margin-top: 0">Weather: ' . implode(', ', $parts) . '. Source: <a href="' . $yr_url . '">Yr</a>.</p>' . "\n\n";
+    echo '<br>Weather: ' . implode(', ', $parts) . '. Source: <a href="' . $yr_url . '">Yr</a>.</p>' . "\n\n";
 }
 
 /**
