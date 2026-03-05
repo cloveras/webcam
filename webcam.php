@@ -1081,6 +1081,18 @@ function weather_symbol_to_text($code)
 }
 
 /**
+ * JAG/TI 2001 wind chill. Returns null if conditions are outside the valid range.
+ * $temp_c: air temperature in °C; $wind_kmh: wind speed in km/h.
+ */
+function wind_chill_c($temp_c, $wind_kmh)
+{
+    if ($temp_c >= 10 || $wind_kmh < 4.8) return null;
+    return 13.12 + 0.6215 * $temp_c
+         - 11.37 * pow($wind_kmh, 0.16)
+         + 0.3965 * $temp_c * pow($wind_kmh, 0.16);
+}
+
+/**
  * Print current weather from api.met.no (only shown on the latest image page).
  */
 function print_weather_info()
@@ -1115,12 +1127,10 @@ function print_weather_info()
     // Feels-like: JAG/TI 2001 wind chill (T < 10°C, wind > 1.33 m/s)
     // or Rothfusz heat index (T > 26°C, RH > 40%) — same logic as Yr.
     $feels_like = null;
-    if ($wind_speed !== null && $temp < 10 && $wind_speed > 1.33) {
-        $v_kmh = $wind_speed * 3.6;
-        $feels_like = 13.12 + 0.6215 * $temp
-                    - 11.37 * pow($v_kmh, 0.16)
-                    + 0.3965 * $temp * pow($v_kmh, 0.16);
-    } elseif ($humidity !== null && $temp > 26 && $humidity > 40) {
+    if ($wind_speed !== null) {
+        $feels_like = wind_chill_c($temp, $wind_speed * 3.6);
+    }
+    if ($feels_like === null && $humidity !== null && $temp > 26 && $humidity > 40) {
         $tf = $temp * 9/5 + 32;
         $rh = $humidity;
         $hi = -42.379 + 2.04901523*$tf + 10.14333127*$rh
@@ -1209,7 +1219,19 @@ function print_openmeteo_weather_info($timestamp)
 
     $parts = [];
     if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
-        $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+        $temp_str = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+        if ($obs['wind_max'] !== null) {
+            $fl_min = wind_chill_c($obs['temp_min'], $obs['wind_max']);
+            $fl_max = wind_chill_c($obs['temp_max'], $obs['wind_max']);
+            if ($fl_min !== null || $fl_max !== null) {
+                $fl_min_r = $fl_min !== null ? round($fl_min) : round($obs['temp_min']);
+                $fl_max_r = $fl_max !== null ? round($fl_max) : round($obs['temp_max']);
+                if ($fl_min_r !== round($obs['temp_min']) || $fl_max_r !== round($obs['temp_max'])) {
+                    $temp_str .= ' (feels like ' . $fl_min_r . '°C to ' . $fl_max_r . '°C)';
+                }
+            }
+        }
+        $parts[] = $temp_str;
     }
     if ($obs['wind_max'] !== null) {
         $parts[] = 'max wind ' . round($obs['wind_max'] / 3.6) . ' m/s';
