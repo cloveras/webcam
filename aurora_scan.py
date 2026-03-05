@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 import multiprocessing
 from pathlib import Path
-from datetime import datetime, time
+from datetime import datetime
+
+from sun_calculator import is_aurora_time
 
 BASE_URL = "https://lilleviklofoten.no/webcam/?type=one&image="
 
@@ -11,13 +13,6 @@ def parse_dt_from_stem(stem: str):
         return datetime.strptime(stem, "%Y%m%d%H%M%S")
     except:
         return None
-
-def is_night(dt: datetime, start_hour=18, end_hour=8):
-    # Night spans across midnight: e.g. 18:00 -> 08:00
-    t = dt.time()
-    if start_hour < end_hour:
-        return time(start_hour, 0) <= t < time(end_hour, 0)
-    return (t >= time(start_hour, 0)) or (t < time(end_hour, 0))
 
 def aurora_score(image_path):
     # IMREAD_REDUCED_COLOR_4 decodes the JPEG at 1/4 resolution in the decoder
@@ -99,7 +94,7 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
         stem = path.stem
         dt = parse_dt_from_stem(stem)
         if night_only and dt:
-            if not is_night(dt, start_hour=18, end_hour=8):
+            if not is_aurora_time(dt):
                 skipped_time += 1
                 continue
         paths.append(path)
@@ -147,7 +142,7 @@ if __name__ == "__main__":
     parser.add_argument("folder", help="Folder to scan")
     parser.add_argument("--limit", type=int, default=50, help="Number of results to show")
     parser.add_argument("--threshold", type=float, default=0.0, help="Minimum score to include")
-    parser.add_argument("--night", action="store_true", help="Only scan 18:00–08:00")
+    parser.add_argument("--night", action="store_true", help="Only scan images taken during astronomical darkness (before nautical dawn / after nautical dusk, accounting for midnight sun and polar night)")
     parser.add_argument("--workers", type=int, default=None, help="Number of parallel workers (default: all CPU cores; try 1-2 for network drives)")
     parser.add_argument("--json-output", metavar="FILE", help="Write results as JSON to FILE (sorted by timestamp, all results above threshold)")
 

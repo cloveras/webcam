@@ -38,7 +38,9 @@ python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-outp
 - `--night` — only scan images between 18:00 and 08:00
 - `--limit N` — cap the stdout report at N results (does not affect JSON output)
 
-Dependencies: `opencv-python`, `numpy` (install in a venv).
+Dependencies: `opencv-python`, `numpy`, `astral` (install in a venv).
+
+`sun_calculator.py` is a shared Python module that mirrors `SunCalculator.php` — same location constants, same midnight sun / polar night periods, same nautical twilight (12°) for dawn/dusk. Both scripts stay consistent this way.
 
 ## Image maintenance
 
