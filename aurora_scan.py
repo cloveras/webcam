@@ -157,6 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--night", action="store_true", help="Only scan images taken during astronomical darkness (before nautical dawn / after nautical dusk, accounting for midnight sun and polar night)")
     parser.add_argument("--workers", type=int, default=None, help="Number of parallel workers (default: all CPU cores; try 1-2 for network drives)")
     parser.add_argument("--json-output", metavar="FILE", help="Write results as JSON to FILE (sorted by timestamp, all results above threshold)")
+    parser.add_argument("--append", action="store_true", help="Upsert entries by timestamp instead of replacing the whole scanned month (use for incremental/daily scans)")
 
     args = parser.parse_args()
 
@@ -177,11 +178,19 @@ if __name__ == "__main__":
         output_path = Path(args.json_output)
         if output_path.exists() and new_data:
             existing = json.loads(output_path.read_text())
-            scanned_months = {x["timestamp"][:6] for x in new_data}
-            kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
-            merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
-            output_path.write_text(json.dumps(merged, indent=2))
-            print(f"\nJSON merged into {args.json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
+            if args.append:
+                by_ts = {x["timestamp"]: x for x in existing}
+                for item in new_data:
+                    by_ts[item["timestamp"]] = item
+                merged = sorted(by_ts.values(), key=lambda x: x["timestamp"])
+                output_path.write_text(json.dumps(merged, indent=2))
+                print(f"\nJSON updated in {args.json_output} ({len(merged)} total entries, {len(new_data)} new/updated)")
+            else:
+                scanned_months = {x["timestamp"][:6] for x in new_data}
+                kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
+                merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
+                output_path.write_text(json.dumps(merged, indent=2))
+                print(f"\nJSON merged into {args.json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
         else:
             output_path.write_text(json.dumps(new_data, indent=2))
             print(f"\nJSON written to {args.json_output} ({len(new_data)} entries)")
