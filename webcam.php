@@ -1192,7 +1192,10 @@ function print_frost_weather_info($timestamp)
 {
     $date_str = date('Y-m-d', $timestamp);
     $obs = get_frost_daily_weather($date_str);
-    if (!$obs) return;
+    if (!$obs) {
+        echo "</p>\n\n";
+        return;
+    }
 
     $parts = [];
 
@@ -1206,9 +1209,12 @@ function print_frost_weather_info($timestamp)
         $parts[] = round($obs['precip'], 1) . ' mm';
     }
 
-    if (empty($parts)) return;
+    if (empty($parts)) {
+        echo "</p>\n\n";
+        return;
+    }
 
-    echo '<p>Weather at Svolvær: ' . implode(', ', $parts) . '. '
+    echo '<br>Weather at Svolvær: ' . implode(', ', $parts) . '. '
        . 'Source: <a href="https://frost.met.no/">Frost/MET Norway</a>.</p>' . "\n\n";
 }
 
@@ -1407,7 +1413,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     }
 
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
-    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1);
+    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1, true);
     print_frost_weather_info($timestamp);
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
