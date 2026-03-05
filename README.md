@@ -52,25 +52,15 @@ If you like this you can
 
 For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
 
-## Code Structure (October 2025 Refactoring)
-
-The code has been refactored for better maintainability while preserving 100% backward compatibility:
+## Code structure
 
 * **`WebcamConfig.php`** - All configuration constants (location, periods, display settings)
 * **`SunCalculator.php`** - Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
 * **`ImageFileManager.php`** - File system operations for finding and organizing images
 * **`NavigationHelper.php`** - Navigation and URL generation utilities
-* **`webcam.php`** - Main entry point with page rendering functions (now with PHPDoc comments)
+* **`webcam.php`** - Main entry point with page rendering functions
 
-See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation of the refactored code structure.
-
-**Key improvements:**
-- Clear separation of concerns
-- Centralized configuration
-- Well-documented classes and functions
-- Easier customization and maintenance
-- No external dependencies
-- All original behavior preserved
+See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation.
 
 ## Aurora borealis gallery
 

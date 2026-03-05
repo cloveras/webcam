@@ -1,9 +1,5 @@
 # Webcam.php Code Structure
 
-## Overview
-
-The webcam.php application has been refactored to improve maintainability while preserving 100% backward compatibility. The code is now organized into logical classes with clear responsibilities.
-
 ## File Structure
 
 ### Core Files
@@ -37,7 +33,7 @@ Central configuration class containing all site-specific settings:
 Handles all astronomical calculations:
 
 - `isMidnightSun($timestamp)` - Check if date is in midnight sun period
-- `isPolarNight($timestamp)` - Check if date is in polar night period  
+- `isPolarNight($timestamp)` - Check if date is in polar night period
 - `findSunTimes($timestamp)` - Calculate sunrise, sunset, dawn, and dusk times
 
 **Key features:**
@@ -76,40 +72,9 @@ The application supports several view types via the `?type=` parameter:
 - **`year`** - Multiple images per month for a year (`&year=YYYY`)
 - **`all`** - Overview of all years (heavy operation)
 
-## Key Design Decisions
+## No External Dependencies
 
-### Backward Compatibility
-
-All original function names are preserved as wrapper functions that delegate to the new classes. This ensures:
-
-- No breaking changes to existing code
-- Gradual migration path
-- Easy rollback if needed
-
-### No External Dependencies
-
-The refactoring uses only PHP standard library functions to maintain simplicity and avoid dependency management.
-
-### Timing Logic Preservation
-
-The most critical aspect - sun time calculations for polar night and midnight sun - has been carefully preserved and tested. The logic matches the original behavior exactly.
-
-### Configuration Centralization
-
-All site-specific values are now in `WebcamConfig.php`, making it easy to:
-- See what needs to be changed for a new installation
-- Update tracking IDs
-- Modify timing parameters
-- Adjust image dimensions
-
-## Testing
-
-A test script `/tmp/test_sun_times.php` verifies sun time calculations throughout the year, including:
-
-- Polar night transitions (December 6 - January 6)
-- Midnight sun transitions (May 24 - July 18)
-- Normal days with calculated sunrise/sunset
-- Edge cases at period boundaries
+The application uses only PHP standard library functions.
 
 ## Customization Guide
 
@@ -133,17 +98,6 @@ To use this code for your own webcam:
    - Test navigation during polar night and midnight sun periods
    - Check image display for different view types
 
-## Future Improvements
-
-Potential enhancements that maintain backward compatibility:
-
-- Extract HTML generation into template system
-- Add caching layer for expensive operations
-- Implement proper error handling and logging
-- Add unit tests for each class
-- Create admin interface for configuration
-- Add support for multiple cameras
-
 ## License
 
-Apache-2.0 (same as original project)
+Apache-2.0
