@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import sys
+import multiprocessing
 from pathlib import Path
 from datetime import datetime, time
 
@@ -20,7 +20,11 @@ def is_night(dt: datetime, start_hour=18, end_hour=8):
     return (t >= time(start_hour, 0)) or (t < time(end_hour, 0))
 
 def aurora_score(image_path):
-    img = cv2.imread(str(image_path))
+    # IMREAD_REDUCED_COLOR_4 decodes the JPEG at 1/4 resolution in the decoder
+    # itself — much faster than reading full-size and resizing in Python.
+    img = cv2.imread(str(image_path), cv2.IMREAD_REDUCED_COLOR_4)
+    if img is None:
+        img = cv2.imread(str(image_path))  # fallback for non-JPEG or older OpenCV
     if img is None:
         return 0.0
 
@@ -73,6 +77,10 @@ def aurora_score(image_path):
 
     return float(score)
 
+def _score_worker(path):
+    """Top-level function required for multiprocessing pickling."""
+    return (aurora_score(path), path)
+
 def human_time_from_filename(stem):
     dt = parse_dt_from_stem(stem)
     if not dt:
@@ -80,29 +88,36 @@ def human_time_from_filename(stem):
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
-    results = []
-    scanned = 0
+    # Collect paths first so we know the total count upfront.
+    paths = []
     skipped_time = 0
-
     for path in Path(folder).rglob("*.jpg"):
         if "mini" in str(path):
             continue
-
         stem = path.stem
         dt = parse_dt_from_stem(stem)
-
         if night_only and dt:
             if not is_night(dt, start_hour=18, end_hour=8):
                 skipped_time += 1
                 continue
+        paths.append(path)
 
-        scanned += 1
-        score = aurora_score(path)
-        if score >= threshold:
-            results.append((score, path))
+    total = len(paths)
+    print(f"Found {total} images to scan ({skipped_time} skipped by time filter)")
 
-        if scanned % 25 == 0:
-            print(f"\r  {scanned} scanned, {len(results)} above threshold, latest: {human_time_from_filename(stem)}", end="", flush=True)
+    results = []
+    scanned = 0
+    spinner = ["-", "\\", "|", "/"]
+
+    cpu_count = multiprocessing.cpu_count()
+    with multiprocessing.Pool(processes=cpu_count) as pool:
+        for score, path in pool.imap_unordered(_score_worker, paths, chunksize=10):
+            scanned += 1
+            if score >= threshold:
+                results.append((score, path))
+            if scanned % 25 == 0 or scanned == total:
+                spin = spinner[(scanned // 25) % 4]
+                print(f"\r  {spin} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
 
     print()  # newline after progress line
     results.sort(reverse=True)
@@ -115,7 +130,7 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
         print(f"{score:.4f}  {readable}")
         print(f"        {url}")
 
-    print(f"\nScanned {scanned} images ({skipped_time} skipped by time filter), kept {len(results)} above threshold {threshold}")
+    print(f"\nScanned {scanned} images, kept {len(results)} above threshold {threshold}")
     return results
 
 if __name__ == "__main__":
@@ -154,4 +169,3 @@ if __name__ == "__main__":
         else:
             output_path.write_text(json.dumps(new_data, indent=2))
             print(f"\nJSON written to {args.json_output} ({len(new_data)} entries)")
-
