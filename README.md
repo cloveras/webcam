@@ -77,7 +77,9 @@ python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-outp
 
 `aurora.php` automatically loads every `aurora-YYYY.json` file present in the same directory, so adding a new year is as simple as dropping in the JSON file.
 
-Example: [Northern lights — February 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=02)
+Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=01)
+
+![Webcam example screenshot: Aurora borealis gallery](images/webcam-ecample-aurora.png)
 
 ## Got lots of images you need to sort and upload?
 
