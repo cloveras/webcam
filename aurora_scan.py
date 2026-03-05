@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import multiprocessing
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -74,7 +75,18 @@ def aurora_score(image_path):
 
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
-    return (aurora_score(path), path)
+    # Suppress libjpeg "Premature end of JPEG file" warnings that come from
+    # IMREAD_REDUCED_COLOR_4 decoding partial DCT data. The images are fine.
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    old_stderr = os.dup(2)
+    os.dup2(devnull, 2)
+    try:
+        score = aurora_score(path)
+    finally:
+        os.dup2(old_stderr, 2)
+        os.close(old_stderr)
+        os.close(devnull)
+    return (score, path)
 
 def human_time_from_filename(stem):
     dt = parse_dt_from_stem(stem)
