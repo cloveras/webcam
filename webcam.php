@@ -1144,7 +1144,7 @@ function print_weather_info()
 
     $temp_str = round($temp) . '°C';
     if ($feels_like !== null && round($feels_like) !== round($temp)) {
-        $temp_str .= ' (feels like ' . round($feels_like) . '°C)';
+        $temp_str .= ' (feels like ' . (int)round($feels_like) . '°C)';
     }
     $parts = [$temp_str];
     if ($wind_speed !== null) {
@@ -1229,9 +1229,9 @@ function print_openmeteo_weather_info($timestamp)
             $fl_min = wind_chill_c($obs['temp_min'], $obs['wind_max']);
             $fl_max = wind_chill_c($obs['temp_max'], $obs['wind_max']);
             if ($fl_min !== null || $fl_max !== null) {
-                $fl_min_r = $fl_min !== null ? round($fl_min) : round($obs['temp_min']);
-                $fl_max_r = $fl_max !== null ? round($fl_max) : round($obs['temp_max']);
-                if ($fl_min_r !== round($obs['temp_min']) || $fl_max_r !== round($obs['temp_max'])) {
+                $fl_min_r = (int)round($fl_min !== null ? $fl_min : $obs['temp_min']);
+                $fl_max_r = (int)round($fl_max !== null ? $fl_max : $obs['temp_max']);
+                if ($fl_min_r !== (int)round($obs['temp_min']) || $fl_max_r !== (int)round($obs['temp_max'])) {
                     $temp_str .= ' (feels like ' . $fl_min_r . '°C to ' . $fl_max_r . '°C)';
                 }
             }
