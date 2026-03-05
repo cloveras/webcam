@@ -145,6 +145,7 @@ if ($prev_url || $next_url) {
     if ($next_url) echo "    function rightArrowPressed() { window.location.href=\"$next_url\"; }\n";
     echo "    document.onkeydown = function(evt) {\n";
     echo "      evt = evt || window.event;\n";
+    echo "      if (window.getSelection().toString()) return;\n";
     echo "      switch (evt.keyCode) {\n";
     if ($prev_url) echo "        case 37: leftArrowPressed();  break;\n";
     if ($next_url) echo "        case 39: rightArrowPressed(); break;\n";

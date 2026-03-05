@@ -167,6 +167,7 @@ END2;
 
         echo "    document.onkeydown = function(evt) {\n";
         echo "      evt = evt || window.event;\n";
+        echo "      if (window.getSelection().toString()) return;\n";
         echo "      switch (evt.keyCode) {\n";
         if ($previous)
             echo "        case 37: leftArrowPressed(); break;\n";
