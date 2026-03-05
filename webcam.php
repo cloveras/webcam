@@ -911,7 +911,7 @@ function print_single_image($image_filename, $last_image)
     }
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, true);
-    if ($last_image) {
+    if ($last_image || date('Y-m-d', $timestamp) === date('Y-m-d')) {
         print_weather_info();
     } else {
         print_openmeteo_weather_info($timestamp);
