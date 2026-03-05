@@ -1126,6 +1126,93 @@ function print_weather_info()
 }
 
 /**
+ * Fetch daily weather observations from MET Norway Frost API for a given date.
+ * Cached permanently for past dates, 1 hour for today.
+ * Returns an array with keys: temp_min, temp_max, wind, precip — or null on failure.
+ */
+function get_frost_daily_weather($date_str)
+{
+    $cache_file = sys_get_temp_dir() . '/frost_weather_' . $date_str . '.json';
+    $is_today   = ($date_str === date('Y-m-d'));
+
+    if (file_exists($cache_file)) {
+        $cached = json_decode(file_get_contents($cache_file), true);
+        if ($cached) {
+            if (!$is_today) return $cached; // past dates: cache forever
+            if (isset($cached['_cached_at']) && time() - $cached['_cached_at'] < 3600) return $cached;
+        }
+    }
+
+    $sources  = WebcamConfig::FROST_STATION_TEMP_WIND . ',' . WebcamConfig::FROST_STATION_PRECIP;
+    $elements = 'min(air_temperature P1D),max(air_temperature P1D),mean(wind_speed P1D),sum(precipitation_amount P1D)';
+    $url = 'https://frost.met.no/observations/v0.jsonld?'
+         . http_build_query([
+               'sources'       => $sources,
+               'referencetime' => $date_str . '/' . $date_str,
+               'elements'      => $elements,
+           ], '', '&', PHP_QUERY_RFC3986);
+
+    $context = stream_context_create(['http' => [
+        'header'  => 'Authorization: Basic ' . base64_encode(WebcamConfig::FROST_CLIENT_ID . ':') . "\r\n",
+        'timeout' => 5,
+    ]]);
+
+    $response = @file_get_contents($url, false, $context);
+    if ($response === false) return null;
+
+    $data = json_decode($response, true);
+    if (empty($data['data'])) return null;
+
+    // Multiple time series may exist per element; take the first occurrence of each.
+    $obs = [];
+    foreach ($data['data'] as $item) {
+        foreach ($item['observations'] as $o) {
+            if (!array_key_exists($o['elementId'], $obs)) {
+                $obs[$o['elementId']] = $o['value'];
+            }
+        }
+    }
+
+    $result = [
+        'temp_min' => $obs['min(air_temperature P1D)'] ?? null,
+        'temp_max' => $obs['max(air_temperature P1D)'] ?? null,
+        'wind'     => $obs['mean(wind_speed P1D)']     ?? null,
+        'precip'   => $obs['sum(precipitation_amount P1D)'] ?? null,
+        '_cached_at' => time(),
+    ];
+
+    @file_put_contents($cache_file, json_encode($result));
+    return $result;
+}
+
+/**
+ * Print daily weather from Frost API for the given timestamp's date.
+ */
+function print_frost_weather_info($timestamp)
+{
+    $date_str = date('Y-m-d', $timestamp);
+    $obs = get_frost_daily_weather($date_str);
+    if (!$obs) return;
+
+    $parts = [];
+
+    if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
+        $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+    }
+    if ($obs['wind'] !== null) {
+        $parts[] = 'wind ' . round($obs['wind']) . ' m/s';
+    }
+    if ($obs['precip'] !== null && $obs['precip'] > 0) {
+        $parts[] = round($obs['precip'], 1) . ' mm';
+    }
+
+    if (empty($parts)) return;
+
+    echo '<p>Weather at Svolvær: ' . implode(', ', $parts) . '. '
+       . 'Source: <a href="https://frost.met.no/">Frost/MET Norway</a>.</p>' . "\n\n";
+}
+
+/**
  * Find previous and next month, handling year boundaries
  *
  * @deprecated Use NavigationHelper::findPreviousAndNextMonth() instead
@@ -1321,6 +1408,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1);
+    print_frost_weather_info($timestamp);
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 

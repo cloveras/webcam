@@ -59,4 +59,9 @@ class WebcamConfig {
     // Google Analytics and Microsoft Clarity tracking IDs
     public const GOOGLE_ANALYTICS_ID = 'G-P8Z20DT0NR';
     public const MICROSOFT_CLARITY_ID = 'brp4ocus57';
+
+    // MET Norway Frost API (https://frost.met.no) — historical weather observations
+    public const FROST_CLIENT_ID            = 'e5fc1f3c-7d9c-40e0-a47c-6186ea18e16e';
+    public const FROST_STATION_TEMP_WIND    = 'SN85450'; // Svolvær airport — temperature + wind
+    public const FROST_STATION_PRECIP       = 'SN84070'; // Svolvær — precipitation
 }
