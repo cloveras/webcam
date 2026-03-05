@@ -913,7 +913,7 @@ function print_single_image($image_filename, $last_image)
     if ($last_image) {
         print_weather_info();
     } else {
-        print_frost_weather_info($timestamp);
+        print_openmeteo_weather_info($timestamp);
     }
     print_full_day_link($timestamp);
 
@@ -1128,58 +1128,45 @@ function print_weather_info()
 }
 
 /**
- * Fetch daily weather observations from MET Norway Frost API for a given date.
+ * Fetch daily weather from Open-Meteo archive API for the webcam's coordinates.
+ * ERA5 reanalysis data interpolated to the exact location — works for any date.
  * Cached permanently for past dates, 1 hour for today.
- * Returns an array with keys: temp_min, temp_max, wind, precip — or null on failure.
+ * Returns array with keys: temp_min, temp_max, wind_max (m/s), precip — or null on failure.
  */
-function get_frost_daily_weather($date_str)
+function get_openmeteo_daily_weather($date_str)
 {
-    $cache_file = sys_get_temp_dir() . '/frost_weather_' . $date_str . '.json';
+    $cache_file = sys_get_temp_dir() . '/openmeteo_weather_' . $date_str . '.json';
     $is_today   = ($date_str === date('Y-m-d'));
 
     if (file_exists($cache_file)) {
         $cached = json_decode(file_get_contents($cache_file), true);
         if ($cached) {
-            if (!$is_today) return $cached; // past dates: cache forever
+            if (!$is_today) return $cached;
             if (isset($cached['_cached_at']) && time() - $cached['_cached_at'] < 3600) return $cached;
         }
     }
 
-    $sources  = WebcamConfig::FROST_STATION_TEMP_WIND . ',' . WebcamConfig::FROST_STATION_PRECIP;
-    $elements = 'min(air_temperature P1D),max(air_temperature P1D),mean(wind_speed P1D),sum(precipitation_amount P1D)';
-    $url = 'https://frost.met.no/observations/v0.jsonld?'
-         . http_build_query([
-               'sources'       => $sources,
-               'referencetime' => $date_str . '/' . $date_str,
-               'elements'      => $elements,
-           ], '', '&', PHP_QUERY_RFC3986);
+    $lat = number_format(WebcamConfig::LATITUDE,  4, '.', '');
+    $lon = number_format(WebcamConfig::LONGITUDE, 4, '.', '');
+    $url = 'https://archive-api.open-meteo.com/v1/archive?'
+         . 'latitude='   . $lat . '&longitude=' . $lon
+         . '&start_date=' . $date_str . '&end_date=' . $date_str
+         . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum'
+         . '&timezone=' . urlencode(WebcamConfig::TIMEZONE);
 
-    $context = stream_context_create(['http' => [
-        'header'  => 'Authorization: Basic ' . base64_encode(WebcamConfig::FROST_CLIENT_ID . ':') . "\r\n",
-        'timeout' => 5,
-    ]]);
-
+    $context  = stream_context_create(['http' => ['timeout' => 5]]);
     $response = @file_get_contents($url, false, $context);
     if ($response === false) return null;
 
-    $data = json_decode($response, true);
-    if (empty($data['data'])) return null;
-
-    // Multiple time series may exist per element; take the first occurrence of each.
-    $obs = [];
-    foreach ($data['data'] as $item) {
-        foreach ($item['observations'] as $o) {
-            if (!array_key_exists($o['elementId'], $obs)) {
-                $obs[$o['elementId']] = $o['value'];
-            }
-        }
-    }
+    $data  = json_decode($response, true);
+    $daily = $data['daily'] ?? null;
+    if (!$daily || empty($daily['time'])) return null;
 
     $result = [
-        'temp_min' => $obs['min(air_temperature P1D)'] ?? null,
-        'temp_max' => $obs['max(air_temperature P1D)'] ?? null,
-        'wind'     => $obs['mean(wind_speed P1D)']     ?? null,
-        'precip'   => $obs['sum(precipitation_amount P1D)'] ?? null,
+        'temp_min' => $daily['temperature_2m_min'][0]  ?? null,
+        'temp_max' => $daily['temperature_2m_max'][0]  ?? null,
+        'wind_max' => $daily['wind_speed_10m_max'][0]  ?? null, // km/h — converted on display
+        'precip'   => $daily['precipitation_sum'][0]   ?? null,
         '_cached_at' => time(),
     ];
 
@@ -1188,36 +1175,29 @@ function get_frost_daily_weather($date_str)
 }
 
 /**
- * Print daily weather from Frost API for the given timestamp's date.
+ * Print daily weather from Open-Meteo for the given timestamp's date.
+ * Closes the <p> tag left open by print_sunrise_sunset_info($leave_open=true).
  */
-function print_frost_weather_info($timestamp)
+function print_openmeteo_weather_info($timestamp)
 {
-    $date_str = date('Y-m-d', $timestamp);
-    $obs = get_frost_daily_weather($date_str);
-    if (!$obs) {
-        echo "</p>\n\n";
-        return;
-    }
+    $obs = get_openmeteo_daily_weather(date('Y-m-d', $timestamp));
+    if (!$obs) { echo "</p>\n\n"; return; }
 
     $parts = [];
-
     if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
         $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
     }
-    if ($obs['wind'] !== null) {
-        $parts[] = 'wind ' . round($obs['wind']) . ' m/s';
+    if ($obs['wind_max'] !== null) {
+        $parts[] = 'max wind ' . round($obs['wind_max'] / 3.6) . ' m/s';
     }
     if ($obs['precip'] !== null && $obs['precip'] > 0) {
         $parts[] = round($obs['precip'], 1) . ' mm';
     }
 
-    if (empty($parts)) {
-        echo "</p>\n\n";
-        return;
-    }
+    if (empty($parts)) { echo "</p>\n\n"; return; }
 
-    echo '<br>Weather at Svolvær: ' . implode(', ', $parts) . '. '
-       . 'Source: <a href="https://frost.met.no/">Frost/MET Norway</a>.</p>' . "\n\n";
+    echo '<br>Weather at Gimsøy: ' . implode(', ', $parts) . '. '
+       . 'Source: <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
 }
 
 /**
@@ -1416,7 +1396,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $number_of_images != 1, true);
-    print_frost_weather_info($timestamp);
+    print_openmeteo_weather_info($timestamp);
     print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 
