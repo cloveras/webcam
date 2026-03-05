@@ -1,130 +1,138 @@
 [
   {
     "timestamp": "20260102020150",
-    "score": 0.1609
+    "score": 0.1527
+  },
+  {
+    "timestamp": "20260111174102",
+    "score": 0.2033
   },
   {
     "timestamp": "20260111211108",
-    "score": 0.5068
+    "score": 0.5233
   },
   {
     "timestamp": "20260112212148",
-    "score": 0.3832
+    "score": 0.3969
   },
   {
     "timestamp": "20260112213149",
-    "score": 0.2333
+    "score": 0.2457
   },
   {
     "timestamp": "20260116213434",
-    "score": 0.5149
+    "score": 0.5482
   },
   {
     "timestamp": "20260118213106",
-    "score": 0.1695
+    "score": 0.202
   },
   {
     "timestamp": "20260119020112",
-    "score": 0.1575
+    "score": 0.1663
   },
   {
     "timestamp": "20260119202145",
-    "score": 0.6616
+    "score": 0.7318
   },
   {
     "timestamp": "20260120183222",
-    "score": 0.3791
+    "score": 0.383
+  },
+  {
+    "timestamp": "20260120184222",
+    "score": 0.17
   },
   {
     "timestamp": "20260121052240",
-    "score": 0.24
+    "score": 0.248
   },
   {
     "timestamp": "20260121070243",
-    "score": 0.1691
+    "score": 0.1668
   },
   {
     "timestamp": "20260121190305",
-    "score": 0.2364
+    "score": 0.263
   },
   {
     "timestamp": "20260121192305",
-    "score": 0.2376
+    "score": 0.2499
   },
   {
     "timestamp": "20260122001314",
-    "score": 0.2874
+    "score": 0.2911
   },
   {
     "timestamp": "20260123001355",
-    "score": 0.216
+    "score": 0.222
   },
   {
     "timestamp": "20260123184426",
-    "score": 0.4082
+    "score": 0.4376
   },
   {
     "timestamp": "20260126000113",
-    "score": 0.2218
+    "score": 0.2275
   },
   {
     "timestamp": "20260127214232",
-    "score": 0.177
+    "score": 0.1775
   },
   {
     "timestamp": "20260127215232",
-    "score": 0.247
+    "score": 0.2586
   },
   {
     "timestamp": "20260128212315",
-    "score": 0.1945
+    "score": 0.2487
   },
   {
     "timestamp": "20260128215316",
-    "score": 0.399
+    "score": 0.4423
   },
   {
     "timestamp": "20260129002320",
-    "score": 0.2299
+    "score": 0.233
   },
   {
     "timestamp": "20260210224236",
-    "score": 0.3025
+    "score": 0.3039
   },
   {
     "timestamp": "20260213012403",
-    "score": 0.175
+    "score": 0.1897
   },
   {
     "timestamp": "20260220230438",
-    "score": 0.1855
+    "score": 0.1842
   },
   {
     "timestamp": "20260220231438",
-    "score": 0.3296
+    "score": 0.3295
   },
   {
     "timestamp": "20260220232438",
-    "score": 0.2147
+    "score": 0.2191
   },
   {
     "timestamp": "20260222222108",
-    "score": 0.3778
+    "score": 0.3824
   },
   {
     "timestamp": "20260223210147",
-    "score": 0.1777
+    "score": 0.1807
   },
   {
     "timestamp": "20260223234152",
-    "score": 0.1943
+    "score": 0.1977
   },
   {
     "timestamp": "20260224192224",
-    "score": 0.2147
+    "score": 0.2156
   },
   {
     "timestamp": "20260224193225",
-    "score": 0.2478
+    "score": 0.2586
   }
 ]
