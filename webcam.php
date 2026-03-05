@@ -1117,7 +1117,7 @@ function print_weather_info()
         if ($readable) $parts[] = $readable;
     }
 
-    echo '<p>Weather: ' . implode(', ', $parts) . ".</p>\n\n";
+    echo '<p style="margin-top: 0">Weather: ' . implode(', ', $parts) . ".</p>\n\n";
 }
 
 /**
