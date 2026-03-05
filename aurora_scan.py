@@ -87,8 +87,10 @@ def human_time_from_filename(stem):
         return stem
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
-def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
+def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None):
     # Collect paths first so we know the total count upfront.
+    # Print progress during collection — can be slow on network volumes.
+    print("Collecting file list...", end="", flush=True)
     paths = []
     skipped_time = 0
     for path in Path(folder).rglob("*.jpg"):
@@ -101,18 +103,20 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
                 skipped_time += 1
                 continue
         paths.append(path)
+        if len(paths) % 500 == 0:
+            print(f"\rCollecting file list... {len(paths)} found", end="", flush=True)
 
     total = len(paths)
-    print(f"Found {total} images to scan ({skipped_time} skipped by time filter)")
+    print(f"\rFound {total} images to scan ({skipped_time} skipped by time filter)    ")
 
     results = []
     scanned = 0
     spinner = ["-", "\\", "|", "/"]
 
-    cpu_count = multiprocessing.cpu_count()
+    num_workers = workers if workers is not None else multiprocessing.cpu_count()
     try:
-        with multiprocessing.Pool(processes=cpu_count) as pool:
-            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=10):
+        with multiprocessing.Pool(processes=num_workers) as pool:
+            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=4):
                 scanned += 1
                 if score >= threshold:
                     results.append((score, path))
@@ -144,6 +148,7 @@ if __name__ == "__main__":
     parser.add_argument("--limit", type=int, default=50, help="Number of results to show")
     parser.add_argument("--threshold", type=float, default=0.0, help="Minimum score to include")
     parser.add_argument("--night", action="store_true", help="Only scan 18:00–08:00")
+    parser.add_argument("--workers", type=int, default=None, help="Number of parallel workers (default: all CPU cores; try 1-2 for network drives)")
     parser.add_argument("--json-output", metavar="FILE", help="Write results as JSON to FILE (sorted by timestamp, all results above threshold)")
 
     args = parser.parse_args()
@@ -152,7 +157,8 @@ if __name__ == "__main__":
         args.folder,
         limit=args.limit,
         threshold=args.threshold,
-        night_only=args.night
+        night_only=args.night,
+        workers=args.workers,
     )
 
     if args.json_output:
