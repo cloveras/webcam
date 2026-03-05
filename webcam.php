@@ -909,9 +909,11 @@ function print_single_image($image_filename, $last_image)
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
-    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, $last_image);
+    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, true);
     if ($last_image) {
         print_weather_info();
+    } else {
+        print_frost_weather_info($timestamp);
     }
     print_full_day_link($timestamp);
 
@@ -1083,10 +1085,10 @@ function weather_symbol_to_text($code)
 function print_weather_info()
 {
     $data = get_weather_data();
-    if (!$data) return;
+    if (!$data) { echo "</p>\n\n"; return; }
 
     $timeseries = $data['properties']['timeseries'] ?? [];
-    if (empty($timeseries)) return;
+    if (empty($timeseries)) { echo "</p>\n\n"; return; }
 
     $now   = time();
     $entry = $timeseries[0];
@@ -1106,7 +1108,7 @@ function print_weather_info()
                ?? $entry['data']['next_6_hours']['summary']['symbol_code']
                ?? null;
 
-    if ($temp === null) return;
+    if ($temp === null) { echo "</p>\n\n"; return; }
 
     $parts = [round($temp) . '°C'];
     if ($wind_speed !== null) {
