@@ -61,7 +61,9 @@ For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
 * **`webcam.php`** — Main entry point with page rendering functions
 * **`aurora.php`** — Northern lights gallery, reads `aurora-YYYY.json` files
 * **`aurora_scan.py`** — Scans images and scores each for aurora likelihood
-* **`sun_calculator.py`** — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py`
+* **`people.php`** — People gallery, reads `people-YYYY.json` files
+* **`people_scan.py`** — Scans images for people using YOLOv8
+* **`sun_calculator.py`** — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py` and `people_scan.py`
 
 See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation.
 
@@ -120,6 +122,45 @@ When viewing the **current month**, `aurora.php` also shows:
 Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=01)
 
 ![Webcam example screenshot: Aurora borealis gallery](images/webcam-ecample-aurora.png)
+
+## People gallery
+
+`people_scan.py` scans webcam images for people using [YOLOv8](https://github.com/ultralytics/ultralytics) (nano model). Score = highest person-detection confidence in the frame (0–1). Results are saved as `people-YYYY.json` and displayed by `people.php`.
+
+### Setup
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install ultralytics astral
+```
+
+The YOLOv8 nano model (`yolov8n.pt`, ~6 MB) is downloaded automatically on first run.
+
+### Scanning
+
+**Update a single month:**
+
+```bash
+python3 people_scan.py /path/to/images/2026/02 --day --threshold 0.3 --json-output data/people-2026.json
+```
+
+**Full year scan:**
+
+```bash
+python3 people_scan.py /path/to/images/2026 --day --threshold 0.3 --json-output data/people-2026.json
+```
+
+When `people-2026.json` already exists, only the scanned months are replaced; all other months are kept.
+
+### Key options
+
+| Option | Description |
+|---|---|
+| `--threshold N` | Minimum confidence to include (0–1; 0.3 is a reasonable starting point) |
+| `--day` | Only scan images taken during daylight (dawn to dusk, handles midnight sun and polar night) |
+| `--limit N` | Cap the stdout report at N results (does not affect JSON output) |
+| `--workers N` | Number of parallel workers (default: all CPU cores; try 1–2 for network drives) |
+| `--append` | Upsert individual timestamps instead of replacing scanned months |
 
 ## Got lots of images you need to sort and upload?
 
