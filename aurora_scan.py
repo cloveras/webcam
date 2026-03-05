@@ -101,6 +101,10 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
         if score >= threshold:
             results.append((score, path))
 
+        if scanned % 25 == 0:
+            print(f"\r  {scanned} scanned, {len(results)} above threshold, latest: {human_time_from_filename(stem)}", end="", flush=True)
+
+    print()  # newline after progress line
     results.sort(reverse=True)
 
     print(f"\nTop {limit} likely aurora frames:\n")
