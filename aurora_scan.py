@@ -110,14 +110,17 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False):
     spinner = ["-", "\\", "|", "/"]
 
     cpu_count = multiprocessing.cpu_count()
-    with multiprocessing.Pool(processes=cpu_count) as pool:
-        for score, path in pool.imap_unordered(_score_worker, paths, chunksize=10):
-            scanned += 1
-            if score >= threshold:
-                results.append((score, path))
-            if scanned % 25 == 0 or scanned == total:
-                spin = spinner[(scanned // 25) % 4]
-                print(f"\r  {spin} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
+    try:
+        with multiprocessing.Pool(processes=cpu_count) as pool:
+            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=10):
+                scanned += 1
+                if score >= threshold:
+                    results.append((score, path))
+                if scanned % 25 == 0 or scanned == total:
+                    spin = spinner[(scanned // 25) % 4]
+                    print(f"\r  {spin} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
+    except KeyboardInterrupt:
+        print(f"\n\nInterrupted after {scanned}/{total} images.")
 
     print()  # newline after progress line
     results.sort(reverse=True)
