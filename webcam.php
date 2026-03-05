@@ -1116,6 +1116,7 @@ function print_weather_info()
     $details    = $entry['data']['instant']['details'] ?? [];
     $temp       = $details['air_temperature'] ?? null;
     $wind_speed = $details['wind_speed'] ?? null;
+    $wind_gust  = $details['wind_speed_of_gust'] ?? null;
     $wind_dir   = $details['wind_from_direction'] ?? null;
     $humidity   = $details['relative_humidity'] ?? null;
     $symbol     = $entry['data']['next_1_hours']['summary']['symbol_code']
@@ -1147,6 +1148,9 @@ function print_weather_info()
     $parts = [$temp_str];
     if ($wind_speed !== null) {
         $wind_str = round($wind_speed) . ' m/s';
+        if ($wind_gust !== null && round($wind_gust) > round($wind_speed)) {
+            $wind_str .= ' (gusts ' . round($wind_gust) . ' m/s)';
+        }
         if ($wind_dir !== null) {
             $wind_str .= ' ' . weather_degrees_to_cardinal($wind_dir);
         }
@@ -1403,6 +1407,12 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
         //------------------------------------------------------------
         echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>.\n";
         echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
+        $date = date('Ymd', $timestamp);
+        if ($size == "large") {
+            echo "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>.\n";
+        } else {
+            echo "<a href=\"?type=day&date=$date&size=large\">Large photos</a>.\n";
+        }
     }
     echo "<a href=\"?type=last\">Latest image</a>.\n";
     echo "<a href=\"aurora.php\">Aurora borealis</a>.\n";
@@ -1525,7 +1535,6 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     } else {
         print_openmeteo_weather_info($timestamp);
     }
-    print_mini_large_links($timestamp, $size);
     print_yesterday_tomorrow_links($timestamp, false);
 
     // Get all *jpg images in "today's" image directory.
