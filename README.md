@@ -127,37 +127,72 @@ Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/au
 
 `people_scan.py` scans webcam images for people using [YOLOv8](https://github.com/ultralytics/ultralytics) (nano model). Score = highest person-detection confidence in the frame (0–1). Results are saved as `people-YYYY.json` and displayed by `people.php`.
 
+Three complementary false-positive suppression layers keep the gallery clean:
+1. **Civil-twilight time filter** — skips images outside usable daylight
+2. **Static exclusion zones** — ignores detections in known-static regions (sky, boathouse, poles)
+3. **Background subtraction** — rejects detections that match the median background (glowing cabin, poles at night, etc.)
+
 ### Setup
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
-pip install ultralytics astral
+pip install ultralytics astral opencv-python numpy
 ```
 
 The YOLOv8 nano model (`yolov8n.pt`, ~6 MB) is downloaded automatically on first run.
 
 ### Scanning
 
-**Update a single month:**
+**Step 1 — build background model once** (samples 300 frames, computes per-pixel median; ~800 MB peak RAM):
 
 ```bash
-python3 people_scan.py /path/to/images/2026/02 --day --threshold 0.3 --json-output data/people-2026.json
+python3 people_scan.py /path/to/images/2026 --build-background data/background-2026.png
 ```
 
-**Full year scan:**
+If `--background` points to a non-existent file the model is built automatically before scanning.
+
+**Step 2 — scan** (re-run to update after new images arrive):
 
 ```bash
-python3 people_scan.py /path/to/images/2026 --day --threshold 0.3 --json-output data/people-2026.json
+python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \
+    --background data/background-2026.png \
+    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.52,0.70,0.61,0.81 \
+    --exclude-zone 0.40,0.88,0.46,0.99 \
+    --json-output data/people-2026.json
 ```
 
-When `people-2026.json` already exists, only the scanned months are replaced; all other months are kept.
+The exclusion zones above are calibrated for this camera (sky/mountains/water, boathouse, foreground poles). Adjust for your own scene using `--annotate` (see below).
+
+When `people-2026.json` already exists, all months present in the scanned folder are replaced; months outside the scanned folder are kept. This means scanning a single month folder only touches that month.
+
+### Diagnosing false positives
+
+`--annotate` processes a single image and saves an annotated version showing every YOLO detection box (green = kept, red = rejected by zone, orange = rejected by background), exclusion zone overlays, and the foreground mask. Use this to calibrate `--exclude-zone` coordinates.
+
+```bash
+python3 people_scan.py /dev/null \
+    --annotate /path/to/suspect-image.jpg annotated.jpg \
+    --background data/background-2026.png \
+    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.52,0.70,0.61,0.81 \
+    --exclude-zone 0.40,0.88,0.46,0.99
+```
 
 ### Key options
 
 | Option | Description |
 |---|---|
 | `--threshold N` | Minimum confidence to include (0–1; 0.3 is a reasonable starting point) |
-| `--day` | Only scan images taken during daylight (dawn to dusk, handles midnight sun and polar night) |
+| `--civil-day` | Only scan images within civil twilight (6° depression) — fewer low-light false positives than `--day` (nautical 12°) |
+| `--day` | Only scan images within nautical twilight (12° depression) |
+| `--background FILE` | Background model PNG for foreground-change filtering; auto-built if file doesn't exist |
+| `--build-background FILE` | Build background model from a sample of images and exit |
+| `--exclude-zone x1,y1,x2,y2` | Ignore detections centred in this zone (fractions 0–1, repeatable) |
+| `--annotate IMAGE OUTPUT` | Diagnostic: annotate a single image with detection boxes and zone overlays, then exit |
+| `--fg-overlap N` | Min fraction of detection box that must be in foreground to accept (default 0.15) |
+| `--bg-diff N` | Pixel intensity diff to consider a region changed from background (default 25) |
+| `--bg-samples N` | Frames to sample when building background (default 300) |
 | `--limit N` | Cap the stdout report at N results (does not affect JSON output) |
 | `--workers N` | Number of parallel workers (default: all CPU cores; try 1–2 for network drives) |
 | `--append` | Upsert individual timestamps instead of replacing scanned months |

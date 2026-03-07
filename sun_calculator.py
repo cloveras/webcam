@@ -51,15 +51,16 @@ def is_polar_night(d: date) -> bool:
     return (m == s[0] and day >= s[1]) or (m == e[0] and day <= e[1])
 
 
-def find_sun_times(d: date) -> tuple:
+def find_sun_times(d: date, depression: float = 12) -> tuple:
     """
     Return (dawn, dusk, midnight_sun, polar_night) as timezone-aware datetimes.
 
     Mirrors SunCalculator::findSunTimes() in SunCalculator.php:
     - Midnight sun  → dawn = 00:00:01, dusk = 23:59:59  (always light)
     - Polar night   → dawn/dusk faked around the fake sunrise/sunset hours
-    - Normal day    → nautical twilight (12° depression), same as PHP's
-                      nautical_twilight_begin / nautical_twilight_end
+    - Normal day    → twilight at given depression angle (default 12° = nautical,
+                      matching PHP's nautical_twilight_begin / nautical_twilight_end)
+                      Use 6° for civil twilight (brighter, fewer low-light images).
     """
     ms = is_midnight_sun(d)
     pn = is_polar_night(d)
@@ -76,10 +77,9 @@ def find_sun_times(d: date) -> tuple:
         dusk = local(POLAR_NIGHT_FAKE_SUNSET_HOUR  + adj)
         return dawn, dusk, False, True
 
-    # Normal day — nautical twilight (12°), matching PHP's nautical_twilight_begin/end
     try:
-        dawn = astral_dawn(_location.observer, date=d, tzinfo=_tz, depression=12)
-        dusk = astral_dusk(_location.observer, date=d, tzinfo=_tz, depression=12)
+        dawn = astral_dawn(_location.observer, date=d, tzinfo=_tz, depression=depression)
+        dusk = astral_dusk(_location.observer, date=d, tzinfo=_tz, depression=depression)
     except Exception:
         # Fallback if astral can't compute (shouldn't happen for this location)
         dawn = local(0, 0, 0)

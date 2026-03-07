@@ -42,6 +42,50 @@ Dependencies: `opencv-python`, `numpy`, `astral` (install in a venv).
 
 `sun_calculator.py` is a shared Python module that mirrors `SunCalculator.php` — same location constants, same midnight sun / polar night periods, same nautical twilight (12°) for dawn/dusk. Both scripts stay consistent this way.
 
+## People gallery
+
+`people_scan.py` scans webcam images for people using YOLOv8. Three complementary false-positive suppression layers: civil-twilight time filter, static exclusion zones, and background subtraction.
+
+**First run — build background model once** (samples 300 frames, computes per-pixel median):
+
+```bash
+python3 people_scan.py /path/to/images/2026 --build-background data/background-2026.png
+```
+
+**Scan** (re-run whenever new months need updating):
+
+```bash
+python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \
+    --background data/background-2026.png \
+    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.52,0.70,0.61,0.81 \
+    --exclude-zone 0.40,0.88,0.46,0.99 \
+    --json-output data/people-2026.json
+```
+
+Exclusion zones (fractions of image width/height): sky/mountains/water, boathouse, foreground poles.
+
+**Diagnose a false positive** — annotates a single image showing all YOLO boxes, zone overlays, and foreground mask:
+
+```bash
+python3 people_scan.py /dev/null \
+    --annotate /path/to/image.jpg annotated.jpg \
+    --background data/background-2026.png \
+    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.52,0.70,0.61,0.81 \
+    --exclude-zone 0.40,0.88,0.46,0.99
+```
+
+- `--civil-day` — civil twilight (6° depression), tighter than `--day` (nautical 12°), fewer low-light false positives
+- `--background FILE` — background model PNG; auto-built from scan folder if file doesn't exist
+- `--exclude-zone x1,y1,x2,y2` — ignore detections centred in this zone (repeatable)
+- `--fg-overlap N` — min fraction of detection box in foreground (default 0.15)
+- Images are 3840×2160 (4K 16:9) for 2026+; 2025 images are 2560×1920 (4:3)
+
+Dependencies: `ultralytics`, `astral`, `opencv-python`, `numpy` (install in a venv).
+
+`people.php` reads all `people-YYYY.json` files in the same directory.
+
 ## Image maintenance
 
 ```bash
