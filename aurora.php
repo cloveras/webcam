@@ -371,11 +371,11 @@ if ($size === 'large') {
     $nav_links[] = "<a href=\"{$base_url}&size=large\">" . t('nav_large_photos') . "</a>";
 }
 $nav_links[] = lang_selector_html();
-echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
-
 if ($using_default && $current_ym !== date('Ym')) {
     echo "<p>" . t('aurora_showing_latest') . "</p>\n\n";
 }
+
+echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
 // ============================================================
 // Image grid
