@@ -271,7 +271,7 @@ function debug($txt)
  * @param string|false $up URL for up navigation
  * @param string|false $down URL for down navigation
  */
-function footer($images_printed, $previous, $next, $up, $down)
+function footer($images_printed, $previous, $next, $up, $down, $nav_prefix = '')
 {
 
     $touch = true;
@@ -298,7 +298,8 @@ TOUCH;
     }
 
     // Navigation links
-    echo "\n\n<p>";
+    echo "\n\n<p>$nav_prefix";
+    if ($nav_prefix) echo ' | ';
     if ($touch) {
         echo t('nav_swipe_or_use') . ' ';
     } else {
@@ -974,9 +975,13 @@ function print_single_image($image_filename, $last_image)
     echo "</p>\n\n";
 
     list($width, $height) = getimagesize("$year/$month/$day/$image_filename");
-    echo "<p>\n<a href=\"$year/$month/$day/$image_filename\">" . t('full_size') . " ($width x $height)</a>\n</p>\n\n";
+    $full_size_link = "<a href=\"$year/$month/$day/$image_filename\">" . t('full_size') . " ($width x $height)</a>";
 
-    footer($images_printed, $previous, $next, $up, $down);
+    if (CAM_IS_PRIMARY) {
+        echo "<p>" . t('seo_description') . "</p>\n\n";
+    }
+
+    footer($images_printed, $previous, $next, $up, $down, $full_size_link);
 }
 
 /**
