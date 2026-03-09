@@ -5,6 +5,8 @@ No build step — deploy the PHP files directly to a web server.
 
 Live example: [lilleviklofoten.no/webcam](https://lilleviklofoten.no/webcam/)
 
+[![Single image view](images/webcam-example-single-image.png)](https://lilleviklofoten.no/webcam/?type=one&image=20260223131133)
+
 ---
 
 ## Contents
