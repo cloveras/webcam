@@ -1,6 +1,13 @@
 # Webcam Performance Optimizations
 # Apache configuration for improved caching and performance
 
+# Redirect /webcam/XX/ and /webcam/XX to ?lang=XX for supported languages
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /webcam/
+    RewriteRule ^(en|de|it|fr|nb|nl|es|ja|zh|ko|sv|da|pl|fi|pt)/?$ /webcam/?lang=$1 [R=301,L]
+</IfModule>
+
 # Enable compression
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript

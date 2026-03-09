@@ -170,6 +170,11 @@ END1;
         echo "  <link rel=\"prefetch\" as=\"image\" href=\"$img_path\">\n";
     }
 
+    // hreflang alternate links (primary camera only)
+    if (CAM_IS_PRIMARY) {
+        echo lang_hreflang_links(WebcamConfig::WEBCAM_URL);
+    }
+
     print <<<END2
   <title>$title</title>
 END2;

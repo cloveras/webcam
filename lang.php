@@ -55,6 +55,28 @@ function lang_html_attr(): string {
     return $map[$LANG] ?? 'en-US';
 }
 
+/**
+ * Generate <link rel="alternate" hreflang="..."> tags for all supported languages.
+ * $base_url: the base URL for this page (no query string), e.g. "https://lilleviklofoten.no/webcam/"
+ * English (default) gets no lang param; all others get ?lang=XX.
+ */
+function lang_hreflang_links(string $base_url): string {
+    $langs = [
+        'en' => 'en', 'de' => 'de', 'it' => 'it', 'fr' => 'fr',
+        'nb' => 'nb', 'nl' => 'nl', 'es' => 'es', 'ja' => 'ja',
+        'zh' => 'zh-CN', 'ko' => 'ko', 'sv' => 'sv', 'da' => 'da',
+        'pl' => 'pl', 'fi' => 'fi', 'pt' => 'pt',
+    ];
+    $sep = strpos($base_url, '?') !== false ? '&' : '?';
+    $out = '';
+    foreach ($langs as $code => $hreflang) {
+        $url = ($code === 'en') ? $base_url : $base_url . $sep . 'lang=' . $code;
+        $out .= "  <link rel=\"alternate\" hreflang=\"$hreflang\" href=\"$url\">\n";
+    }
+    $out .= "  <link rel=\"alternate\" hreflang=\"x-default\" href=\"{$base_url}\">\n";
+    return $out;
+}
+
 function t(string $key): string {
     global $LANG, $TRANSLATIONS;
     return $TRANSLATIONS[$LANG][$key] ?? $TRANSLATIONS['en'][$key] ?? $key;

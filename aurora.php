@@ -304,6 +304,7 @@ if ($next_url) {
     echo "  <link rel=\"prefetch\" title=\"Next\" href=\"{$script_url}{$next_url}\">\n";
 }
 
+echo lang_hreflang_links('https://lilleviklofoten.no/webcam/aurora.php');
 echo "  <title>$title</title>\n";
 
 // Arrow-key navigation
