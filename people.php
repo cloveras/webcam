@@ -132,7 +132,7 @@ echo '  <meta charset="utf-8">' . "\n";
 echo '  <meta name="description" content="' . htmlspecialchars(WebcamConfig::SITE_DESCRIPTION) . '">' . "\n";
 echo '  <meta name="keywords" content="lofoten,webcam,people,Lillevik">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
-echo '  <meta name="robot" content="noindex">' . "\n";
+echo '  <meta name="robots" content="noindex, nofollow">' . "\n";
 echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
 echo '  <link rel="stylesheet" type="text/css" href="' . PEOPLE_CSS_PATH . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";

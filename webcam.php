@@ -121,7 +121,7 @@ JSONLD;
 
   <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
   <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
-  <meta name="robot" content="index">
+  <meta name="robots" content="index, follow">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
 
   <meta property="og:title" content="$_cam_label">

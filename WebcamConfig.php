@@ -49,6 +49,7 @@ class WebcamConfig {
     public const SITE_URL = 'https://lilleviklofoten.no';
     public const WEBCAM_URL = 'https://lilleviklofoten.no/webcam/';
     public const SITE_DESCRIPTION = 'Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.';
+    public const AURORA_DESCRIPTION = 'Northern lights gallery from the webcam at Lillevik, Gimsøy, Lofoten, Norway — automatically detected aurora images going back several years, plus live forecast.';
     
     // Filename prefix for files that need renaming (cron hasn't processed yet)
     public const FILENAME_PREFIX_TO_RENAME = 'Lillevik Lofoten_01_';
