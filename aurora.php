@@ -12,6 +12,7 @@
 
 require_once 'WebcamConfig.php';
 require_once 'NavigationHelper.php';
+require_once 'lang.php';
 
 error_reporting(E_ERROR | E_PARSE);
 setlocale(LC_ALL, WebcamConfig::LOCALE);
@@ -77,19 +78,19 @@ function print_aurora_forecast()
     if (empty($nights)) return;
 
     $condition_labels = [
-        'no_intensity'      => 'No activity',
-        'low_intensity'     => 'Low',
-        'medium_intensity'  => 'Medium',
-        'high_intensity'    => 'High',
-        'extreme_intensity' => 'Extreme',
+        'no_intensity'      => t('aurora_no_activity'),
+        'low_intensity'     => t('aurora_low'),
+        'medium_intensity'  => t('aurora_medium'),
+        'high_intensity'    => t('aurora_high'),
+        'extreme_intensity' => t('aurora_extreme'),
     ];
     $cloud_map = [
-        'Klart'        => 'Clear',
-        'Lettskyet'    => 'Few clouds',
-        'Delvis skyet' => 'Partly cloudy',
-        'Skyet'        => 'Cloudy',
-        'Overskyet'    => 'Overcast',
-        'Tåke'         => 'Fog',
+        'Klart'        => t('cloud_clear'),
+        'Lettskyet'    => t('cloud_few'),
+        'Delvis skyet' => t('cloud_partly'),
+        'Skyet'        => t('cloud_cloudy'),
+        'Overskyet'    => t('cloud_overcast'),
+        'Tåke'         => t('cloud_fog'),
     ];
 
     $today    = date('Y-m-d');
@@ -97,7 +98,7 @@ function print_aurora_forecast()
 
     $lines = [];
     foreach ($nights as $key => $night) {
-        $label     = ($key === $today) ? 'Tonight' : (($key === $tomorrow) ? 'Tomorrow night' : date('D M j', strtotime($key)));
+        $label     = ($key === $today) ? t('aurora_tonight') : (($key === $tomorrow) ? t('aurora_tomorrow') : date('D M j', strtotime($key)));
         $condition = $condition_labels[$night['condition']] ?? 'Unknown';
         $counts    = array_count_values($night['cloud']);
         arsort($counts);
@@ -114,7 +115,7 @@ function print_aurora_forecast()
     $swpc_url   = 'https://www.swpc.noaa.gov/products/aurora-30-minute-forecast';
     $frames_url = 'https://services.swpc.noaa.gov/images/animations/ovation/north/';
 
-    echo "<h2>Northern lights forecast for Lofoten</h2>\n\n";
+    echo "<h2>" . t('aurora_forecast') . "</h2>\n\n";
 
     // Animated player: cycles through the last 24 frames (2 hours at 5-min intervals).
     // Frame filenames are aurora_N_YYYY-MM-DD_HHMM.jpg in UTC.
@@ -176,8 +177,8 @@ function print_aurora_forecast()
 HTML;
 
     echo "<p>" . implode('. ', $lines) . ".\n";
-    echo "Source: <a href=\"$yr_url\">Yr</a>";
-    if ($updated_ts) echo ", updated " . date('M j H:i', $updated_ts);
+    echo t('source') . ": <a href=\"$yr_url\">Yr</a>";
+    if ($updated_ts) echo ", " . t('aurora_updated') . " " . date('M j H:i', $updated_ts);
     echo ".</p>\n\n";
 }
 
@@ -281,7 +282,7 @@ if (empty($_SERVER['SERVER_NAME'])) {
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
 
 echo '<!DOCTYPE html>' . "\n";
-echo '<html lang="en-US">' . "\n";
+echo '<html lang="' . lang_html_attr() . '">' . "\n";
 echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
 echo '  <meta name="description" content="' . htmlspecialchars(WebcamConfig::AURORA_DESCRIPTION) . '">' . "\n";
@@ -365,11 +366,11 @@ $nav_links[] = date('F Y', $title_ts);
 if ($next_url && $next_label) {
     $nav_links[] = "<a href=\"$next_url\">$next_label &rarr;</a>";
 }
-$nav_links[] = "<a href=\".\">Webcam</a>";
+$nav_links[] = "<a href=\".\">" . t('nav_webcam') . "</a>";
 if ($size === 'large') {
-    $nav_links[] = "<a href=\"{$base_url}\">Mini photos</a>";
+    $nav_links[] = "<a href=\"{$base_url}\">" . t('nav_mini_photos') . "</a>";
 } else {
-    $nav_links[] = "<a href=\"{$base_url}&size=large\">Large photos</a>";
+    $nav_links[] = "<a href=\"{$base_url}&size=large\">" . t('nav_large_photos') . "</a>";
 }
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
@@ -419,7 +420,7 @@ foreach ($month_images as $img) {
 echo "</div>\n\n";
 
 if ($count === 0) {
-    echo '<p>(No northern lights photos to display for ' . date('F Y', $title_ts) . '.)</p>' . "\n\n";
+    echo '<p>(' . sprintf(t('aurora_no_photos'), date('F Y', $title_ts)) . '.)</p>' . "\n\n";
 }
 
 if ($current_ym === date('Ym')) {
@@ -448,8 +449,6 @@ echo <<<TOUCH
 TOUCH;
 
 
-echo "<p style=\"color: rgb(200, 200, 200);\">Northern lights detection by "
-   . "<a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">aurora_scan.py</a>. "
-   . "Image overlay: day, time, and aurora detection score.</p>\n\n";
+echo "<p style=\"color: rgb(200, 200, 200);\">" . t('aurora_credit') . "</p>\n\n";
 
 echo "</body>\n</html>\n";

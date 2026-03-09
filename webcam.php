@@ -17,6 +17,7 @@ require_once __DIR__ . '/WebcamConfig.php';
 require_once __DIR__ . '/SunCalculator.php';
 require_once __DIR__ . '/ImageFileManager.php';
 require_once __DIR__ . '/NavigationHelper.php';
+require_once __DIR__ . '/lang.php';
 
 // ============================================================
 // Camera configuration — override via define() before including this file
@@ -112,10 +113,11 @@ JSONLD;
     } else {
         $_cam_json_ld = '';
     }
+    $_html_lang = lang_html_attr();
 
     print <<<END1
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="$_html_lang">
 <head>
   <meta charset="utf-8">
 
@@ -293,22 +295,22 @@ TOUCH;
     // Navigation links
     echo "\n\n<p>";
     if ($touch) {
-        echo "Swipe left/right or use ";
+        echo t('nav_swipe_or_use') . ' ';
     } else {
-        echo "Use ";
+        echo t('nav_use') . ' ';
     }
-    echo 'the arrow keys to navigate: ';
+    echo t('nav_arrow_keys') . ' ';
     if ($next) {
-        echo "<a href=\"$next\">forward</a> (&rarr;), ";
+        echo "<a href=\"$next\">" . t('nav_forward') . "</a> (&rarr;), ";
     }
     if ($previous) {
-        echo "<a href=\"$previous\">back</a> (&larr;), ";
+        echo "<a href=\"$previous\">" . t('nav_back') . "</a> (&larr;), ";
     }
     if ($up) {
-        echo "<a href=\"$up\">up</a> (&uarr;) ";
+        echo "<a href=\"$up\">" . t('nav_up') . "</a> (&uarr;) ";
     }
     if ($down) {
-        echo "and <a href=\"$down\">down</a> (&darr;)\n";
+        echo t('nav_and') . " <a href=\"$down\">" . t('nav_down') . "</a> (&darr;)\n";
     }
     echo ".</p>\n\n";
 
@@ -317,7 +319,7 @@ TOUCH;
         print_lillevik_images_and_links();
     }
 
-    echo "<p style=\"color: rgb(200, 200, 200);\" >Made with <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
+    echo "<p style=\"color: rgb(200, 200, 200);\" >" . t('made_with') . " <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
 
     echo "</body>\n</html>\n";
 }
@@ -500,7 +502,7 @@ function print_full_month($year, $month)
     echo "</div>\n";
     if ($images_printed == 0) {
         // No pictures found for this month.
-        echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n";
+        echo "<p>(" . sprintf(t('no_photos'), date("Y-m-d", $timestamp)) . ")</p>\n";
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -538,17 +540,17 @@ function print_full_year($year)
 
     page_header(CAM_LABEL . ": $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
     // Links to all months 1-12: Commas and "and" for the last one.
-    echo "\n<p>" . year_nav_links($year) . " | Months: \n";
+    echo "\n<p>" . year_nav_links($year) . " | " . t('nav_months') . ": \n";
     $monthLinks = [];
     for ($i = 1; $i <= 12; $i++) {
         $monthLinks[] = "<a href=\"?type=month&year=$year&month=" . sprintf("%02d", $i) . "\">" . sprintf("%02d", $i) . "</a>";
     }
-    $formattedMonthLinks = implode(', ', array_slice($monthLinks, 0, -1)) . ' and ' . end($monthLinks);
+    $formattedMonthLinks = implode(', ', array_slice($monthLinks, 0, -1)) . ' ' . t('nav_and_conj') . ' ' . end($monthLinks);
     print $formattedMonthLinks . " | ";
 
     // Link to today.
-    echo "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("M d") . "</a>";
-    echo " | <a href=\"?type=last\">Latest image</a>";
+    echo "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("M d") . "</a>";
+    echo " | <a href=\"?type=last\">" . t('nav_latest') . "</a>";
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
@@ -609,7 +611,7 @@ function print_full_year($year)
         echo "</p>\n";
     } else {
         // No pictures found for this year.
-        echo "<p>(No photos to display for " . date("Y", mktime(12, 0, 0, 1, 1, $year)) . ")</p>\n";
+        echo "<p>(" . sprintf(t('no_photos'), date("Y", mktime(12, 0, 0, 1, 1, $year))) . ")</p>\n";
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -632,8 +634,8 @@ function print_all_years()
     $previous = $next = $up = $down = false;
     page_header(CAM_LABEL . ": $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
     echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
-    echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("M d") . "</a> \n";
-    echo "<a href=\"?type=last\">Latest image</a>.\n";
+    echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("M d") . "</a> \n";
+    echo "<a href=\"?type=last\">" . t('nav_latest') . "</a>.\n";
     echo "</p>\n\n";
 
     for ($year = $start_year; $year <= $this_year; $year++) {
@@ -694,7 +696,7 @@ function print_all_years()
         echo "</div>\n";
 
         if ($images_printed == 0) {
-            echo "(No photos to display for $year)\n";
+            echo "(" . sprintf(t('no_photos'), $year) . ")\n";
         }
         echo "</p>\n\n";
 
@@ -713,10 +715,10 @@ function print_mini_large_links($timestamp, $size)
     $date = date('Ymd', $timestamp);
     echo "<p>\n";
     if ($size == "large") { // Link to mini if we showed large, or don't know.
-        echo "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>. ";
+        echo "<a href=\"?type=day&date=$date&size=mini\">" . t('nav_mini_photos') . "</a>. ";
     }
     if ($size == "mini" || empty($size)) { // Links to large if we showed mini, or don't know.
-        echo "<a href=\"?type=day&date=$date&size=large\">Large photos</a>. ";
+        echo "<a href=\"?type=day&date=$date&size=large\">" . t('nav_large_photos') . "</a>. ";
     }
     echo "</p>\n\n";
 }
@@ -861,8 +863,8 @@ function print_single_image($image_filename, $last_image)
     // Validate input
     if (empty($image_filename)) {
         page_header("Error", false, false, false, false);
-        echo "<p>No image found.</p>\n";
-        echo "<p><a href=\".\">Back to webcam</a></p>\n";
+        echo "<p>" . t('no_image_found') . "</p>\n";
+        echo "<p><a href=\".\">" . t('back_to_webcam') . "</a></p>\n";
         footer(0, false, false, false, false);
         return;
     }
@@ -947,10 +949,10 @@ function print_single_image($image_filename, $last_image)
     if ($previous_datepart || $next_datepart) {
         echo "<p>";
         if ($previous_datepart) {
-            echo "<a href=\"$previous\">Previous: " . substr($previous_datepart, 8, 2) . ":" . substr($previous_datepart, 10, 2) . "</a>.\n";
+            echo "<a href=\"$previous\">" . t('prev_image') . ": " . substr($previous_datepart, 8, 2) . ":" . substr($previous_datepart, 10, 2) . "</a>.\n";
         }
         if ($next_datepart) {
-            echo "<a href=\"$next\">Next: " . substr($next_datepart, 8, 2) . ":" . substr($next_datepart, 10, 2) . "</a>.\n";
+            echo "<a href=\"$next\">" . t('next_image') . ": " . substr($next_datepart, 8, 2) . ":" . substr($next_datepart, 10, 2) . "</a>.\n";
         }
         echo "</p>\n\n";
     }
@@ -965,7 +967,7 @@ function print_single_image($image_filename, $last_image)
     echo "</p>\n\n";
 
     list($width, $height) = getimagesize("$year/$month/$day/$image_filename");
-    echo "<p>\n<a href=\"$year/$month/$day/$image_filename\">Full size ($width x $height)</a>\n</p>\n\n";
+    echo "<p>\n<a href=\"$year/$month/$day/$image_filename\">" . t('full_size') . " ($width x $height)</a>\n</p>\n\n";
 
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -987,16 +989,16 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
     global $monthly_day;
     echo "\n\n<p>";
     if ($midnight_sun) {
-        echo "Midnight sun &#9728;";
+        echo t('midnight_sun') . " &#9728;";
     } else if ($polar_night) {
-        echo "Polar night";
+        echo t('polar_night');
     } else {
-        echo "Sunrise: " . date('H:i', $sunrise) . ". Sunset: " . date('H:i', $sunset);
+        echo t('sunrise') . ": " . date('H:i', $sunrise) . ". " . t('sunset') . ": " . date('H:i', $sunset);
     }
     if ($include_interval == "day") {
-        echo ". Displaying photos taken between " . date('H:i', $dawn) . " and " . date('H:i', $dusk);
+        echo ". " . sprintf(t('displaying_between'), date('H:i', $dawn), date('H:i', $dusk));
     } else if ($include_interval == "average") {
-        echo " (calculated for " . date('F', $dawn) . " $monthly_day)";
+        echo " (" . sprintf(t('calculated_for'), date('F', $dawn), $monthly_day) . ")";
         //echo " with the newest images first";
     }
     if ($leave_open) {
@@ -1172,13 +1174,13 @@ function print_weather_info()
 
     $temp_str = round($temp) . '°C';
     if ($feels_like !== null && round($feels_like) !== round($temp)) {
-        $temp_str .= ' (feels like ' . (int)round($feels_like) . '°C)';
+        $temp_str .= ' (' . t('feels_like') . ' ' . (int)round($feels_like) . '°C)';
     }
     $parts = [$temp_str];
     if ($wind_speed !== null) {
         $wind_str = round($wind_speed) . ' m/s';
         if ($wind_gust !== null && round($wind_gust) > round($wind_speed)) {
-            $wind_str .= ' (gusts ' . round($wind_gust) . ' m/s)';
+            $wind_str .= ' (' . t('gusts') . ' ' . round($wind_gust) . ' m/s)';
         }
         if ($wind_dir !== null) {
             $wind_str .= ' ' . weather_degrees_to_cardinal($wind_dir);
@@ -1191,7 +1193,7 @@ function print_weather_info()
     }
 
     $yr_url = 'https://www.yr.no/en/forecast/daily-table/1-279560/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
-    echo '<br>Weather: ' . implode(', ', $parts) . '. Source: <a href="' . $yr_url . '">Yr</a>.</p>' . "\n\n";
+    echo '<br>' . t('weather') . ': ' . implode(', ', $parts) . '. ' . t('source') . ': <a href="' . $yr_url . '">Yr</a>.</p>' . "\n\n";
 }
 
 /**
@@ -1260,14 +1262,14 @@ function print_openmeteo_weather_info($timestamp)
                 $fl_min_r = (int)round($fl_min !== null ? $fl_min : $obs['temp_min']);
                 $fl_max_r = (int)round($fl_max !== null ? $fl_max : $obs['temp_max']);
                 if ($fl_min_r !== (int)round($obs['temp_min']) || $fl_max_r !== (int)round($obs['temp_max'])) {
-                    $temp_str .= ' (feels like ' . $fl_min_r . '°C to ' . $fl_max_r . '°C)';
+                    $temp_str .= ' (' . t('feels_like') . ' ' . $fl_min_r . '°C to ' . $fl_max_r . '°C)';
                 }
             }
         }
         $parts[] = $temp_str;
     }
     if ($obs['wind_max'] !== null) {
-        $parts[] = 'max wind ' . round($obs['wind_max'] / 3.6) . ' m/s';
+        $parts[] = t('max_wind') . ' ' . round($obs['wind_max'] / 3.6) . ' m/s';
     }
     if ($obs['precip'] !== null && $obs['precip'] > 0) {
         $parts[] = round($obs['precip'], 1) . ' mm';
@@ -1275,8 +1277,8 @@ function print_openmeteo_weather_info($timestamp)
 
     if (empty($parts)) { echo "</p>\n\n"; return; }
 
-    echo '<br>Weather: ' . implode(', ', $parts) . '. '
-       . 'Source: <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
+    echo '<br>' . t('weather') . ': ' . implode(', ', $parts) . '. '
+       . t('source') . ': <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
 }
 
 /**
@@ -1348,13 +1350,13 @@ function print_openmeteo_monthly_weather_info($year, $month)
         $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
     }
     if ($obs['wind_max'] !== null) {
-        $parts[] = 'max wind ' . round($obs['wind_max'] / 3.6) . ' m/s';
+        $parts[] = t('max_wind') . ' ' . round($obs['wind_max'] / 3.6) . ' m/s';
     }
 
     if (empty($parts)) { echo "</p>\n\n"; return; }
 
-    echo '<br>Weather: ' . implode(', ', $parts) . '. '
-       . 'Source: <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
+    echo '<br>' . t('weather') . ': ' . implode(', ', $parts) . '. '
+       . t('source') . ': <a href="https://open-meteo.com/">Open-Meteo</a>.</p>' . "\n\n";
 }
 
 /**
@@ -1405,10 +1407,10 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
 
         $requested_month = date('Y-m', $timestamp);
         if ($requested_month != date('Y-m')) {
-            $links[] = "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("F") . "</a>";
+            $links[] = "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">" . t('nav_now') . ": " . date("F") . "</a>";
         }
-        $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>";
-        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("F d") . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
     } else {
         $yesterday_timestamp = strtotime('-1 day', $timestamp);
         $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">&larr; " . date("F d", $yesterday_timestamp) . "</a>";
@@ -1419,24 +1421,24 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
         }
 
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
-            $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("F d") . "</a>";
         }
 
-        $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
-        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">" . t('nav_entire') . " " . date("F", $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
         $date = date('Ymd', $timestamp);
         if ($size == "large") {
-            $links[] = "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>";
+            $links[] = "<a href=\"?type=day&date=$date&size=mini\">" . t('nav_mini_photos') . "</a>";
         } else {
-            $links[] = "<a href=\"?type=day&date=$date&size=large\">Large photos</a>";
+            $links[] = "<a href=\"?type=day&date=$date&size=large\">" . t('nav_large_photos') . "</a>";
         }
     }
-    $links[] = "<a href=\"?type=last\">Latest image</a>";
+    $links[] = "<a href=\"?type=last\">" . t('nav_latest') . "</a>";
     if (file_exists('aurora.php')) {
-        $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+        $links[] = "<a href=\"aurora.php\">" . t('nav_aurora') . "</a>";
     }
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
-        $links[] = "<a href=\"people.php\">People</a>";
+        $links[] = "<a href=\"people.php\">" . t('nav_people') . "</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1450,14 +1452,14 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
 function print_full_day_link($timestamp)
 {
     $links = [];
-    $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">The whole day</a>";
-    $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
-    $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
+    $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">" . t('nav_whole_day') . "</a>";
+    $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">" . t('nav_entire') . " " . date("F", $timestamp) . "</a>";
+    $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
     if (file_exists('aurora.php')) {
-        $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+        $links[] = "<a href=\"aurora.php\">" . t('nav_aurora') . "</a>";
     }
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
-        $links[] = "<a href=\"people.php\">People</a>";
+        $links[] = "<a href=\"people.php\">" . t('nav_people') . "</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1635,7 +1637,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     if ($images_printed > 0) {
         echo "</p>\n";
     } else {
-        echo "<p>(No photos to display for " . date("Y-m-d", $timestamp) . ")</p>\n";
+        echo "<p>(" . sprintf(t('no_photos'), date("Y-m-d", $timestamp)) . ")</p>\n";
     }
     footer($images_printed, $previous, $next, $up, $down);
 }
@@ -1662,11 +1664,11 @@ function print_lillevik_images_and_links()
 
     // Output HTML
     echo "<!-- Lillevik images and links -->\n";
-    echo "<h3>Lillevik Lofoten: More photos</h3>\n";
+    echo "<h3>" . t('more_photos_header') . "</h3>\n";
     echo "<p>";
-    echo "The photos below are taken at <a href=\"https://lilleviklofoten.no?utm_source=webcam\">Lillevik Lofoten</a>, or nearby on Gimsøy.\n";
-    echo "Information and booking: <a href=\"https://lilleviklofoten.no?utm_source=webcam\">lilleviklofoten.no</a>.\n";
-    echo "For new photos: <a href=\"#\" onclick=\"location.reload(); return false;\">Reload</a>.\n";
+    echo t('more_photos_intro') . "\n";
+    echo t('more_photos_booking') . "\n";
+    echo t('more_photos_reload') . "\n";
     echo "</p>\n\n";
 
     // Responsive flex container
