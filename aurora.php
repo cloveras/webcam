@@ -266,7 +266,7 @@ usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = 'Lillevik Lofoten webcam: Northern lights ' . date('F Y', $title_ts);
+$title    = 'Lillevik Lofoten webcam: ' . t('aurora_page_suffix') . ' ' . date('F Y', $title_ts);
 
 // ============================================================
 // HTML header
@@ -346,13 +346,7 @@ echo "  </script>\n\n";
 echo "</head>\n";
 echo "<body>\n\n";
 echo "<h1>$title</h1>\n\n";
-echo "<p>\n";
-echo "<a href=\".\">Webcam</a>\n";
-echo "at\n";
-echo "<a href=\"https://lilleviklofoten.no\">Lillevik Lofoten</a>,\n";
-echo "Vik, Gimsøy, Lofoten, Norway.\n";
-echo "See also: <a href=\"https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/\">Northern lights at Lillevik Lofoten</a>.\n";
-echo "</p>\n\n";
+echo "<p>" . t('aurora_intro') . " " . t('aurora_see_also') . "</p>\n\n";
 
 // ============================================================
 // Month navigation bar
