@@ -13,10 +13,20 @@
  */
 
 // Include required classes
-require_once 'WebcamConfig.php';
-require_once 'SunCalculator.php';
-require_once 'ImageFileManager.php';
-require_once 'NavigationHelper.php';
+require_once __DIR__ . '/WebcamConfig.php';
+require_once __DIR__ . '/SunCalculator.php';
+require_once __DIR__ . '/ImageFileManager.php';
+require_once __DIR__ . '/NavigationHelper.php';
+
+// ============================================================
+// Camera configuration — override via define() before including this file
+// ============================================================
+defined('CAM_LABEL')           || define('CAM_LABEL',           'Lillevik Lofoten webcam');
+defined('CAM_FILE_PREFIX')     || define('CAM_FILE_PREFIX',     'Lillevik Lofoten_01_');
+defined('CAM_FILE_PREFIX_ALT') || define('CAM_FILE_PREFIX_ALT', 'Lillevik Lofoten_00_');
+defined('CAM_IS_PRIMARY')      || define('CAM_IS_PRIMARY',      true);
+defined('CAM_CSS_PATH')        || define('CAM_CSS_PATH',        'css.php');
+defined('CAM_INTRO_HTML')      || define('CAM_INTRO_HTML',      '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway. See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>');
 
 // ============================================================
 // Functions
@@ -46,18 +56,19 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
   <meta name="robot" content="index">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
 
-  <meta property="og:title" content="Lillevik Lofoten Webcam">
+  <meta property="og:title" content="<?php echo CAM_LABEL; ?>">
 
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
   <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
 
-  <link rel="canonical" href="https://lilleviklofoten.no/webcam/">
+  <?php if (CAM_IS_PRIMARY): ?><link rel="canonical" href="https://lilleviklofoten.no/webcam/"><?php endif; ?>
 
-  <link rel="stylesheet" type="text/css" href="css.php">
+  <link rel="stylesheet" type="text/css" href="<?php echo CAM_CSS_PATH; ?>">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <?php if (CAM_IS_PRIMARY): ?>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -110,6 +121,7 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     "image": "https://lilleviklofoten.no/webcam/latest.jpg"
   }
   </script>
+  <?php endif; ?>
 
 END1;
 
@@ -209,11 +221,7 @@ END2;
 <h1>$title</h1>
 
 <p>
-<a href=".">Webcam</a>
-at
-<a href="https://lilleviklofoten.no">Lillevik Lofoten</a>,
-Vik, Gimsøy, Lofoten, Norway.
-See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>
+<?php echo CAM_INTRO_HTML; ?>
 </p>
 END3;
 }
@@ -290,7 +298,9 @@ TOUCH;
     echo ".</p>\n\n";
 
 
-    print_lillevik_images_and_links();
+    if (CAM_IS_PRIMARY) {
+        print_lillevik_images_and_links();
+    }
 
     echo "<p style=\"color: rgb(200, 200, 200);\" >Made with <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">webcam.php</a></p>\n\n";
 
@@ -399,7 +409,7 @@ function print_full_month($year, $month)
     $minute = 0;
     $second = 0;
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
-    $title = "Lillevik Lofoten webcam: " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
+    $title = CAM_LABEL . ": " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
     
     // Collect images to prefetch for better performance
     global $imageManager;
@@ -443,7 +453,7 @@ function print_full_month($year, $month)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=day&date=$year$month$day\">";
-                echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {
@@ -512,7 +522,7 @@ function print_full_year($year)
         }
     }
 
-    page_header("Lillevik Lofoten webcam: $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
+    page_header(CAM_LABEL . ": $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
     // Links to all months 1-12: Commas and "and" for the last one.
     echo "\n<p>" . year_nav_links($year) . " | Months: \n";
     $monthLinks = [];
@@ -557,7 +567,7 @@ function print_full_year($year)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
-                echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 echo "src=\"$year/$month/$day/";
@@ -606,7 +616,7 @@ function print_all_years()
     $monthly_days = [1, 7, 14, 21, 28]; // Only show these days in each month.
 
     $previous = $next = $up = $down = false;
-    page_header("Lillevik Lofoten webcam: $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
+    page_header(CAM_LABEL . ": $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
     echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
     echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("M d") . "</a> \n";
     echo "<a href=\"?type=last\">Latest image</a>.\n";
@@ -646,7 +656,7 @@ function print_all_years()
                     echo "<div class=\"grid-item\">";
 
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
-                    echo "<img alt=\"Lillevik Lofoten webcam: $year-$month--$monthly_day $hour:$minute\" ";
+                    echo "<img alt=\"" . CAM_LABEL . ": $year-$month--$monthly_day $hour:$minute\" ";
                     //echo "title=\"$year-$month-$monthly_day $hour:$minute\" ";
                     echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                     echo "src=\"$year/$month/$monthly_day/";
@@ -904,7 +914,7 @@ function print_single_image($image_filename, $last_image)
     ]);
 
     // Print!
-    $title = "Lillevik Lofoten webcam";
+    $title = CAM_LABEL;
     if (!$last_image) {
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
@@ -930,7 +940,7 @@ function print_single_image($image_filename, $last_image)
 
     echo "<p>\n";
     echo "<a href=\"?type=day&date=$year$month$day\">";
-    echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
+    echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
     //echo "title=\"$year-$month-$day $hour:$minute\" ";
     echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
     echo "src=\"$year/$month/$day/$image_filename\">";
@@ -1405,7 +1415,9 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
         }
     }
     $links[] = "<a href=\"?type=last\">Latest image</a>";
-    $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    if (file_exists('aurora.php')) {
+        $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
@@ -1421,7 +1433,9 @@ function print_full_day_link($timestamp)
     $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">The whole day</a>";
     $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
     $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
-    $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    if (file_exists('aurora.php')) {
+        $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
@@ -1512,7 +1526,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     ]);
 
     // Print header now that we have the details for it.
-    $title = "Lillevik Lofoten webcam: " . date('Y-m-d', $timestamp);
+    $title = CAM_LABEL . ": " . date('Y-m-d', $timestamp);
     if ($number_of_images == 1) {
         // We are printintg just the latest image, so include hour and minute too.
         $title .= date('H', $timestamp) . ":" . date('i', $timestamp);
@@ -1561,7 +1575,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
-                echo "<img alt=\"Lillevik Lofoten webcam: $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {
@@ -1690,9 +1704,10 @@ $navHelper = new NavigationHelper();
 
 // Handle files not yet processed by cron - must be done early before finding latest image
 // Old webcam:
-check_and_rename_files_hack("Lillevik Lofoten_01_");
-// 2025 webcam:
-check_and_rename_files_hack("Lillevik Lofoten_00_");
+check_and_rename_files_hack(CAM_FILE_PREFIX);
+if (CAM_FILE_PREFIX_ALT !== '') {
+    check_and_rename_files_hack(CAM_FILE_PREFIX_ALT);
+}
 
 // Parse query string to determine what to show
 // ------------------------------------------------------------

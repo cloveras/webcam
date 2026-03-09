@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Viktun webcam"
+AuthUserFile /home/1/l/lilleviklofoten/www/webcam/viktun/.htpasswd
+Require valid-user
