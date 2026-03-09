@@ -17,6 +17,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Viktun credentials (never commit)
+viktun/auth.php
+
 # Python cache
 __pycache__/
 *.pyc
