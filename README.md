@@ -1,79 +1,86 @@
 # webcam.php
 
-Generates HTML pages
-([examples here](#example-screenshots))
-for webcam images stored in a directory structure like this:
-`YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`:
+PHP gallery for webcam images stored as `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`.
+No build step — deploy the PHP files directly to a web server.
+
+Live example: [lilleviklofoten.no/webcam](https://lilleviklofoten.no/webcam/)
+
+[![Single image view](images/webcam-example-single-image.png)](https://lilleviklofoten.no/webcam/?type=one&image=20260223131133)
+
+---
+
+## Contents
+
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Aurora borealis gallery](#aurora-borealis-gallery)
+- [People gallery](#people-gallery)
+- [Bulk image operations](#bulk-image-operations)
+- [Screenshots](#screenshots)
+
+---
+
+## Features
+
+- Calculates sunrise, sunset, dawn, and dusk from latitude and longitude — only shows images taken between dawn and dusk
+- Handles midnight sun and polar night
+- Touch gestures and arrow-key navigation
+- Time overlay on thumbnails (day, month, and year views)
+- Weather from Open-Meteo (historical) and Yr (current day)
+- Aurora borealis gallery with live Yr forecast and animated NOAA/SWPC map
+- People/vehicle/animal detection gallery powered by YOLOv8
+- Client-side image caching, lazy loading, and prefetching
+
+---
+
+## Getting started
+
+### Image directory structure
 
 ```
-2023
-├── 01
-│   ├── 01
-│   │   ├── 20230101000000.jpg
-│   │   ├── 20230101001000.jpg
-│   │   ├── 20230101002000.jpg
-[...]
-├── 12
-│   │   ├── 20231231000000.jpg
-│   │   ├── 20231231001000.jpg
-│   │   ├── 20231231002000.jpg
-[...]
+2026/
+├── 01/
+│   └── 15/
+│       ├── 20260115083000.jpg
+│       ├── 20260115083010.jpg
+│       └── mini/
+│           └── 20260115083000.jpg   ← 160×120 thumbnail
+└── 02/
+    └── ...
 ```
 
-## Highlights
+### Setup
 
-* Finds sunrise, sunset, dawn, and dusk based on latitude and longitude.
-* Only shows images taken between dawn and dusk, handles midnight sun and polar night.
-* Navigation with touch gestures and arrow keys.
-* Shows the time (HH:MM) as a CSS overlay on thumbnails when viewing a full day, month and year.
-* Data collection with Google Analytics and Microsoft Clarity
-* Client-side caching, resource prefetching, and lazy image loading
+1. Copy all PHP files to your web server.
+2. Edit [`WebcamConfig.php`](WebcamConfig.php) — set your coordinates, timezone, analytics IDs, and filename prefix.
+3. Edit [`cron/copy-latest-image.sh`](cron/copy-latest-image.sh) and [`cron/rename_and_make_mini_images.sh`](cron/rename_and_make_mini_images.sh) for your camera's filename format, then add them to cron. See [`util/crontab.txt`](util/crontab.txt).
+4. Verify calculated sunrise/sunset at [yr.no](https://www.yr.no/).
+5. Update the midnight sun and polar night date ranges in [`WebcamConfig.php`](WebcamConfig.php) if applicable.
 
-Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
+For verbose debug output: set `$debug = 1` in `webcam.php`.
 
-If you like this you can
-[buy me a coffee](https://www.buymeacoffee.com/superelectric) ☕️
-(you'll be the first)
+### Code structure
 
-## Things that should be changed if you want to use this
+- `webcam.php` — main entry point and HTML rendering
+- `WebcamConfig.php` — all configuration constants
+- `SunCalculator.php` — sunrise/sunset/dawn/dusk, midnight sun, polar night
+- `ImageFileManager.php` — finding and organizing image files
+- `NavigationHelper.php` — navigation URL generation
+- `aurora.php` — northern lights gallery
+- `people.php` — people/vehicle/animal detection gallery
+- `aurora_scan.py` — scores images for aurora likelihood
+- `people_scan.py` — detects people using YOLOv8
+- `sun_calculator.py` — Python mirror of `SunCalculator.php`, used by the scan scripts
 
-* Edit
-  [`copy-latest-image.sh`](https://github.com/cloveras/webcam/blob/main/cron/copy-latest-image.sh)
-  and
-  [`rename_and_make_mini_images.sh`](https://github.com/cloveras/webcam/blob/main/cron/rename_and_make_mini_images.sh).
-* Add cron jobs for those two scripts. See
-  [crontab.txt](util/crontab.txt).
-* Edit the filename in `check_and_rename_files_hack()` that covers for cron when it's too slow.
-* Update latitude and longitude (use Google Maps to find coordinates)
-* Verify the calculated sunrise and sunset at [yr.no](https://www.yr.no/).
-* Update the dates in functions `midnight_sun()` and `polar_night()`.
-* Change the code for Google Analytics and Microsoft Clarity.
-* Update the HTML meta tags.
+See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for full class documentation.
 
-For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
-
-## Code structure
-
-* `WebcamConfig.php` — All configuration constants (location, periods, display settings)
-* `SunCalculator.php` — Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
-* `ImageFileManager.php` — File system operations for finding and organizing images
-* `NavigationHelper.php` — Navigation and URL generation utilities
-* `webcam.php` — Main entry point with page rendering functions
-* `aurora.php` — Northern lights gallery, reads `aurora-YYYY.json` files
-* `aurora_scan.py` — Scans images and scores each for aurora likelihood
-* `people.php` — People gallery, reads `people-YYYY.json` files
-* `people_scan.py` — Scans images for people using YOLOv8
-* `sun_calculator.py` — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py` and `people_scan.py`
-
-See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation.
+---
 
 ## Aurora borealis gallery
 
-`aurora_scan.py` scans webcam images and scores each one for aurora likelihood using OpenCV (aurora-green hue, local contrast, and connected-component structure). Scores above `--threshold` are saved as `aurora-YYYY.json` and displayed by `aurora.php`.
+`aurora_scan.py` scores each image for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). Results above `--threshold` are saved to `aurora-YYYY.json` and shown by `aurora.php`, which also displays a live Yr forecast and an animated NOAA/SWPC polar map for the current month.
 
-`aurora.php` automatically loads every `aurora-YYYY.json` file in the same directory, so adding a new year requires only dropping in the JSON file.
-
-### Setup
+### Dependencies
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
@@ -82,78 +89,54 @@ pip install opencv-python numpy astral
 
 ### Scanning
 
-Update a single month (fast — good for routine updates):
-
 ```bash
+# Update one month (fast — good for routine use)
 python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output data/aurora-2026.json
-```
 
-When `aurora-2026.json` already exists, only the months present in the scan are replaced; all other months are kept. This means you can re-scan January without touching February–December.
-
-Full year scan (slow — use for initial build or full rebuild):
-
-```bash
+# Full year (slow — use for initial build)
 python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
-```
 
-Incremental / daily scan using `--append` (upserts individual timestamps instead of replacing the whole month):
-
-```bash
+# Daily incremental update
 python3 aurora_scan.py /path/to/images/2026/03/15 --night --threshold 0.15 --append --json-output data/aurora-2026.json
 ```
 
-### Key options
+When the output file already exists, only the scanned months are replaced — the rest is preserved.
+
+### Options
 
 | Option | Description |
 |---|---|
-| `--threshold N` | Minimum score to include (0.15 is a reasonable starting point) |
-| `--night` | Only scan images taken during darkness (before nautical dawn / after nautical dusk, accounting for midnight sun and polar night) |
-| `--limit N` | Cap the stdout report at N results (does not affect JSON output) |
-| `--workers N` | Number of parallel workers (default: all CPU cores; try 1–2 for network drives) |
-| `--append` | Upsert individual timestamps instead of replacing scanned months |
+| `--threshold N` | Minimum score to include (0.15 is a good starting point) |
+| `--night` / `--day` | Time filter (default: night) |
+| `--limit N` | Cap stdout report at N results (JSON output is unaffected) |
+| `--workers N` | Parallel workers (default: all cores; use 1–2 for network drives) |
+| `--append` | Upsert individual timestamps instead of replacing the whole month |
 
-### Live forecast on aurora.php
-
-When viewing the current month, `aurora.php` also shows:
-
-* Yr aurora forecast — tonight and tomorrow night, with activity level and cloud cover. Fetched from the Yr API and cached for 30 minutes in `/tmp/yr_aurora_forecast.json`.
-* NOAA/SWPC animated forecast — the last 24 frames (2 hours at 5-minute intervals) cycling as an animation.
-
-Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=01)
-
-![Webcam example screenshot: Aurora borealis gallery](images/webcam-ecample-aurora.png)
+---
 
 ## People gallery
 
-`people_scan.py` scans webcam images for people using [YOLOv8](https://github.com/ultralytics/ultralytics) (nano model). Score = highest person-detection confidence in the frame (0–1). Results are saved as `people-YYYY.json` and displayed by `people.php`.
+`people_scan.py` detects people, vehicles, and animals using [YOLOv8](https://github.com/ultralytics/ultralytics) (nano model, ~6 MB, downloaded automatically). Score = highest detection confidence in the frame. Results are saved to `people-YYYY.json` and shown by `people.php`.
 
-Three complementary false-positive suppression layers keep the gallery clean:
+Three false-positive suppression layers:
 1. Civil-twilight time filter — skips images outside usable daylight
-2. Static exclusion zones — ignores detections in known-static regions (sky, boathouse, poles)
-3. Background subtraction — rejects detections that match the median background (glowing cabin, poles at night, etc.)
+2. Static exclusion zones — ignores detections in known-static areas (sky, water, fixed structures)
+3. Background subtraction — rejects detections that match the per-pixel median background
 
-### Setup
+### Dependencies
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
 pip install ultralytics astral opencv-python numpy
 ```
 
-The YOLOv8 nano model (`yolov8n.pt`, ~6 MB) is downloaded automatically on first run.
-
 ### Scanning
 
-Step 1 — build background model once (samples 300 frames, computes per-pixel median; ~800 MB peak RAM):
-
 ```bash
+# Step 1 — build background model once (~800 MB peak RAM)
 python3 people_scan.py /path/to/images/2026 --build-background data/background-2026.png
-```
 
-If `--background` points to a non-existent file the model is built automatically before scanning.
-
-Step 2 — scan (re-run to update after new images arrive):
-
-```bash
+# Step 2 — scan (re-run whenever new images arrive)
 python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \
     --background data/background-2026.png \
     --exclude-zone 0.0,0.0,1.0,0.68 \
@@ -162,66 +145,64 @@ python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \
     --json-output data/people-2026.json
 ```
 
-The exclusion zones above are calibrated for this camera (sky/mountains/water, boathouse, foreground poles). Adjust for your own scene using `--annotate` (see below).
-
-When `people-2026.json` already exists, all months present in the scanned folder are replaced; months outside the scanned folder are kept. This means scanning a single month folder only touches that month.
+If `--background` points to a non-existent file the model is built automatically before scanning. Exclusion zones are fractions of image width/height — calibrate for your scene using `--annotate`.
 
 ### Diagnosing false positives
 
-`--annotate` processes a single image and saves an annotated version showing every YOLO detection box (green = kept, red = rejected by zone, orange = rejected by background), exclusion zone overlays, and the foreground mask. Use this to calibrate `--exclude-zone` coordinates.
-
 ```bash
 python3 people_scan.py /dev/null \
-    --annotate /path/to/suspect-image.jpg annotated.jpg \
+    --annotate /path/to/image.jpg annotated.jpg \
     --background data/background-2026.png \
-    --exclude-zone 0.0,0.0,1.0,0.68 \
-    --exclude-zone 0.52,0.70,0.61,0.81 \
-    --exclude-zone 0.40,0.88,0.46,0.99
+    --exclude-zone 0.0,0.0,1.0,0.68
 ```
 
-### Key options
+`--annotate` saves an image showing every YOLO box (green = kept, red = rejected by zone, orange = rejected by background), zone overlays, and the foreground mask.
+
+### Options
 
 | Option | Description |
 |---|---|
-| `--threshold N` | Minimum confidence to include (0–1; 0.3 is a reasonable starting point) |
-| `--civil-day` | Only scan images within civil twilight (6° depression) — fewer low-light false positives than `--day` (nautical 12°) |
-| `--day` | Only scan images within nautical twilight (12° depression) |
-| `--background FILE` | Background model PNG for foreground-change filtering; auto-built if file doesn't exist |
-| `--build-background FILE` | Build background model from a sample of images and exit |
-| `--exclude-zone x1,y1,x2,y2` | Ignore detections centred in this zone (fractions 0–1, repeatable) |
-| `--annotate IMAGE OUTPUT` | Diagnostic: annotate a single image with detection boxes and zone overlays, then exit |
-| `--fg-overlap N` | Min fraction of detection box that must be in foreground to accept (default 0.15) |
-| `--bg-diff N` | Pixel intensity diff to consider a region changed from background (default 25) |
-| `--bg-samples N` | Frames to sample when building background (default 300) |
-| `--limit N` | Cap the stdout report at N results (does not affect JSON output) |
-| `--workers N` | Number of parallel workers (default: all CPU cores; try 1–2 for network drives) |
-| `--append` | Upsert individual timestamps instead of replacing scanned months |
+| `--threshold N` | Minimum confidence to include (0–1; 0.3 is a good starting point) |
+| `--civil-day` | Civil twilight filter (6° depression) — fewer low-light false positives than `--day` |
+| `--day` | Nautical twilight filter (12° depression) |
+| `--background FILE` | Background model PNG; auto-built if missing |
+| `--build-background FILE` | Build background model and exit |
+| `--exclude-zone x1,y1,x2,y2` | Ignore detections centred in this zone (repeatable) |
+| `--annotate IMAGE OUTPUT` | Annotate one image for diagnosis and exit |
+| `--fg-overlap N` | Min foreground fraction of detection box (default 0.15) |
+| `--bg-diff N` | Pixel diff threshold for foreground detection (default 25) |
+| `--bg-samples N` | Frames sampled when building background (default 300) |
+| `--limit N` | Cap stdout report at N results (JSON output is unaffected) |
+| `--workers N` | Parallel workers (default: all cores; use 1–2 for network drives) |
+| `--append` | Upsert individual timestamps instead of replacing the whole month |
 
-## Got lots of images you need to sort and upload?
+---
 
-The Bash script
-[`webcam-image-organize-fix.sh`](https://github.com/cloveras/webcam/blob/main/util/webcam-image-organize-fix.sh)
-can be a good _starting point_
-for reorganizing thousands of images into `YYYY/MM/DD` directories.
+## Bulk image operations
 
-The Bash script
-[`util/nctpput-all-images.sh`](https://github.com/cloveras/webcam/blob/main/util/nctpput-all-images.sh)
-uses
-[`ncftp`](https://www.ncftp.com)
-and can be a good _starting point_ for mass-uploading thousands of files.
+[`util/webcam-image-organize-fix.sh`](util/webcam-image-organize-fix.sh) reorganizes images into `YYYY/MM/DD` directories.
 
-## Example screenshots
+[`util/nctpput-all-images.sh`](util/nctpput-all-images.sh) mass-uploads files using [`ncftp`](https://www.ncftp.com).
 
-Resized to fit.
+[`delete_old_images.py`](delete_old_images.py) thins out old images (dry-run by default):
 
-A single image: https://lilleviklofoten.no/webcam/?type=one&image=20231126151113
+```bash
+python3 delete_old_images.py --delete --one-per-hour   # keep one per hour
+python3 delete_old_images.py --compress-quality 80     # recompress (requires Pillow)
+```
 
-![Webcam example screenshot: Single image](images/webcam-example-single-image.png)
+---
 
-One full day: https://lilleviklofoten.no/webcam/?type=day&date=20231126
+## Screenshots
 
-![Webcam example screenshot: Day](images/webcam-example-day.png)
+Full day — all images from dawn to dusk, with time overlay:
 
-One full month: https://lilleviklofoten.no/webcam/?type=month&year=2023&month=11
+[![Day view](images/webcam-example-day.png)](https://lilleviklofoten.no/webcam/?type=day&date=20260223)
 
-![Webcam example screensho: Month](images/webcam-example-month.png)
+Full month — one image per day at ~12:00:
+
+[![Month view](images/webcam-example-month.png)](https://lilleviklofoten.no/webcam/?type=month&year=2026&month=01)
+
+---
+
+If you find this useful, [buy me a coffee](https://www.buymeacoffee.com/superelectric) ☕️
