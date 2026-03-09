@@ -216,7 +216,7 @@ END2;
     }
 
     // Google Analytics and Microsoft Clarity
-    $_cam_intro = CAM_INTRO_HTML;
+    $_cam_intro = t('webcam_intro');
     print <<<END3
 
   <!-- Google tag (gtag.js) -->
@@ -1445,6 +1445,7 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
         $links[] = "<a href=\"people.php" . lang_query() . "\">" . t('nav_people') . "</a>";
     }
+    $links[] = lang_selector_html();
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 

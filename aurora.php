@@ -367,6 +367,7 @@ if ($size === 'large') {
 } else {
     $nav_links[] = "<a href=\"{$base_url}&size=large\">" . t('nav_large_photos') . "</a>";
 }
+$nav_links[] = lang_selector_html();
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
 // ============================================================
