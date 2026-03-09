@@ -44,6 +44,7 @@ $months_list = array_keys($months_with_images); // ascending
 
 $year  = isset($_GET['year'])  ? (int)$_GET['year']  : 0;
 $month = isset($_GET['month']) ? (int)$_GET['month'] : 0;
+$size  = (isset($_GET['size']) && $_GET['size'] === 'large') ? 'large' : 'mini';
 
 if (!$year || !$month) {
     if (!empty($months_list)) {
@@ -73,13 +74,15 @@ foreach ($months_list as $ym) {
     if ($ym < $current_ym) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
-        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m);
+        $size_param = ($size === 'large') ? '&size=large' : '';
+        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
         $prev_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
     }
     if ($ym > $current_ym && !$next_url) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
-        $next_url   = "?year=$y&month=" . sprintf('%02d', $m);
+        $size_param = ($size === 'large') ? '&size=large' : '';
+        $next_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
         $next_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
     }
 }
@@ -198,6 +201,17 @@ if ($next_url && $next_label) {
 }
 echo "</p>\n\n";
 
+$base_url = "?year=$year_str&month=$month_str";
+$nav_links = [];
+$nav_links[] = "<a href=\".\">Webcam</a>";
+if ($size === 'large') {
+    $nav_links[] = "<a href=\"{$base_url}\">Mini photos</a>";
+} else {
+    $nav_links[] = "<a href=\"{$base_url}&size=large\">Large photos</a>";
+}
+$nav_links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
+
 // ============================================================
 // Image grid
 // ============================================================
@@ -218,14 +232,21 @@ foreach ($month_images as $img) {
     $h  = substr($ts, 8, 2);
     $mi = substr($ts, 10, 2);
 
+    $full_path = "$y/$m/$d/$ts.jpg";
     $mini_path = "$y/$m/$d/mini/$ts.jpg";
-    $src       = file_exists($mini_path) ? $mini_path : "$y/$m/$d/$ts.jpg";
+    if ($size === 'large') {
+        $src = $full_path;
+        $img_attrs = "";
+    } else {
+        $src = file_exists($mini_path) ? $mini_path : $full_path;
+        $img_attrs = " width=\"$mini_w\" height=\"$mini_h\"";
+    }
     $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi";
     $link      = "webcam.php?type=one&image=$ts";
     $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
     echo "  <div class=\"grid-item\">\n";
-    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" width=\"$mini_w\" height=\"$mini_h\"></a>\n";
+    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\"{$img_attrs}></a>\n";
     echo "    <span class=\"time\">$label</span>\n";
     echo "  </div>\n";
     $count++;

@@ -1354,11 +1354,12 @@ function find_previous_and_next_month($year, $month)
  */
 function print_previous_next_year_links($year)
 {
-    echo "<p><a href=\"?type=year&year=" . ($year - 1) . "\">Previous (" . ($year - 1) . ")</a>.\n";
+    $links = [];
+    $links[] = "<a href=\"?type=year&year=" . ($year - 1) . "\">Previous (" . ($year - 1) . ")</a>";
     if ($year < date('Y')) {
-        echo "<a href=\"?type=year&year=" . ($year + 1) . "\">Next (" . ($year + 1) . ")</a>.\n";
+        $links[] = "<a href=\"?type=year&year=" . ($year + 1) . "\">Next (" . ($year + 1) . ")</a>";
     }
-    echo "<p>\n";
+    echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
 /**
@@ -1371,56 +1372,44 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
 {
     global $size;
 
+    $links = [];
     if ($is_full_month) {
-        // No links to yesterday and tomorrow, but the the previous and next months. Easy.
         list($year_previous, $month_previous, $year_next, $month_next) = find_previous_and_next_month(date('Y', $timestamp), date('m', $timestamp));
-        echo "<p><a href=\"?type=month&year=$year_previous&month=$month_previous\">Previous: " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>. \n";
-        echo "<a href=\"?type=month&year=$year_next&month=$month_next\">Next: " . date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . "</a>. \n";
+        $links[] = "<a href=\"?type=month&year=$year_previous&month=$month_previous\">Previous: " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>";
+        $links[] = "<a href=\"?type=month&year=$year_next&month=$month_next\">Next: " . date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . "</a>";
 
         $requested_month = date('Y-m', $timestamp);
-        $this_month = date('Y-m'); // 2023-11
-        $previous_month = date('Y-m', strtotime('-30 days')); // 2023-10
-        if ($requested_month != $this_month) {
-            echo "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("F") . "</a>. \n";
+        if ($requested_month != date('Y-m')) {
+            $links[] = "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">Now: " . date("F") . "</a>";
         }
-        echo "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>, \n";
-        echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
-        //echo "<a href=\"?type=last\">Latest image</a>.\n";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
     } else {
-        // Not showing a full month: Work hard to find the days.
-
-        // Previous: Yesterday always exists.
         $yesterday_timestamp = strtotime('-1 day', $timestamp);
-        echo "<p>\n<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("F d", $yesterday_timestamp) . "</a>.\n";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("F d", $yesterday_timestamp) . "</a>";
 
-        // Next: Is there a tomorrow, based on the selected day?
-        if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
-            // The $timestamp is today, so there is no tomorrow.
-        } else {
+        if (date('Y-m-d', $timestamp) != date('Y-m-d')) {
             $tomorrow_timestamp = strtotime('+1 day', $timestamp);
-            echo "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("F d", $tomorrow_timestamp) . "</a>.\n";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("F d", $tomorrow_timestamp) . "</a>";
         }
 
-        // Today: Only if this is the day before yesterday, or earlier.
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
-            echo "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>, \n";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("F d") . "</a>";
         }
-        //echo "<a href=\"?type=last\">Latest image</a>.\n";
 
-        // Link to the full month and year - and everything.
-        //------------------------------------------------------------
-        echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>.\n";
-        echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
+        $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
         $date = date('Ymd', $timestamp);
         if ($size == "large") {
-            echo "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>.\n";
+            $links[] = "<a href=\"?type=day&date=$date&size=mini\">Mini photos</a>";
         } else {
-            echo "<a href=\"?type=day&date=$date&size=large\">Large photos</a>.\n";
+            $links[] = "<a href=\"?type=day&date=$date&size=large\">Large photos</a>";
         }
     }
-    echo "<a href=\"?type=last\">Latest image</a>.\n";
-    echo "<a href=\"aurora.php\">Aurora borealis</a>.\n";
-    echo "</p>\n\n";
+    $links[] = "<a href=\"?type=last\">Latest image</a>";
+    $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    $links[] = "<a href=\"people.php\">People</a>";
+    echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
 
@@ -1431,12 +1420,13 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
  */
 function print_full_day_link($timestamp)
 {
-    echo "<p>";
-    echo "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">The whole day</a>.\n";
-    echo "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>.\n";
-    echo "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>.\n";
-    echo "<a href=\"aurora.php\">Aurora borealis</a>.\n";
-    echo "</p>\n\n";
+    $links = [];
+    $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">The whole day</a>";
+    $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
+    $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
+    $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    $links[] = "<a href=\"people.php\">People</a>";
+    echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
 /**
