@@ -447,7 +447,6 @@ function print_full_month($year, $month)
 
     $images_printed = 0;
     for ($i = 1; $i <= 31; $i += 1) { // Works for February and 30-day months too.
-        $now = mktime($hour, $minute, $second, $month, $i, $year);
         $i = sprintf("%02d", $i); // Need to pad the days with 0 first. Still works fine in for() above.
 
         // Get all *jpg images that start with the right year, month, day and hour.
@@ -671,7 +670,7 @@ function print_all_years()
                     echo "<div class=\"grid-item\">";
 
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
-                    echo "<img alt=\"" . CAM_LABEL . ": $year-$month--$monthly_day $hour:$minute\" loading=\"lazy\" ";
+                    echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$monthly_day $hour:$minute\" loading=\"lazy\" ";
                     //echo "title=\"$year-$month-$monthly_day $hour:$minute\" ";
                     echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                     echo "src=\"$year/$month/$monthly_day/";
@@ -750,16 +749,19 @@ function find_latest_image()
     }
     // Fallback for backwards compatibility
     list($year, $month, $day) = explode('-', date('Y-m-d'));
+    $images = [];
     if (is_dir("$year/$month/$day")) {
         debug("NORMAL: max(glob(\"$year/$month/$day/*.jpg\", GLOB_BRACE))");
-        $latest_image = max(glob("$year/$month/$day/*.jpg", GLOB_BRACE));
+        $images = glob("$year/$month/$day/*.jpg", GLOB_BRACE);
     } else if (is_dir("$year/$month")) {
         debug("MONTH: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
-        $latest_image = max(glob("$year/$month/**/*.jpg", GLOB_BRACE));
+        $images = glob("$year/$month/**/*.jpg", GLOB_BRACE);
     } else if (is_dir("$year")) {
         debug("YEAR: max(glob(\"$year/**/*.jpg\", GLOB_BRACE))");
-        $latest_image = max(glob("$year/**/*.jpg", GLOB_BRACE));
+        $images = glob("$year/**/*.jpg", GLOB_BRACE);
     }
+    if (empty($images)) return '';
+    $latest_image = max($images);
     $image = get_yyyymmddhhmmss($latest_image);
     debug("FOUND: image (datepart): $image");
     return $image;
@@ -1034,7 +1036,7 @@ function get_weather_data()
     }
 
     $expires = time() + 1800;
-    foreach ($http_response_header as $header) {
+    foreach ($http_response_header ?? [] as $header) {
         if (stripos($header, 'Expires:') === 0) {
             $exp = strtotime(substr($header, 9));
             if ($exp > time()) $expires = $exp;
@@ -1784,7 +1786,7 @@ if ($type == "last") {
 } else if ($type == "month") {
     // All images for this month, specified with $year and $month parameters.
     if ($month && $year) {
-        print_full_month($year, sprintf("%02d", $month), $monthly_hour, $size);
+        print_full_month($year, sprintf("%02d", $month));
     }
 } else if ($type == "year") {
     // The full year, actually. Not all images, though.

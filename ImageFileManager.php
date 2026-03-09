@@ -57,20 +57,23 @@ class ImageFileManager {
         
         if (is_dir("$year/$month/$day")) {
             $this->debugLog("NORMAL: Finding latest in $year/$month/$day/");
-            $latest_image = max(glob("$year/$month/$day/*.jpg", GLOB_BRACE));
+            $images = glob("$year/$month/$day/*.jpg", GLOB_BRACE);
         } elseif (is_dir("$year/$month")) {
             $this->debugLog("MONTH: Finding latest in $year/$month/");
-            $latest_image = max(glob("$year/$month/**/*.jpg", GLOB_BRACE));
+            $images = glob("$year/$month/**/*.jpg", GLOB_BRACE);
         } elseif (is_dir("$year")) {
             $this->debugLog("YEAR: Finding latest in $year/");
-            $latest_image = max(glob("$year/**/*.jpg", GLOB_BRACE));
+            $images = glob("$year/**/*.jpg", GLOB_BRACE);
         } else {
             return '';
         }
-        
+
+        if (empty($images)) return '';
+        $latest_image = max($images);
+
         $image = $this->getYYYYMMDDHHMMSS($latest_image);
         $this->debugLog("FOUND latest image: $image");
-        
+
         return $image;
     }
     

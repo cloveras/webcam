@@ -266,8 +266,8 @@ if ($count === 0) {
 // Footer
 // ============================================================
 
-$prev_url_safe = $prev_url ?: '';
-$next_url_safe = $next_url ?: '';
+$prev_url_safe = $prev_url ? addslashes($prev_url) : '';
+$next_url_safe = $next_url ? addslashes($next_url) : '';
 
 echo <<<TOUCH
 

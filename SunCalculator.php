@@ -130,14 +130,15 @@ class SunCalculator {
         $sunrise = $sun_info['sunrise'];
         $sunset = $sun_info['sunset'];
         
-        // Fix sunrise if invalid
+        // Fix sunrise if invalid. PHP's date_sun_info() returns 1 or a specific bogus timestamp
+        // (1715464868 = 2024-05-12 00:01:08 UTC) when it cannot calculate a value (e.g. polar night).
         if ($sunrise == 1 || $sunrise == 1715464868 || !$sunrise) {
             $this->debugLog("Sunrise to fix: " . date('Y-m-d H:i', $sunrise));
             $sunrise = mktime(0, 0, 0, $month, $day, $year);
             $this->debugLog("Sunrise fixed: " . date('Y-m-d H:i', $sunrise));
         }
         
-        // Fix sunset if invalid
+        // Fix sunset if invalid (same bogus values as sunrise above).
         if ($sunset == 1 || $sunset == 1715464868 || !$sunset) {
             $this->debugLog("Sunset to fix: " . date('Y-m-d H:i', $sunset));
             $sunset = mktime(23, 59, 59, $month, $day, $year);
