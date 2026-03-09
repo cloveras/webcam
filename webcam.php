@@ -513,10 +513,8 @@ function print_full_year($year)
     }
 
     page_header("Lillevik Lofoten webcam: $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
-    print_previous_next_year_links($year);
-
     // Links to all months 1-12: Commas and "and" for the last one.
-    echo "\n<p>Months: \n";
+    echo "\n<p>" . year_nav_links($year) . " | Months: \n";
     $monthLinks = [];
     for ($i = 1; $i <= 12; $i++) {
         $monthLinks[] = "<a href=\"?type=month&year=$year&month=" . sprintf("%02d", $i) . "\">" . sprintf("%02d", $i) . "</a>";
@@ -1352,14 +1350,14 @@ function find_previous_and_next_month($year, $month)
  * 
  * @param string|int $year
  */
-function print_previous_next_year_links($year)
+function year_nav_links($year)
 {
     $links = [];
     $links[] = "<a href=\"?type=year&year=" . ($year - 1) . "\">&larr; " . ($year - 1) . "</a>";
     if ($year < date('Y')) {
         $links[] = "<a href=\"?type=year&year=" . ($year + 1) . "\">" . ($year + 1) . " &rarr;</a>";
     }
-    echo "<p>" . implode(" | ", $links) . "</p>\n\n";
+    return implode(" | ", $links);
 }
 
 /**
