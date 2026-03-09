@@ -147,35 +147,53 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
     print(f"\nScanned {scanned} images, kept {len(results)} above threshold {threshold}")
     return results
 
+def _infer_year(folder):
+    """Extract a 4-digit year from the folder path, e.g. /images/2026 or /images/2026/03."""
+    for part in Path(folder).parts:
+        if part.isdigit() and len(part) == 4 and 2000 <= int(part) <= 2100:
+            return part
+    return None
+
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Scan webcam images for aurora likelihood.")
-    parser.add_argument("folder", help="Folder to scan")
-    parser.add_argument("--limit", type=int, default=50, help="Number of results to show")
-    parser.add_argument("--threshold", type=float, default=0.0, help="Minimum score to include")
-    parser.add_argument("--night", action="store_true", help="Only scan images taken during astronomical darkness (before nautical dawn / after nautical dusk, accounting for midnight sun and polar night)")
-    parser.add_argument("--workers", type=int, default=None, help="Number of parallel workers (default: all CPU cores; try 1-2 for network drives)")
-    parser.add_argument("--json-output", metavar="FILE", help="Write results as JSON to FILE (sorted by timestamp, all results above threshold)")
-    parser.add_argument("--append", action="store_true", help="Upsert entries by timestamp instead of replacing the whole scanned month (use for incremental/daily scans)")
+    parser = argparse.ArgumentParser(
+        description="Scan webcam images for aurora likelihood.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("folder", help="Folder to scan (year, month, or day directory)")
+    parser.add_argument("--limit", type=int, default=50, help="Number of results to print")
+    parser.add_argument("--threshold", type=float, default=0.15, help="Minimum score to include")
+    parser.add_argument("--day", action="store_true", help="Scan all images including daytime (default: night only)")
+    parser.add_argument("--workers", type=int, default=None, help="Parallel workers (default: all CPU cores; try 1-2 for network drives)")
+    parser.add_argument("--json-output", metavar="FILE", help="JSON output file (default: data/aurora-YYYY.json derived from folder path)")
+    parser.add_argument("--append", action="store_true", help="Upsert entries by timestamp instead of replacing the whole scanned month")
 
     args = parser.parse_args()
+
+    # Derive json output path from folder year if not given explicitly
+    json_output = args.json_output
+    if json_output is None:
+        year = _infer_year(args.folder)
+        if year:
+            json_output = f"data/aurora-{year}.json"
 
     results = scan_folder(
         args.folder,
         limit=args.limit,
         threshold=args.threshold,
-        night_only=args.night,
+        night_only=not args.day,
         workers=args.workers,
     )
 
-    if args.json_output:
+    if json_output:
         import json
         new_data = sorted(
             [{"timestamp": path.stem, "score": round(score, 4)} for score, path in results],
             key=lambda x: x["timestamp"]
         )
-        output_path = Path(args.json_output)
+        output_path = Path(json_output)
         if output_path.exists() and new_data:
             existing = json.loads(output_path.read_text())
             if args.append:
@@ -184,13 +202,13 @@ if __name__ == "__main__":
                     by_ts[item["timestamp"]] = item
                 merged = sorted(by_ts.values(), key=lambda x: x["timestamp"])
                 output_path.write_text(json.dumps(merged, indent=2))
-                print(f"\nJSON updated in {args.json_output} ({len(merged)} total entries, {len(new_data)} new/updated)")
+                print(f"\nJSON updated in {json_output} ({len(merged)} total entries, {len(new_data)} new/updated)")
             else:
                 scanned_months = {x["timestamp"][:6] for x in new_data}
                 kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
                 merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
                 output_path.write_text(json.dumps(merged, indent=2))
-                print(f"\nJSON merged into {args.json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
+                print(f"\nJSON merged into {json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
         else:
             output_path.write_text(json.dumps(new_data, indent=2))
-            print(f"\nJSON written to {args.json_output} ({len(new_data)} entries)")
+            print(f"\nJSON written to {json_output} ({len(new_data)} entries)")
