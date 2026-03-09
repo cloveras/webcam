@@ -356,25 +356,21 @@ echo "</p>\n\n";
 // Month navigation bar
 // ============================================================
 
-echo '<p>';
-if ($prev_url && $prev_label) {
-    echo "<a href=\"$prev_url\">&larr; $prev_label</a> &nbsp;|&nbsp; ";
-}
-echo date('F Y', $title_ts);
-if ($next_url && $next_label) {
-    echo " &nbsp;|&nbsp; <a href=\"$next_url\">$next_label &rarr;</a>";
-}
-echo "</p>\n\n";
-
 $base_url = "?year=$year_str&month=$month_str";
 $nav_links = [];
+if ($prev_url && $prev_label) {
+    $nav_links[] = "<a href=\"$prev_url\">&larr; $prev_label</a>";
+}
+$nav_links[] = date('F Y', $title_ts);
+if ($next_url && $next_label) {
+    $nav_links[] = "<a href=\"$next_url\">$next_label &rarr;</a>";
+}
 $nav_links[] = "<a href=\".\">Webcam</a>";
 if ($size === 'large') {
     $nav_links[] = "<a href=\"{$base_url}\">Mini photos</a>";
 } else {
     $nav_links[] = "<a href=\"{$base_url}&size=large\">Large photos</a>";
 }
-$nav_links[] = "<a href=\"people.php\">People</a>";
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
 // ============================================================

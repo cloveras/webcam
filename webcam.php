@@ -1408,7 +1408,6 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
     }
     $links[] = "<a href=\"?type=last\">Latest image</a>";
     $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
-    $links[] = "<a href=\"people.php\">People</a>";
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
@@ -1425,7 +1424,6 @@ function print_full_day_link($timestamp)
     $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">Entire " . date("F", $timestamp) . "</a>";
     $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
     $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
-    $links[] = "<a href=\"people.php\">People</a>";
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
