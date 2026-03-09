@@ -510,6 +510,7 @@ if __name__ == "__main__":
             key=lambda x: x["timestamp"]
         )
         output_path = Path(args.json_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         if output_path.exists() and new_data:
             existing = json.loads(output_path.read_text())
             if args.append:

@@ -4,13 +4,13 @@
 
 ### Core Files
 
-- **`webcam.php`** - Main entry point and page rendering functions
-- **`WebcamConfig.php`** - All configuration constants and site-specific settings
-- **`SunCalculator.php`** - Sun time calculations (sunrise, sunset, dawn, dusk, midnight sun, polar night)
-- **`ImageFileManager.php`** - File system operations for images
-- **`NavigationHelper.php`** - Navigation and URL generation helpers
-- **`css.php`** - CSS file server
-- **`latest.php`** - Latest image server with no-cache headers
+- `webcam.php` - Main entry point and page rendering functions
+- `WebcamConfig.php` - All configuration constants and site-specific settings
+- `SunCalculator.php` - Sun time calculations (sunrise, sunset, dawn, dusk, midnight sun, polar night)
+- `ImageFileManager.php` - File system operations for images
+- `NavigationHelper.php` - Navigation and URL generation helpers
+- `css.php` - CSS file server
+- `latest.php` - Latest image server with no-cache headers
 
 ## Class Documentation
 
@@ -26,7 +26,7 @@ Central configuration class containing all site-specific settings:
 - Site information and URLs
 - Analytics tracking IDs
 
-**To customize for your installation:** Edit the constants in `WebcamConfig.php`.
+To customize for your installation: Edit the constants in `WebcamConfig.php`.
 
 ### SunCalculator
 
@@ -36,7 +36,7 @@ Handles all astronomical calculations:
 - `isPolarNight($timestamp)` - Check if date is in polar night period
 - `findSunTimes($timestamp)` - Calculate sunrise, sunset, dawn, and dusk times
 
-**Key features:**
+Key features:
 - Automatically handles midnight sun (shows images 00:00-23:59)
 - Automatically handles polar night (shows images 06:00-17:00)
 - Adjusts dawn/dusk to stay within the same day as sunrise/sunset
@@ -52,6 +52,7 @@ Manages all file system operations:
 - `findFirstDayWithImages($year, $month)` - Find first available day
 - `getAllImagesInDirectory($directory)` - Get all images for a day
 - `findFirstImageAfterTime(...)` - Find first image after specific time
+- `findClosestImageToHour($directory, $hour)` - Find image nearest to a target hour (fallback for days with gaps)
 - `checkAndRenameFilesHack($prefix)` - Handle files before cron processes them
 
 ### NavigationHelper
@@ -65,12 +66,12 @@ Navigation and URL generation utilities:
 
 The application supports several view types via the `?type=` parameter:
 
-- **`last`** - Latest single image (default)
-- **`one`** - Specific single image (`&image=YYYYMMDDHHMMSS`)
-- **`day`** - All images for a day (`&date=YYYYMMDD&size=mini|large`)
-- **`month`** - One image per day for a month (`&year=YYYY&month=MM`)
-- **`year`** - Multiple images per month for a year (`&year=YYYY`)
-- **`all`** - Overview of all years (heavy operation)
+- `last` - Latest single image (default)
+- `one` - Specific single image (`&image=YYYYMMDDHHMMSS`)
+- `day` - All images for a day (`&date=YYYYMMDD&size=mini|large`)
+- `month` - One image per day for a month (`&year=YYYY&month=MM`)
+- `year` - Multiple images per month for a year (`&year=YYYY`)
+- `all` - Overview of all years (heavy operation)
 
 ## No External Dependencies
 
@@ -80,7 +81,7 @@ The application uses only PHP standard library functions.
 
 To use this code for your own webcam:
 
-1. **Update `WebcamConfig.php`:**
+1. Update `WebcamConfig.php`:
    - Set `LATITUDE` and `LONGITUDE` for your location
    - Update `MIDNIGHT_SUN_PERIOD` and `POLAR_NIGHT_PERIOD` dates (check [yr.no](https://www.yr.no/))
    - Change `SITE_NAME`, `SITE_URL`, `SITE_DESCRIPTION`
@@ -88,12 +89,12 @@ To use this code for your own webcam:
    - Set `FILENAME_PREFIX_TO_RENAME` for your camera's filename format
    - Adjust `START_YEAR` to your first year of images
 
-2. **Update `webcam.php`:**
+2. Update `webcam.php`:
    - Modify the HTML meta tags in `page_header()` function
    - Update Schema.org structured data
    - Customize the `print_lillevik_images_and_links()` function for your site
 
-3. **Test thoroughly:**
+3. Test thoroughly:
    - Verify sunrise/sunset times at [yr.no](https://www.yr.no/)
    - Test navigation during polar night and midnight sun periods
    - Check image display for different view types

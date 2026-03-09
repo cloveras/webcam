@@ -10,8 +10,17 @@
  *     --json-output /path/to/webcam/data/people-2026.json
  */
 
-require_once 'WebcamConfig.php';
-require_once 'NavigationHelper.php';
+require_once __DIR__ . '/WebcamConfig.php';
+require_once __DIR__ . '/NavigationHelper.php';
+
+// ============================================================
+// Camera configuration — override via define() before including this file
+// ============================================================
+defined('PEOPLE_LABEL')       || define('PEOPLE_LABEL',       'Lillevik Lofoten webcam');
+defined('PEOPLE_CSS_PATH')    || define('PEOPLE_CSS_PATH',    'css.php');
+defined('PEOPLE_INTRO_HTML')  || define('PEOPLE_INTRO_HTML',  '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway.');
+defined('PEOPLE_SHOW_AURORA') || define('PEOPLE_SHOW_AURORA', true);
+defined('PEOPLE_DATA_DIR')    || define('PEOPLE_DATA_DIR',    __DIR__ . '/data');
 
 error_reporting(E_ERROR | E_PARSE);
 setlocale(LC_ALL, WebcamConfig::LOCALE);
@@ -22,7 +31,7 @@ date_default_timezone_set(WebcamConfig::TIMEZONE);
 // ============================================================
 
 $all_images = [];
-foreach (glob(__DIR__ . '/data/people-*.json') as $json_file) {
+foreach (glob(PEOPLE_DATA_DIR . '/people-*.json') as $json_file) {
     $decoded = json_decode(file_get_contents($json_file), true);
     if (is_array($decoded)) {
         $all_images = array_merge($all_images, $decoded);
@@ -101,7 +110,7 @@ usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = 'Lillevik Lofoten webcam: People ' . date('F Y', $title_ts);
+$title    = PEOPLE_LABEL . ': People ' . date('F Y', $title_ts);
 
 // ============================================================
 // HTML header
@@ -125,7 +134,7 @@ echo '  <meta name="keywords" content="lofoten,webcam,people,Lillevik">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robot" content="noindex">' . "\n";
 echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
-echo '  <link rel="stylesheet" type="text/css" href="css.php">' . "\n";
+echo '  <link rel="stylesheet" type="text/css" href="' . PEOPLE_CSS_PATH . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
 echo '  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">' . "\n";
@@ -180,12 +189,7 @@ echo "  </script>\n\n";
 echo "</head>\n";
 echo "<body>\n\n";
 echo "<h1>$title</h1>\n\n";
-echo "<p>\n";
-echo "<a href=\".\">Webcam</a>\n";
-echo "at\n";
-echo "<a href=\"https://lilleviklofoten.no\">Lillevik Lofoten</a>,\n";
-echo "Vik, Gimsøy, Lofoten, Norway.\n";
-echo "</p>\n\n";
+echo "<p>" . PEOPLE_INTRO_HTML . "</p>\n\n";
 
 // ============================================================
 // Month navigation bar
@@ -206,7 +210,7 @@ if ($size === 'large') {
 } else {
     $nav_links[] = "<a href=\"{$base_url}&size=large\">Large photos</a>";
 }
-$nav_links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+if (PEOPLE_SHOW_AURORA) $nav_links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
 // ============================================================
@@ -216,7 +220,8 @@ echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 $mini_w = WebcamConfig::MINI_IMAGE_WIDTH;
 $mini_h = WebcamConfig::MINI_IMAGE_HEIGHT;
 
-echo '<div class="grid-container">' . "\n";
+$grid_class = ($size === 'large') ? 'grid-container-large' : 'grid-container';
+echo "<div class=\"$grid_class\">\n";
 
 $count = 0;
 foreach ($month_images as $img) {
@@ -238,13 +243,15 @@ foreach ($month_images as $img) {
         $src = file_exists($mini_path) ? $mini_path : $full_path;
         $img_attrs = " width=\"$mini_w\" height=\"$mini_h\"";
     }
-    $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi";
+    $alt       = PEOPLE_LABEL . ": $y-$m-$d $h:$mi";
     $link      = "webcam.php?type=one&image=$ts";
     $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
-    echo "  <div class=\"grid-item\">\n";
-    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\"{$img_attrs}></a>\n";
-    echo "    <span class=\"time\">$label</span>\n";
+    $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
+    $time_style = ($size === 'large') ? ' style="bottom:40px"' : '';
+    echo "  <div class=\"grid-item\"$item_style>\n";
+    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" loading=\"lazy\"{$img_attrs}></a>\n";
+    echo "    <span class=\"time\"$time_style>$label</span>\n";
     echo "  </div>\n";
     $count++;
 }

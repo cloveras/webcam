@@ -380,7 +380,8 @@ echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 $mini_w = WebcamConfig::MINI_IMAGE_WIDTH;
 $mini_h = WebcamConfig::MINI_IMAGE_HEIGHT;
 
-echo '<div class="grid-container">' . "\n";
+$grid_class = ($size === 'large') ? 'grid-container-large' : 'grid-container';
+echo "<div class=\"$grid_class\">\n";
 
 $count = 0;
 foreach ($month_images as $img) {
@@ -406,9 +407,11 @@ foreach ($month_images as $img) {
     $link      = "webcam.php?type=one&image=$ts";
     $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
-    echo "  <div class=\"grid-item\">\n";
-    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\"{$img_attrs}></a>\n";
-    echo "    <span class=\"time\">$label</span>\n";
+    $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
+    $time_style = ($size === 'large') ? ' style="bottom:40px"' : '';
+    echo "  <div class=\"grid-item\"$item_style>\n";
+    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" loading=\"lazy\"{$img_attrs}></a>\n";
+    echo "    <span class=\"time\"$time_style>$label</span>\n";
     echo "  </div>\n";
     $count++;
 }

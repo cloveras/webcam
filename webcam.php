@@ -25,6 +25,7 @@ defined('CAM_LABEL')           || define('CAM_LABEL',           'Lillevik Lofote
 defined('CAM_FILE_PREFIX')     || define('CAM_FILE_PREFIX',     'Lillevik Lofoten_01_');
 defined('CAM_FILE_PREFIX_ALT') || define('CAM_FILE_PREFIX_ALT', 'Lillevik Lofoten_00_');
 defined('CAM_IS_PRIMARY')      || define('CAM_IS_PRIMARY',      true);
+defined('CAM_SHOW_PEOPLE')     || define('CAM_SHOW_PEOPLE',     false);
 defined('CAM_CSS_PATH')        || define('CAM_CSS_PATH',        'css.php');
 defined('CAM_INTRO_HTML')      || define('CAM_INTRO_HTML',      '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway. See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>');
 
@@ -44,31 +45,17 @@ defined('CAM_INTRO_HTML')      || define('CAM_INTRO_HTML',      '<a href=".">Web
  */
 function page_header($title, $previous, $next, $up, $down, $prefetch_images = array())
 {
+    // Pre-compute variables for heredoc interpolation (PHP tags don't execute inside heredocs)
+    $_cam_label    = CAM_LABEL;
+    $_cam_css_path = CAM_CSS_PATH;
+    $_cam_canonical = CAM_IS_PRIMARY
+        ? '  <link rel="canonical" href="https://lilleviklofoten.no/webcam/">'
+        : '';
+    $_ga_id        = WebcamConfig::GOOGLE_ANALYTICS_ID;
+    $_clarity_id   = WebcamConfig::MICROSOFT_CLARITY_ID;
+    if (CAM_IS_PRIMARY) {
+        $_cam_json_ld = <<<JSONLD
 
-    print <<<END1
-<!DOCTYPE html>
-<html lang="en-US">
-<head>
-  <meta charset="utf-8">
-
-  <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
-  <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
-  <meta name="robot" content="index">
-  <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
-
-  <meta property="og:title" content="<?php echo CAM_LABEL; ?>">
-
-  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
-  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
-  <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
-
-  <?php if (CAM_IS_PRIMARY): ?><link rel="canonical" href="https://lilleviklofoten.no/webcam/"><?php endif; ?>
-
-  <link rel="stylesheet" type="text/css" href="<?php echo CAM_CSS_PATH; ?>">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <?php if (CAM_IS_PRIMARY): ?>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -121,7 +108,34 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     "image": "https://lilleviklofoten.no/webcam/latest.jpg"
   }
   </script>
-  <?php endif; ?>
+JSONLD;
+    } else {
+        $_cam_json_ld = '';
+    }
+
+    print <<<END1
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+
+  <meta name="description" content="Lofoten webcam with view towards west from Vik, Gimsøy, Lofoten, Norway.">
+  <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
+  <meta name="robot" content="index">
+  <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
+
+  <meta property="og:title" content="$_cam_label">
+
+  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
+  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
+  <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
+
+$_cam_canonical
+
+  <link rel="stylesheet" type="text/css" href="$_cam_css_path">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+$_cam_json_ld
 
 END1;
 
@@ -195,15 +209,16 @@ END2;
     }
 
     // Google Analytics and Microsoft Clarity
+    $_cam_intro = CAM_INTRO_HTML;
     print <<<END3
 
   <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo WebcamConfig::GOOGLE_ANALYTICS_ID; ?>"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=$_ga_id"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '<?php echo WebcamConfig::GOOGLE_ANALYTICS_ID; ?>');
+      gtag('config', '$_ga_id');
     </script>
 
     <!-- Microsoft Clarity -->
@@ -212,7 +227,7 @@ END2;
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "<?php echo WebcamConfig::MICROSOFT_CLARITY_ID; ?>");
+    })(window, document, "clarity", "script", "$_clarity_id");
     </script>
 
 </head>
@@ -221,7 +236,7 @@ END2;
 <h1>$title</h1>
 
 <p>
-<?php echo CAM_INTRO_HTML; ?>
+$_cam_intro
 </p>
 END3;
 }
@@ -453,7 +468,7 @@ function print_full_month($year, $month)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=day&date=$year$month$day\">";
-                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" loading=\"lazy\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {
@@ -567,7 +582,7 @@ function print_full_year($year)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
-                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" loading=\"lazy\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                 echo "src=\"$year/$month/$day/";
@@ -656,7 +671,7 @@ function print_all_years()
                     echo "<div class=\"grid-item\">";
 
                     echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
-                    echo "<img alt=\"" . CAM_LABEL . ": $year-$month--$monthly_day $hour:$minute\" ";
+                    echo "<img alt=\"" . CAM_LABEL . ": $year-$month--$monthly_day $hour:$minute\" loading=\"lazy\" ";
                     //echo "title=\"$year-$month-$monthly_day $hour:$minute\" ";
                     echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
                     echo "src=\"$year/$month/$monthly_day/";
@@ -1418,13 +1433,16 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
     if (file_exists('aurora.php')) {
         $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
     }
+    if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
+        $links[] = "<a href=\"people.php\">People</a>";
+    }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 
 
 /**
  * Print link to the full day view
- * 
+ *
  * @param int $timestamp Unix timestamp
  */
 function print_full_day_link($timestamp)
@@ -1435,6 +1453,9 @@ function print_full_day_link($timestamp)
     $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
     if (file_exists('aurora.php')) {
         $links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+    }
+    if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
+        $links[] = "<a href=\"people.php\">People</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1575,7 +1596,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
                 echo "<div class=\"grid-item\">";
 
                 echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
-                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
+                echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" loading=\"lazy\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";
                 if ($size == "mini" || empty($size)) {

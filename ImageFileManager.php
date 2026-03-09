@@ -110,8 +110,36 @@ class ImageFileManager {
     }
     
     /**
-     * Get the latest image in a directory for a specific hour
-     * 
+     * Find the image in a directory whose time is closest to a target hour.
+     * Used as a fallback when no image exists for the exact target hour.
+     *
+     * @param string $directory Example: "2023/11/14"
+     * @param int $targetHour Hour (0-23)
+     * @return string Full path to closest image, or empty string if directory is empty
+     */
+    public function findClosestImageToHour(string $directory, int $targetHour): string {
+        $images = glob("$directory/*.jpg");
+        if (empty($images)) return '';
+
+        $best = '';
+        $bestDiff = PHP_INT_MAX;
+        foreach ($images as $img) {
+            $yyyymmddhhmmss = $this->getYYYYMMDDHHMMSS($img);
+            $imgMinutes = (int)substr($yyyymmddhhmmss, 8, 2) * 60 + (int)substr($yyyymmddhhmmss, 10, 2);
+            $diff = abs($imgMinutes - $targetHour * 60);
+            if ($diff < $bestDiff) {
+                $bestDiff = $diff;
+                $best = $img;
+            }
+        }
+        $this->debugLog("findClosestImageToHour($directory, $targetHour): " . ($best ?: 'none'));
+        return $best;
+    }
+
+    /**
+     * Get the latest image in a directory for a specific hour.
+     * Falls back to the image closest to that hour if none exists at the exact hour.
+     *
      * @param string $directory Example: "2023/11/14"
      * @param int $hour Hour (0-23)
      * @return string Full path to image or empty string
@@ -120,16 +148,17 @@ class ImageFileManager {
         $date = preg_replace("/[^0-9]/", "", $directory);
         $hour_padded = sprintf("%02d", $hour);
         $images = glob("$directory/$date$hour_padded*.jpg");
-        
-        $this->debugLog("getLatestImageInDirectoryByDateHour($directory, $hour): Found " . 
+
+        $this->debugLog("getLatestImageInDirectoryByDateHour($directory, $hour): Found " .
                        count($images) . " images");
-        
-        return !empty($images) ? $images[0] : '';
+
+        return !empty($images) ? $images[0] : $this->findClosestImageToHour($directory, $hour);
     }
-    
+
     /**
-     * Find the first image after a given time
-     * 
+     * Find the first image after a given time.
+     * Falls back to the image closest to that hour if none exists at the exact hour.
+     *
      * @param string $year
      * @param string $month
      * @param string $day
@@ -138,29 +167,31 @@ class ImageFileManager {
      * @param int $seconds
      * @return string Date part of filename (YYYYMMDDHHMMSS) or empty string
      */
-    public function findFirstImageAfterTime(string $year, string $month, string $day, 
+    public function findFirstImageAfterTime(string $year, string $month, string $day,
                                            int $hour, int $minute, int $seconds): string {
         $minute = sprintf("%02d", $minute);
         $seconds = sprintf("%02d", $seconds);
         $hour = sprintf("%02d", $hour);
-        
+
         $this->debugLog("findFirstImageAfterTime($year, $month, $day, $hour, $minute, $seconds)");
-        
-        $imagePattern = sprintf("%s/%s/%s/%s%s%s%s*", 
+
+        $imagePattern = sprintf("%s/%s/%s/%s%s%s%s*",
                                $year, $month, $day, $year, $month, $day, $hour);
-        
+
         $this->debugLog("Looking with pattern: $imagePattern");
-        
+
         $images = glob($imagePattern);
-        
+
         if (!empty($images)) {
             $image = $this->getYYYYMMDDHHMMSS($images[0]);
             $this->debugLog("Image found: $image");
             return $image;
         }
-        
-        $this->debugLog("No images found matching pattern: $imagePattern");
-        return '';
+
+        // Fallback: no image at the target hour — pick the closest one in the day
+        $this->debugLog("No images at hour $hour, falling back to closest image in day");
+        $closest = $this->findClosestImageToHour("$year/$month/$day", (int)$hour);
+        return $closest ? $this->getYYYYMMDDHHMMSS($closest) : '';
     }
     
     /**

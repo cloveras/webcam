@@ -8,15 +8,15 @@ for webcam images stored in a directory structure like this:
 ```
 2023
 ├── 01
-│   ├── 01
-│   │   ├── 20230101000000.jpg
-│   │   ├── 20230101001000.jpg
-│   │   ├── 20230101002000.jpg
+│   ├── 01
+│   │   ├── 20230101000000.jpg
+│   │   ├── 20230101001000.jpg
+│   │   ├── 20230101002000.jpg
 [...]
 ├── 12
-│   │   ├── 20231231000000.jpg
-│   │   ├── 20231231001000.jpg
-│   │   ├── 20231231002000.jpg
+│   │   ├── 20231231000000.jpg
+│   │   ├── 20231231001000.jpg
+│   │   ├── 20231231002000.jpg
 [...]
 ```
 
@@ -25,9 +25,9 @@ for webcam images stored in a directory structure like this:
 * Finds sunrise, sunset, dawn, and dusk based on latitude and longitude.
 * Only shows images taken between dawn and dusk, handles midnight sun and polar night.
 * Navigation with touch gestures and arrow keys.
-* Shows the time (HH:MM) as a CSS overlay on thumbails when viewing a full day, month and year.
+* Shows the time (HH:MM) as a CSS overlay on thumbnails when viewing a full day, month and year.
 * Data collection with Google Analytics and Microsoft Clarity
-* **Performance optimizations**: Client-side caching, resource prefetching, and optimized loading (see [PERFORMANCE.md](PERFORMANCE.md))
+* Client-side caching, resource prefetching, and lazy image loading
 
 Example: [Lillevik Lofoten webcam](https://lilleviklofoten.no/webcam/?type=day&date=20231117)
 
@@ -47,23 +47,23 @@ If you like this you can
 * Update latitude and longitude (use Google Maps to find coordinates)
 * Verify the calculated sunrise and sunset at [yr.no](https://www.yr.no/).
 * Update the dates in functions `midnight_sun()` and `polar_night()`.
-* Change the code for Google and Analytics Microsoft Clarity.
+* Change the code for Google Analytics and Microsoft Clarity.
 * Update the HTML meta tags.
 
 For verbose feedback for debugging: Set `$debug = 1` in `webcam.php`.
 
 ## Code structure
 
-* **`WebcamConfig.php`** — All configuration constants (location, periods, display settings)
-* **`SunCalculator.php`** — Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
-* **`ImageFileManager.php`** — File system operations for finding and organizing images
-* **`NavigationHelper.php`** — Navigation and URL generation utilities
-* **`webcam.php`** — Main entry point with page rendering functions
-* **`aurora.php`** — Northern lights gallery, reads `aurora-YYYY.json` files
-* **`aurora_scan.py`** — Scans images and scores each for aurora likelihood
-* **`people.php`** — People gallery, reads `people-YYYY.json` files
-* **`people_scan.py`** — Scans images for people using YOLOv8
-* **`sun_calculator.py`** — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py` and `people_scan.py`
+* `WebcamConfig.php` — All configuration constants (location, periods, display settings)
+* `SunCalculator.php` — Sun time calculations (sunrise, sunset, dawn, dusk, handles midnight sun and polar night)
+* `ImageFileManager.php` — File system operations for finding and organizing images
+* `NavigationHelper.php` — Navigation and URL generation utilities
+* `webcam.php` — Main entry point with page rendering functions
+* `aurora.php` — Northern lights gallery, reads `aurora-YYYY.json` files
+* `aurora_scan.py` — Scans images and scores each for aurora likelihood
+* `people.php` — People gallery, reads `people-YYYY.json` files
+* `people_scan.py` — Scans images for people using YOLOv8
+* `sun_calculator.py` — Shared Python module mirroring `SunCalculator.php` (same location, same nautical twilight logic); used by `aurora_scan.py` and `people_scan.py`
 
 See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for detailed documentation.
 
@@ -82,7 +82,7 @@ pip install opencv-python numpy astral
 
 ### Scanning
 
-**Update a single month** (fast — good for routine updates):
+Update a single month (fast — good for routine updates):
 
 ```bash
 python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output data/aurora-2026.json
@@ -90,13 +90,13 @@ python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-o
 
 When `aurora-2026.json` already exists, only the months present in the scan are replaced; all other months are kept. This means you can re-scan January without touching February–December.
 
-**Full year scan** (slow — use for initial build or full rebuild):
+Full year scan (slow — use for initial build or full rebuild):
 
 ```bash
 python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
 ```
 
-**Incremental / daily scan** using `--append` (upserts individual timestamps instead of replacing the whole month):
+Incremental / daily scan using `--append` (upserts individual timestamps instead of replacing the whole month):
 
 ```bash
 python3 aurora_scan.py /path/to/images/2026/03/15 --night --threshold 0.15 --append --json-output data/aurora-2026.json
@@ -114,10 +114,10 @@ python3 aurora_scan.py /path/to/images/2026/03/15 --night --threshold 0.15 --app
 
 ### Live forecast on aurora.php
 
-When viewing the **current month**, `aurora.php` also shows:
+When viewing the current month, `aurora.php` also shows:
 
-* **Yr aurora forecast** — tonight and tomorrow night, with activity level and cloud cover. Fetched from the Yr API and cached for 30 minutes in `/tmp/yr_aurora_forecast.json`.
-* **NOAA/SWPC animated forecast** — the last 24 frames (2 hours at 5-minute intervals) cycling as an animation.
+* Yr aurora forecast — tonight and tomorrow night, with activity level and cloud cover. Fetched from the Yr API and cached for 30 minutes in `/tmp/yr_aurora_forecast.json`.
+* NOAA/SWPC animated forecast — the last 24 frames (2 hours at 5-minute intervals) cycling as an animation.
 
 Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/aurora.php?year=2026&month=01)
 
@@ -128,9 +128,9 @@ Example: [Northern lights — January 2026](https://lilleviklofoten.no/webcam/au
 `people_scan.py` scans webcam images for people using [YOLOv8](https://github.com/ultralytics/ultralytics) (nano model). Score = highest person-detection confidence in the frame (0–1). Results are saved as `people-YYYY.json` and displayed by `people.php`.
 
 Three complementary false-positive suppression layers keep the gallery clean:
-1. **Civil-twilight time filter** — skips images outside usable daylight
-2. **Static exclusion zones** — ignores detections in known-static regions (sky, boathouse, poles)
-3. **Background subtraction** — rejects detections that match the median background (glowing cabin, poles at night, etc.)
+1. Civil-twilight time filter — skips images outside usable daylight
+2. Static exclusion zones — ignores detections in known-static regions (sky, boathouse, poles)
+3. Background subtraction — rejects detections that match the median background (glowing cabin, poles at night, etc.)
 
 ### Setup
 
@@ -143,7 +143,7 @@ The YOLOv8 nano model (`yolov8n.pt`, ~6 MB) is downloaded automatically on first
 
 ### Scanning
 
-**Step 1 — build background model once** (samples 300 frames, computes per-pixel median; ~800 MB peak RAM):
+Step 1 — build background model once (samples 300 frames, computes per-pixel median; ~800 MB peak RAM):
 
 ```bash
 python3 people_scan.py /path/to/images/2026 --build-background data/background-2026.png
@@ -151,7 +151,7 @@ python3 people_scan.py /path/to/images/2026 --build-background data/background-2
 
 If `--background` points to a non-existent file the model is built automatically before scanning.
 
-**Step 2 — scan** (re-run to update after new images arrive):
+Step 2 — scan (re-run to update after new images arrive):
 
 ```bash
 python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \

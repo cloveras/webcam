@@ -10,7 +10,8 @@ define('CAM_LABEL',           'Viktun webcam');
 define('CAM_FILE_PREFIX',     'Viktun_01_');
 define('CAM_FILE_PREFIX_ALT', '');
 define('CAM_IS_PRIMARY',      false);
+define('CAM_SHOW_PEOPLE',     true);
 define('CAM_CSS_PATH',        '../css.php');
-define('CAM_INTRO_HTML',      '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway. See also: <a href="../">Lillevik Lofoten webcam</a>.');
+define('CAM_INTRO_HTML',      '<a href=".">Webcam</a> at Viktun. See also: <a href="../">Lillevik webcam</a>.');
 
 require_once __DIR__ . '/../webcam.php';
