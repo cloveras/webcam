@@ -522,11 +522,11 @@ function print_full_year($year)
         $monthLinks[] = "<a href=\"?type=month&year=$year&month=" . sprintf("%02d", $i) . "\">" . sprintf("%02d", $i) . "</a>";
     }
     $formattedMonthLinks = implode(', ', array_slice($monthLinks, 0, -1)) . ' and ' . end($monthLinks);
-    print $formattedMonthLinks . ".\n";
+    print $formattedMonthLinks . " | ";
 
     // Link to today.
-    echo "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("M d") . "</a>.\n";
-    echo "<a href=\"?type=last\">Latest image</a>.\n";
+    echo "<a href=\"?type=day&date=" . date('Ymd') . "\">Today: " . date("M d") . "</a>";
+    echo " | <a href=\"?type=last\">Latest image</a>";
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
