@@ -140,7 +140,7 @@ function lang_selector_html(): string {
 
     $html = '<select onchange="location.href=this.value">';
     foreach ($names as $code => $name) {
-        $url      = $code === 'en' ? ($qs ?? '.') : ($qs ? $qs . '&' : '?') . 'lang=' . $code;
+        $url      = ($qs ? $qs . '&' : '?') . 'lang=' . $code;
         $selected = $code === $LANG ? ' selected' : '';
         $html    .= '<option value="' . htmlspecialchars($url) . '"' . $selected . '>' . htmlspecialchars($name) . '</option>';
     }

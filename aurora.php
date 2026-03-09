@@ -266,7 +266,7 @@ usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = 'Lillevik Lofoten webcam: ' . t('aurora_page_suffix') . ' ' . date('F Y', $title_ts);
+$title    = 'Lillevik Lofoten webcam: ' . t('aurora_page_suffix') . ' ' . t_month_year($month, $year);
 
 // ============================================================
 // HTML header
