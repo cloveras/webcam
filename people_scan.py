@@ -329,7 +329,7 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
                 fg_overlap=0.15, bg_diff_threshold=25, workers=None):
     if not Path(folder).is_dir():
         print(f"Error: folder not found: {folder}")
-        return []
+        return [], set()
 
     print("Collecting file list...", end="", flush=True)
     paths = []
