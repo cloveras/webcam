@@ -209,6 +209,7 @@ $months_list = array_keys($months_with_images); // ascending
 
 $year  = isset($_GET['year'])  ? (int)$_GET['year']  : 0;
 $month = isset($_GET['month']) ? (int)$_GET['month'] : 0;
+$using_default = !isset($_GET['year']) && !isset($_GET['month']);
 $size  = (isset($_GET['size']) && $_GET['size'] === 'large') ? 'large' : 'mini';
 
 if (!$year || !$month) {
@@ -285,12 +286,14 @@ echo '<!DOCTYPE html>' . "\n";
 echo '<html lang="' . lang_html_attr() . '">' . "\n";
 echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
-echo '  <meta name="description" content="' . htmlspecialchars(WebcamConfig::AURORA_DESCRIPTION) . '">' . "\n";
+$_aurora_meta_desc = htmlspecialchars(strip_tags(t('aurora_seo_description')), ENT_QUOTES, 'UTF-8');
+echo '  <meta name="description" content="' . $_aurora_meta_desc . '">' . "\n";
+echo '  <meta property="og:description" content="' . $_aurora_meta_desc . '">' . "\n";
 echo '  <meta name="keywords" content="lofoten,webcam,aurora,northern lights,nordlys,polarlys">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robots" content="index, follow">' . "\n";
 echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
-echo '  <link rel="stylesheet" type="text/css" href="css.php">' . "\n";
+echo '  <link rel="stylesheet" type="text/css" href="css.php?v=' . filemtime(__DIR__ . '/webcam.css') . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
 echo '  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">' . "\n";
@@ -370,6 +373,10 @@ if ($size === 'large') {
 $nav_links[] = lang_selector_html();
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
+if ($using_default && $current_ym !== date('Ym')) {
+    echo "<p>" . t('aurora_showing_latest') . "</p>\n\n";
+}
+
 // ============================================================
 // Image grid
 // ============================================================
@@ -418,6 +425,8 @@ echo "</div>\n\n";
 if ($count === 0) {
     echo '<p>(' . sprintf(t('aurora_no_photos'), t_month_year($month, $year)) . '.)</p>' . "\n\n";
 }
+
+echo "<p class=\"seo-desc\">" . t('aurora_seo_description_short') . "</p>\n\n";
 
 if ($current_ym === date('Ym')) {
     print_aurora_forecast();
