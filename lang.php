@@ -82,6 +82,46 @@ function t(string $key): string {
     return $TRANSLATIONS[$LANG][$key] ?? $TRANSLATIONS['en'][$key] ?? $key;
 }
 
+/** Returns "&lang=XX" (for appending to URLs that already have a query string), or "" for English. */
+function lang_param(): string {
+    global $LANG;
+    return $LANG === 'en' ? '' : '&lang=' . $LANG;
+}
+
+/** Returns "?lang=XX" (for appending to bare URLs with no query string), or "" for English. */
+function lang_query(): string {
+    global $LANG;
+    return $LANG === 'en' ? '' : '?lang=' . $LANG;
+}
+
+/** Returns the translated month name for month 1–12. */
+function t_month(int $month): string {
+    global $LANG, $TRANSLATIONS;
+    $months = $TRANSLATIONS[$LANG]['months'] ?? $TRANSLATIONS['en']['months'];
+    return $months[$month - 1] ?? '';
+}
+
+/** Returns a localised "Month Year" string, e.g. "gennaio 2026" or "2026年1月". */
+function t_month_year(int $month, int $year): string {
+    global $LANG;
+    if ($LANG === 'ja' || $LANG === 'zh') return "{$year}年{$month}月";
+    if ($LANG === 'ko') return "{$year}년 {$month}월";
+    return t_month($month) . ' ' . $year;
+}
+
+/** Returns a localised "Month Day" string for navigation labels, e.g. "8 marzo" or "8. März". */
+function t_month_day(int $month, int $day): string {
+    global $LANG;
+    $name = t_month($month);
+    return match($LANG) {
+        'ja', 'zh' => "{$month}月{$day}日",
+        'ko'       => "{$month}월 {$day}일",
+        'de', 'nb', 'da', 'fi' => "{$day}. {$name}",
+        'es', 'pt' => "{$day} de {$name}",
+        default    => "{$day} {$name}",
+    };
+}
+
 $LANG = detect_lang();
 
 $TRANSLATIONS = [
@@ -150,6 +190,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Northern lights detection by <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Image overlay: day, time, and aurora detection score.',
     'aurora_intro'        => '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway.',
     'aurora_see_also'     => 'See also: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Northern lights at Lillevik Lofoten</a>.',
+    'months'             => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     'people_no_photos'    => 'No photos with people to display for %s',
     'people_credit'       => 'People detection by <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> using YOLOv8. Image label: day, time, and detection confidence.',
 ],
@@ -218,6 +259,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Nordlichterkennung durch <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Bildüberlagerung: Tag, Uhrzeit und Erkennungswert.',
     'aurora_intro'        => '<a href=".">Webcam</a> bei <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norwegen.',
     'aurora_see_also'     => 'Siehe auch: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Nordlichter bei Lillevik Lofoten</a>.',
+    'months'             => ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
     'people_no_photos'    => 'Keine Personenfotos für %s',
     'people_credit'       => 'Personenerkennung durch <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> mit YOLOv8. Beschriftung: Tag, Uhrzeit und Erkennungswert.',
 ],
@@ -286,6 +328,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Rilevamento aurora da <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Sovrapposizione: giorno, ora e punteggio.',
     'aurora_intro'        => '<a href=".">Webcam</a> a <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norvegia.',
     'aurora_see_also'     => 'Vedi anche: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Aurora boreale a Lillevik Lofoten</a>.',
+    'months'             => ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'],
     'people_no_photos'    => 'Nessuna foto con persone per %s',
     'people_credit'       => 'Rilevamento persone da <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> con YOLOv8. Etichetta: giorno, ora e confidenza.',
 ],
@@ -354,6 +397,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => "Détection d'aurores par <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">aurora_scan.py</a>. Superposition\u00a0: jour, heure et score.",
     'aurora_intro'        => '<a href=".">Webcam</a> à <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norvège.',
     'aurora_see_also'     => 'Voir aussi : <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Aurore boréale à Lillevik Lofoten</a>.',
+    'months'             => ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
     'people_no_photos'    => 'Aucune photo avec des personnes pour %s',
     'people_credit'       => 'Détection de personnes par <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> avec YOLOv8. Étiquette\u00a0: jour, heure et confiance.',
 ],
@@ -422,6 +466,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Nordlysregistrering av <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Bildetekst: dag, tid og poengsum.',
     'aurora_intro'        => '<a href=".">Webkamera</a> ved <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norge.',
     'aurora_see_also'     => 'Se også: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Nordlys ved Lillevik Lofoten</a>.',
+    'months'             => ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'],
     'people_no_photos'    => 'Ingen personbilder for %s',
     'people_credit'       => 'Personregistrering av <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> med YOLOv8. Bildetekst: dag, tid og konfidensverdi.',
 ],
@@ -490,6 +535,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Noorderlichtdetectie door <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Beeldoverlay: dag, tijd en detectiescore.',
     'aurora_intro'        => '<a href=".">Webcam</a> bij <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Noorwegen.',
     'aurora_see_also'     => 'Zie ook: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Noorderlicht bij Lillevik Lofoten</a>.',
+    'months'             => ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'],
     'people_no_photos'    => "Geen foto's met personen voor %s",
     'people_credit'       => "Persoonsdetectie door <a style=\"color: rgb(200, 200, 200);\" href=\"https://github.com/cloveras/webcam\">people_scan.py</a> met YOLOv8. Label: dag, tijd en betrouwbaarheid.",
 ],
@@ -558,6 +604,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Detección de auroras por <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Superposición: día, hora y puntuación.',
     'aurora_intro'        => '<a href=".">Webcam</a> en <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Noruega.',
     'aurora_see_also'     => 'Ver también: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Aurora boreal en Lillevik Lofoten</a>.',
+    'months'             => ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
     'people_no_photos'    => 'Sin fotos con personas para %s',
     'people_credit'       => 'Detección de personas por <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> con YOLOv8. Etiqueta: día, hora y confianza.',
 ],
@@ -626,6 +673,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => '<a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>によるオーロラ検出。ラベル：日付、時刻、スコア。',
     'aurora_intro'        => '<a href="https://lilleviklofoten.no">Lillevik Lofoten</a>（ノルウェー、ロフォーテン諸島、Gimsøy、Vik）の<a href=".">ウェブカメラ</a>。',
     'aurora_see_also'     => '関連： <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Lillevik Lofoten のオーロラ</a>。',
+    'months'             => ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
     'people_no_photos'    => '%sの人物写真なし',
     'people_credit'       => 'YOLOv8を使用した<a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a>による人物検出。ラベル：日付、時刻、信頼度。',
 ],
@@ -694,6 +742,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => '<a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>极光检测。标注：日期、时间和分数。',
     'aurora_intro'        => '<a href=".">网络摄像头</a>位于<a href="https://lilleviklofoten.no">Lillevik Lofoten</a>，挪威罗弗敦群岛Gimsøy岛Vik。',
     'aurora_see_also'     => '另请参阅： <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Lillevik Lofoten 的极光</a>。',
+    'months'             => ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
     'people_no_photos'    => '%s无人物照片',
     'people_credit'       => '<a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a>使用YOLOv8进行人物检测。标注：日期、时间和置信度。',
 ],
@@ -762,6 +811,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => '<a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>로 오로라 감지. 레이블: 날짜, 시간, 점수.',
     'aurora_intro'        => '노르웨이 로포텐 제도 Gimsøy, Vik의 <a href="https://lilleviklofoten.no">Lillevik Lofoten</a> <a href=".">웹카메라</a>.',
     'aurora_see_also'     => '참고： <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Lillevik Lofoten의 오로라</a>.',
+    'months'             => ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
     'people_no_photos'    => '%s 인물 사진 없음',
     'people_credit'       => 'YOLOv8을 사용한 <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a>로 인물 감지. 레이블: 날짜, 시간, 신뢰도.',
 ],
@@ -830,6 +880,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Norrskensdetektion av <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Bildtext: dag, tid och poäng.',
     'aurora_intro'        => '<a href=".">Webbkamera</a> vid <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norge.',
     'aurora_see_also'     => 'Se även: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Norrsken vid Lillevik Lofoten</a>.',
+    'months'             => ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'],
     'people_no_photos'    => 'Inga personbilder för %s',
     'people_credit'       => 'Persondetektering av <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> med YOLOv8. Etikett: dag, tid och säkerhet.',
 ],
@@ -898,6 +949,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Nordlysdetektering af <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Billedtekst: dag, tid og score.',
     'aurora_intro'        => '<a href=".">Webkamera</a> ved <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norge.',
     'aurora_see_also'     => 'Se også: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Nordlys ved Lillevik Lofoten</a>.',
+    'months'             => ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december'],
     'people_no_photos'    => 'Ingen personbilleder for %s',
     'people_credit'       => 'Persondetektering af <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> med YOLOv8. Etiket: dag, tid og konfidensscorer.',
 ],
@@ -966,6 +1018,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Wykrywanie zorzy przez <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Etykieta: dzień, godzina i wynik.',
     'aurora_intro'        => '<a href=".">Kamera</a> w <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norwegia.',
     'aurora_see_also'     => 'Zobacz też: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Zorza polarna w Lillevik Lofoten</a>.',
+    'months'             => ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'],
     'people_no_photos'    => 'Brak zdjęć z osobami dla %s',
     'people_credit'       => 'Wykrywanie osób przez <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> z YOLOv8. Etykieta: dzień, godzina i pewność.',
 ],
@@ -1034,6 +1087,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Revontulihavainto <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>:lla. Kuvan teksti: päivä, aika ja pistemäärä.',
     'aurora_intro'        => '<a href=".">Verkkokamera</a> kohteessa <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norja.',
     'aurora_see_also'     => 'Katso myös: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Revontulet Lillevik Lofotenissa</a>.',
+    'months'             => ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
     'people_no_photos'    => 'Ei henkilövalokuvia %s',
     'people_credit'       => 'Henkilöhavainto <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a>:lla YOLOv8:n avulla. Teksti: päivä, aika ja luotettavuus.',
 ],
@@ -1102,6 +1156,7 @@ $TRANSLATIONS = [
     'aurora_credit'       => 'Deteção de aurora por <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Sobreposição: dia, hora e pontuação.',
     'aurora_intro'        => '<a href=".">Webcam</a> em <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Noruega.',
     'aurora_see_also'     => 'Veja também: <a href="https://lilleviklofoten.no/en/northern-lights-at-lillevik-lofoten/">Aurora boreal em Lillevik Lofoten</a>.',
+    'months'             => ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
     'people_no_photos'    => 'Sem fotos com pessoas para %s',
     'people_credit'       => 'Deteção de pessoas por <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">people_scan.py</a> com YOLOv8. Etiqueta: dia, hora e confiança.',
 ],

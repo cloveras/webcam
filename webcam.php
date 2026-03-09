@@ -415,14 +415,14 @@ function print_full_month($year, $month)
 
     // Find previous and next month, and create the links to them.
     list($year_previous, $month_previous, $year_next, $month_next) = find_previous_and_next_month($year, $month);
-    $previous = "?type=month&year=$year_previous&month=$month_previous&size=$size"; // Previous month.
-    $next = "?type=month&year=$year_next&month=$month_next&size=$size"; // Next month.
-    $up = "?type=year&year=$year"; // Up: SHow the full year.
+    $previous = "?type=month&year=$year_previous&month=$month_previous&size=$size" . lang_param(); // Previous month.
+    $next = "?type=month&year=$year_next&month=$month_next&size=$size" . lang_param(); // Next month.
+    $up = "?type=year&year=$year" . lang_param(); // Up: SHow the full year.
 
     // "Down" goes to the first day n this month that has images.
     $first_day_with_images = find_first_day_with_images($year, $month);
     if ($first_day_with_images) {
-        $down = "?type=day&date=" . find_first_day_with_images($year, $month);
+        $down = "?type=day&date=" . find_first_day_with_images($year, $month) . lang_param();
     } else {
         $down = false;
     }
@@ -431,7 +431,7 @@ function print_full_month($year, $month)
     $minute = 0;
     $second = 0;
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
-    $title = CAM_LABEL . ": " . date("F Y", $timestamp) . " (ca. $monthly_hour:00 each day)";
+    $title = CAM_LABEL . ": " . t_month_year((int)$month, (int)$year) . " (ca. $monthly_hour:00 each day)";
     
     // Collect images to prefetch for better performance
     global $imageManager;
@@ -526,9 +526,9 @@ function print_full_year($year)
 
     // Find previous and next year, and create the links to them.
     $previous = $next = $up = $down = false;
-    $previous = "?type=year&year=" . ($year - 1);
+    $previous = "?type=year&year=" . ($year - 1) . lang_param();
     if ($year < date('Y')) {
-        $next = "?type=year&year=" . ($year + 1); // Next year only if it exists.
+        $next = "?type=year&year=" . ($year + 1) . lang_param(); // Next year only if it exists.
     }
 
     // Find the first day in the month, and use that for the down link.
@@ -538,7 +538,7 @@ function print_full_year($year)
         $first_day_with_images = find_first_day_with_images($year, $month);
         if ($first_day_with_images) {
             // We found a month (and also a day, which we don't need now).
-            $down = "?type=month&year=$year&month=$month";
+            $down = "?type=month&year=$year&month=$month" . lang_param();
             break;
         }
     }
@@ -548,14 +548,14 @@ function print_full_year($year)
     echo "\n<p>" . year_nav_links($year) . " | " . t('nav_months') . ": \n";
     $monthLinks = [];
     for ($i = 1; $i <= 12; $i++) {
-        $monthLinks[] = "<a href=\"?type=month&year=$year&month=" . sprintf("%02d", $i) . "\">" . sprintf("%02d", $i) . "</a>";
+        $monthLinks[] = "<a href=\"?type=month&year=$year&month=" . sprintf("%02d", $i) . lang_param() . "\">" . sprintf("%02d", $i) . "</a>";
     }
     $formattedMonthLinks = implode(', ', array_slice($monthLinks, 0, -1)) . ' ' . t('nav_and_conj') . ' ' . end($monthLinks);
     print $formattedMonthLinks . " | ";
 
     // Link to today.
-    echo "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("M d") . "</a>";
-    echo " | <a href=\"?type=last\">" . t('nav_latest') . "</a>";
+    echo "<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a>";
+    echo " | <a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>";
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
@@ -587,7 +587,7 @@ function print_full_year($year)
                 // CSS overlay   
                 echo "<div class=\"grid-item\">";
 
-                echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
+                echo "<a href=\"?type=one&image=$yyyymmddhhmmss" . lang_param() . "\">";
                 echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" loading=\"lazy\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
@@ -598,7 +598,7 @@ function print_full_year($year)
                 }
                 echo "$yyyymmddhhmmss.jpg\"></a>\n";
 
-                // CSS overlay    
+                // CSS overlay
                 if ($size == "mini" || empty($size)) {
                     echo "<span class=\"time\">$year-$month-$day</span>";
                 }
@@ -639,8 +639,8 @@ function print_all_years()
     $previous = $next = $up = $down = false;
     page_header(CAM_LABEL . ": $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
     echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
-    echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("M d") . "</a> \n";
-    echo "<a href=\"?type=last\">" . t('nav_latest') . "</a>.\n";
+    echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a> \n";
+    echo "<a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>.\n";
     echo "</p>\n\n";
 
     for ($year = $start_year; $year <= $this_year; $year++) {
@@ -676,7 +676,7 @@ function print_all_years()
                     // CSS overlay   
                     echo "<div class=\"grid-item\">";
 
-                    echo "<a href=\"?type=one&image=$yyyymmddhhmmss\">";
+                    echo "<a href=\"?type=one&image=$yyyymmddhhmmss" . lang_param() . "\">";
                     echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$monthly_day $hour:$minute\" loading=\"lazy\" ";
                     //echo "title=\"$year-$month-$monthly_day $hour:$minute\" ";
                     echo "width=\"$mini_image_width\" height=\"$mini_image_height\" ";
@@ -720,10 +720,10 @@ function print_mini_large_links($timestamp, $size)
     $date = date('Ymd', $timestamp);
     echo "<p>\n";
     if ($size == "large") { // Link to mini if we showed large, or don't know.
-        echo "<a href=\"?type=day&date=$date&size=mini\">" . t('nav_mini_photos') . "</a>. ";
+        echo "<a href=\"?type=day&date=$date&size=mini" . lang_param() . "\">" . t('nav_mini_photos') . "</a>. ";
     }
     if ($size == "mini" || empty($size)) { // Links to large if we showed mini, or don't know.
-        echo "<a href=\"?type=day&date=$date&size=large\">" . t('nav_large_photos') . "</a>. ";
+        echo "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\">" . t('nav_large_photos') . "</a>. ";
     }
     echo "</p>\n\n";
 }
@@ -915,14 +915,14 @@ function print_single_image($image_filename, $last_image)
     debug("previous_image: $previous_image<br/>next_image: $next_image<br/>");
     if ($previous_image) {
         $previous_image_datepart = get_yyyymmddhhmmss($previous_image);
-        $previous = "?type=one&image=$previous_image_datepart"; // Only date for the link.
+        $previous = "?type=one&image=$previous_image_datepart" . lang_param(); // Only date for the link.
     }
     if ($next_image) {
         $next_image_datepart = get_yyyymmddhhmmss($next_image);
-        $next = "?type=one&image=$next_image_datepart"; // Only date for the link.
+        $next = "?type=one&image=$next_image_datepart" . lang_param(); // Only date for the link.
     }
     $up_image_datepart = get_yyyymmddhhmmss($image_filename);
-    $up = "?type=day&date=$up_image_datepart"; // The full day.
+    $up = "?type=day&date=$up_image_datepart" . lang_param(); // The full day.
     $down = false; // Already showing a single image, not possible to go lower.
 
     debug("PREV: $previous<br/>NEXT: $next<br/>UP: $up<br/>DOWN: $down<br/>");
@@ -963,7 +963,7 @@ function print_single_image($image_filename, $last_image)
     }
 
     echo "<p>\n";
-    echo "<a href=\"?type=day&date=$year$month$day\">";
+    echo "<a href=\"?type=day&date=$year$month$day" . lang_param() . "\">";
     echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
     //echo "title=\"$year-$month-$day $hour:$minute\" ";
     echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
@@ -1387,9 +1387,9 @@ function find_previous_and_next_month($year, $month)
 function year_nav_links($year)
 {
     $links = [];
-    $links[] = "<a href=\"?type=year&year=" . ($year - 1) . "\">&larr; " . ($year - 1) . "</a>";
+    $links[] = "<a href=\"?type=year&year=" . ($year - 1) . lang_param() . "\">&larr; " . ($year - 1) . "</a>";
     if ($year < date('Y')) {
-        $links[] = "<a href=\"?type=year&year=" . ($year + 1) . "\">" . ($year + 1) . " &rarr;</a>";
+        $links[] = "<a href=\"?type=year&year=" . ($year + 1) . lang_param() . "\">" . ($year + 1) . " &rarr;</a>";
     }
     return implode(" | ", $links);
 }
@@ -1407,43 +1407,43 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
     $links = [];
     if ($is_full_month) {
         list($year_previous, $month_previous, $year_next, $month_next) = find_previous_and_next_month(date('Y', $timestamp), date('m', $timestamp));
-        $links[] = "<a href=\"?type=month&year=$year_previous&month=$month_previous\">&larr; " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>";
-        $links[] = "<a href=\"?type=month&year=$year_next&month=$month_next\">" . date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . " &rarr;</a>";
+        $links[] = "<a href=\"?type=month&year=$year_previous&month=$month_previous" . lang_param() . "\">&larr; " . t_month((int)$month_previous) . "</a>";
+        $links[] = "<a href=\"?type=month&year=$year_next&month=$month_next" . lang_param() . "\">" . t_month((int)$month_next) . " &rarr;</a>";
 
         $requested_month = date('Y-m', $timestamp);
         if ($requested_month != date('Y-m')) {
-            $links[] = "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . "\">" . t('nav_now') . ": " . date("F") . "</a>";
+            $links[] = "<a href=\"?type=month&year=" . date('Y') . "&month=" . date('m') . lang_param() . "\">" . t('nav_now') . ": " . t_month((int)date('m')) . "</a>";
         }
-        $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("F d") . "</a>";
-        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . lang_param() . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
     } else {
         $yesterday_timestamp = strtotime('-1 day', $timestamp);
-        $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">&larr; " . date("F d", $yesterday_timestamp) . "</a>";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size" . lang_param() . "\">&larr; " . t_month_day((int)date('m', $yesterday_timestamp), (int)date('d', $yesterday_timestamp)) . "</a>";
 
         if (date('Y-m-d', $timestamp) != date('Y-m-d')) {
             $tomorrow_timestamp = strtotime('+1 day', $timestamp);
-            $links[] = "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">" . date("F d", $tomorrow_timestamp) . " &rarr;</a>";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . lang_param() . "\">" . t_month_day((int)date('m', $tomorrow_timestamp), (int)date('d', $tomorrow_timestamp)) . " &rarr;</a>";
         }
 
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
-            $links[] = "<a href=\"?type=day&date=" . date('Ymd') . "\">" . t('nav_today') . ": " . date("F d") . "</a>";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a>";
         }
 
-        $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">" . t('nav_entire') . " " . date("F", $timestamp) . "</a>";
-        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
+        $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . lang_param() . "\">" . t('nav_entire') . " " . t_month((int)date('m', $timestamp)) . "</a>";
+        $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . lang_param() . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
         $date = date('Ymd', $timestamp);
         if ($size == "large") {
-            $links[] = "<a href=\"?type=day&date=$date&size=mini\">" . t('nav_mini_photos') . "</a>";
+            $links[] = "<a href=\"?type=day&date=$date&size=mini" . lang_param() . "\">" . t('nav_mini_photos') . "</a>";
         } else {
-            $links[] = "<a href=\"?type=day&date=$date&size=large\">" . t('nav_large_photos') . "</a>";
+            $links[] = "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\">" . t('nav_large_photos') . "</a>";
         }
     }
-    $links[] = "<a href=\"?type=last\">" . t('nav_latest') . "</a>";
+    $links[] = "<a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>";
     if (file_exists('aurora.php')) {
-        $links[] = "<a href=\"aurora.php\">" . t('nav_aurora') . "</a>";
+        $links[] = "<a href=\"aurora.php" . lang_query() . "\">" . t('nav_aurora') . "</a>";
     }
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
-        $links[] = "<a href=\"people.php\">" . t('nav_people') . "</a>";
+        $links[] = "<a href=\"people.php" . lang_query() . "\">" . t('nav_people') . "</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1457,14 +1457,14 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
 function print_full_day_link($timestamp)
 {
     $links = [];
-    $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . "\">" . t('nav_whole_day') . "</a>";
-    $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . "\">" . t('nav_entire') . " " . date("F", $timestamp) . "</a>";
-    $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
+    $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . lang_param() . "\">" . t('nav_whole_day') . "</a>";
+    $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . lang_param() . "\">" . t('nav_entire') . " " . t_month((int)date('m', $timestamp)) . "</a>";
+    $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . lang_param() . "\">" . t('nav_entire') . " " . date('Y', $timestamp) . "</a>";
     if (file_exists('aurora.php')) {
-        $links[] = "<a href=\"aurora.php\">" . t('nav_aurora') . "</a>";
+        $links[] = "<a href=\"aurora.php" . lang_query() . "\">" . t('nav_aurora') . "</a>";
     }
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
-        $links[] = "<a href=\"people.php\">" . t('nav_people') . "</a>";
+        $links[] = "<a href=\"people.php" . lang_query() . "\">" . t('nav_people') . "</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1530,20 +1530,20 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
     // Set the navigation (we need $dusk from above).
     // Previous: The previous day.
-    $previous = "?type=day&date=" . date('Ymd', strtotime('-1 day', $timestamp)) . "&size=$size";
+    $previous = "?type=day&date=" . date('Ymd', strtotime('-1 day', $timestamp)) . "&size=$size" . lang_param();
     // Next: The next day, but not if it's tomorrow.
     $next_date = date('Ymd', strtotime('+1 day', $timestamp));
     if (date('Ymd') != date('Ymd', $timestamp)) {
         // We are showing image for today, so no need for a link to tomorrow (no images there yet).
-        $next = "?type=day&date=$next_date&size=$size";
+        $next = "?type=day&date=$next_date&size=$size" . lang_param();
         //$next     = "?type=day&date="   . date('Ymd', $timestamp + 60 * 60 * 24) . "&size=$size"; 
     } else {
         $next = false;
     }
     // Up: The full month.
-    $up = "?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp);
+    $up = "?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . lang_param();
     // Down. The first image after dawn for this day.
-    $down = "?type=one&image=" . find_first_image_after_time(date('Y', $timestamp), date('m', $timestamp), date('d', $timestamp), date('H', $dawn), 0, 0);
+    $down = "?type=one&image=" . find_first_image_after_time(date('Y', $timestamp), date('m', $timestamp), date('d', $timestamp), date('H', $dawn), 0, 0) . lang_param();
 
     // Collect images to prefetch for better performance
     global $imageManager;
@@ -1604,7 +1604,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
                 // CSS overlay   
                 echo "<div class=\"grid-item\">";
 
-                echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds\">";
+                echo "<a href=\"?type=one&image=$year$month$day$hour$minute$seconds" . lang_param() . "\">";
                 echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" loading=\"lazy\" ";
                 //echo "title=\"$year-$month-$day $hour:$minute\" ";
                 echo "src=\"$year/$month/$day/";

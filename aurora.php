@@ -240,15 +240,15 @@ foreach ($months_list as $ym) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
         $size_param = ($size === 'large') ? '&size=large' : '';
-        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
-        $prev_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
+        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param . lang_param();
+        $prev_label = t_month_year($m, $y);
     }
     if ($ym > $current_ym && !$next_url) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
         $size_param = ($size === 'large') ? '&size=large' : '';
-        $next_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
-        $next_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
+        $next_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param . lang_param();
+        $next_label = t_month_year($m, $y);
     }
 }
 
@@ -352,16 +352,16 @@ echo "<p>" . t('aurora_intro') . " " . t('aurora_see_also') . "</p>\n\n";
 // Month navigation bar
 // ============================================================
 
-$base_url = "?year=$year_str&month=$month_str";
+$base_url = "?year=$year_str&month=$month_str" . lang_param();
 $nav_links = [];
 if ($prev_url && $prev_label) {
     $nav_links[] = "<a href=\"$prev_url\">&larr; $prev_label</a>";
 }
-$nav_links[] = date('F Y', $title_ts);
+$nav_links[] = t_month_year($month, $year);
 if ($next_url && $next_label) {
     $nav_links[] = "<a href=\"$next_url\">$next_label &rarr;</a>";
 }
-$nav_links[] = "<a href=\".\">" . t('nav_webcam') . "</a>";
+$nav_links[] = "<a href=\"." . lang_query() . "\">" . t('nav_webcam') . "</a>";
 if ($size === 'large') {
     $nav_links[] = "<a href=\"{$base_url}\">" . t('nav_mini_photos') . "</a>";
 } else {
@@ -400,7 +400,7 @@ foreach ($month_images as $img) {
         $img_attrs = " width=\"$mini_w\" height=\"$mini_h\"";
     }
     $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi";
-    $link      = "webcam.php?type=one&image=$ts";
+    $link      = "webcam.php?type=one&image=$ts" . lang_param();
     $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
     $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
@@ -415,7 +415,7 @@ foreach ($month_images as $img) {
 echo "</div>\n\n";
 
 if ($count === 0) {
-    echo '<p>(' . sprintf(t('aurora_no_photos'), date('F Y', $title_ts)) . '.)</p>' . "\n\n";
+    echo '<p>(' . sprintf(t('aurora_no_photos'), t_month_year($month, $year)) . '.)</p>' . "\n\n";
 }
 
 if ($current_ym === date('Ym')) {
