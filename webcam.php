@@ -1355,9 +1355,9 @@ function find_previous_and_next_month($year, $month)
 function print_previous_next_year_links($year)
 {
     $links = [];
-    $links[] = "<a href=\"?type=year&year=" . ($year - 1) . "\">Previous (" . ($year - 1) . ")</a>";
+    $links[] = "<a href=\"?type=year&year=" . ($year - 1) . "\">&larr; " . ($year - 1) . "</a>";
     if ($year < date('Y')) {
-        $links[] = "<a href=\"?type=year&year=" . ($year + 1) . "\">Next (" . ($year + 1) . ")</a>";
+        $links[] = "<a href=\"?type=year&year=" . ($year + 1) . "\">" . ($year + 1) . " &rarr;</a>";
     }
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
@@ -1375,8 +1375,8 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
     $links = [];
     if ($is_full_month) {
         list($year_previous, $month_previous, $year_next, $month_next) = find_previous_and_next_month(date('Y', $timestamp), date('m', $timestamp));
-        $links[] = "<a href=\"?type=month&year=$year_previous&month=$month_previous\">Previous: " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>";
-        $links[] = "<a href=\"?type=month&year=$year_next&month=$month_next\">Next: " . date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . "</a>";
+        $links[] = "<a href=\"?type=month&year=$year_previous&month=$month_previous\">&larr; " . date("F", mktime(0, 0, 0, $month_previous, 1, $year_previous)) . "</a>";
+        $links[] = "<a href=\"?type=month&year=$year_next&month=$month_next\">" . date("F", mktime(0, 0, 0, $month_next, 1, $year_previous)) . " &rarr;</a>";
 
         $requested_month = date('Y-m', $timestamp);
         if ($requested_month != date('Y-m')) {
@@ -1386,11 +1386,11 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
         $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . "\">Entire " . date('Y', $timestamp) . "</a>";
     } else {
         $yesterday_timestamp = strtotime('-1 day', $timestamp);
-        $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">Previous: " . date("F d", $yesterday_timestamp) . "</a>";
+        $links[] = "<a href=\"?type=day&date=" . date('Ymd', $yesterday_timestamp) . "&size=$size\">&larr; " . date("F d", $yesterday_timestamp) . "</a>";
 
         if (date('Y-m-d', $timestamp) != date('Y-m-d')) {
             $tomorrow_timestamp = strtotime('+1 day', $timestamp);
-            $links[] = "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">Next: " . date("F d", $tomorrow_timestamp) . "</a>";
+            $links[] = "<a href=\"?type=day&date=" . date('Ymd', $tomorrow_timestamp) . "\">" . date("F d", $tomorrow_timestamp) . " &rarr;</a>";
         }
 
         if (date('Y-m-d', $timestamp) <= date('Y-m-d', strtotime('-2 day'))) {
