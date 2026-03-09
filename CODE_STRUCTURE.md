@@ -9,7 +9,8 @@
 - `SunCalculator.php` - Sun time calculations (sunrise, sunset, dawn, dusk, midnight sun, polar night)
 - `ImageFileManager.php` - File system operations for images
 - `NavigationHelper.php` - Navigation and URL generation helpers
-- `css.php` - CSS file server
+- `lang.php` - Multilingual support: translations, language detection, helper functions
+- `css.php` - CSS file server (serves `webcam.css` with versioned cache-busting via `?v=<mtime>`)
 - `latest.php` - Latest image server with no-cache headers
 
 ## Class Documentation
@@ -89,9 +90,14 @@ To use this code for your own webcam:
    - Set `FILENAME_PREFIX_TO_RENAME` for your camera's filename format
    - Adjust `START_YEAR` to your first year of images
 
-2. Update `webcam.php`:
-   - Modify the HTML meta tags in `page_header()` function
-   - Update Schema.org structured data
+2. Update `lang.php`:
+   - Edit the `'en'` translation block — all other languages are auto-translated
+   - `seo_description` is used in `<meta name="description">` and `<meta property="og:description">`
+   - `seo_description_short` is shown as a visible paragraph below single images
+   - `webcam_intro` / `aurora_intro` are used as the first line of each page
+
+3. Update `webcam.php`:
+   - Update Schema.org structured data in `page_header()`
    - Customize the `print_lillevik_images_and_links()` function for your site
 
 3. Test thoroughly:

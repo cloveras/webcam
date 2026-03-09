@@ -30,6 +30,7 @@ Live example: [lilleviklofoten.no/webcam](https://lilleviklofoten.no/webcam/)
 - Aurora borealis gallery with live Yr forecast and animated NOAA/SWPC map
 - People/vehicle/animal detection gallery powered by YOLOv8
 - Client-side image caching, lazy loading, and prefetching
+- Multilingual UI in 21 languages (en, de, it, fr, nb, nl, es, ja, zh, ko, sv, da, pl, fi, pt, th, tr, id, hi, ms, uk) with auto-detection from browser language, persistent cookie, and SEO hreflang tags
 
 ---
 
@@ -66,6 +67,7 @@ For verbose debug output: set `$debug = 1` in `webcam.php`.
 - `SunCalculator.php` — sunrise/sunset/dawn/dusk, midnight sun, polar night
 - `ImageFileManager.php` — finding and organizing image files
 - `NavigationHelper.php` — navigation URL generation
+- `lang.php` — multilingual support (21 languages, auto-detection, hreflang SEO)
 - `aurora.php` — northern lights gallery
 - `people.php` — people/vehicle/animal detection gallery
 - `aurora_scan.py` — scores images for aurora likelihood

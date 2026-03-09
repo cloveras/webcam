@@ -14,6 +14,7 @@ PHP gallery for webcam images stored as `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`. No buil
 - `SunCalculator.php` — sunrise/sunset/dawn/dusk calculations, midnight sun and polar night logic
 - `ImageFileManager.php` — filesystem operations for finding/organizing images
 - `NavigationHelper.php` — navigation URL generation
+- `lang.php` — multilingual support: `t()`, `t_month()`, `t_month_year()`, `t_month_day()`, `lang_param()`, `lang_query()`, `lang_selector_html()`, `lang_hreflang_links()`
 - `webcam.php` — main entry point and HTML rendering; supports multiple cameras via `define()` guards
 - `aurora.php` — northern lights gallery (reads `aurora-YYYY.json` files from `data/`)
 - `people.php` — people detection gallery (reads `people-YYYY.json` files); supports multiple cameras via `define()` guards
@@ -40,10 +41,10 @@ require_once __DIR__ . '/../webcam.php';
 Available `CAM_*` constants (webcam.php):
 - `CAM_LABEL` — page title / h1
 - `CAM_FILE_PREFIX` / `CAM_FILE_PREFIX_ALT` — prefixes stripped from uploaded filenames
-- `CAM_IS_PRIMARY` — enables JSON-LD, canonical tag, Lillevik-specific nav blocks
+- `CAM_IS_PRIMARY` — enables JSON-LD, canonical tag, hreflang, SEO paragraph, Lillevik-specific nav blocks
 - `CAM_SHOW_PEOPLE` — show People link in nav (default: `false`)
 - `CAM_CSS_PATH` — path to css.php (default: `css.php`)
-- `CAM_INTRO_HTML` — intro paragraph HTML
+- `CAM_INTRO_HTML` — intro paragraph HTML (non-primary cameras only; primary uses `t('webcam_intro')` from lang.php)
 
 Available `PEOPLE_*` constants (people.php):
 - `PEOPLE_LABEL` — page title
@@ -53,6 +54,25 @@ Available `PEOPLE_*` constants (people.php):
 - `PEOPLE_DATA_DIR` — absolute path to directory containing `people-YYYY.json` files
 
 Navigation links (aurora.php, people.php) use `file_exists()` to auto-show/hide per camera.
+
+## Multilingual support
+
+`lang.php` provides translations for 21 languages: `en de it fr nb nl es ja zh ko sv da pl fi pt th tr id hi ms uk`.
+
+Language detection order: `?lang=XX` query param (sets 1-year cookie) → cookie → `Accept-Language` header → English.
+
+Short URLs `/webcam/XX/` redirect to `?lang=XX` via `.htaccess`.
+
+Key functions:
+- `t(string $key)` — returns translated string; auto-localises `lilleviklofoten.no` hrefs for non-English
+- `t_month_year(int $month, int $year)` — localised "Month Year" (CJK uses `年月` format)
+- `t_month_day(int $month, int $day)` — localised "Day Month" (handles day-first vs. month-first languages)
+- `lang_param()` — returns `"&lang=XX"` or `""` for English; append to nav URLs
+- `lang_query()` — returns `"?lang=XX"` or `""` for English; append to bare URLs
+- `lang_selector_html()` — inline `<select>` language switcher for nav bar
+- `lang_hreflang_links(string $base_url)` — `<link rel="alternate" hreflang>` tags for SEO
+
+Translation keys include all nav labels, month names, weather terms, aurora/people UI strings, and two SEO descriptions: `seo_description` (full, used in `<meta>`) and `seo_description_short` (half-length, shown below single images).
 
 ## Debug mode
 

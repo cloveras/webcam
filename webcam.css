@@ -84,3 +84,7 @@ select.lang-select:hover {
   background-color: #000;
 }
 
+.seo-desc {
+  max-width: 900px;
+}
+
