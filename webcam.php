@@ -556,6 +556,7 @@ function print_full_year($year)
     // Link to today.
     echo "<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a>";
     echo " | <a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>";
+    echo " | " . lang_selector_html();
     echo "</p>\n\n";
 
     // Loop through all months 1-12 (again) and print images for the $days if they exist.
@@ -640,7 +641,8 @@ function print_all_years()
     page_header(CAM_LABEL . ": $start_year" . "-" . "$this_year", $previous, $next, $up, $down);
     echo "<p>Displaying images for $monthly_hour:00 on the $monthly_day" . "th for each month for all year.</p>\n";
     echo "<p>\n<a href=\"?type=day&date=" . date('Ymd') . lang_param() . "\">" . t('nav_today') . ": " . t_month_day((int)date('m'), (int)date('d')) . "</a> \n";
-    echo "<a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>.\n";
+    echo "| <a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a> \n";
+    echo "| " . lang_selector_html() . "\n";
     echo "</p>\n\n";
 
     for ($year = $start_year; $year <= $this_year; $year++) {
@@ -1467,6 +1469,7 @@ function print_full_day_link($timestamp)
     if (CAM_SHOW_PEOPLE && file_exists('people.php')) {
         $links[] = "<a href=\"people.php" . lang_query() . "\">" . t('nav_people') . "</a>";
     }
+    $links[] = lang_selector_html();
     echo "<p>" . implode(" | ", $links) . "</p>\n\n";
 }
 

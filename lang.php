@@ -123,7 +123,7 @@ function t_month_day(int $month, int $day): string {
 }
 
 /**
- * Returns an inline language selector <details> dropdown for the nav bar.
+ * Returns an inline <select> language selector for the nav bar.
  * Preserves current query parameters, replacing only lang=.
  */
 function lang_selector_html(): string {
@@ -138,15 +138,13 @@ function lang_selector_html(): string {
     unset($params['lang']);
     $qs = count($params) ? '?' . http_build_query($params) : null;
 
-    $html  = '<details class="lang-select">';
-    $html .= '<summary>' . htmlspecialchars($names[$LANG]) . '</summary>';
-    $html .= '<div class="lang-dropdown">';
+    $html = '<select onchange="location.href=this.value">';
     foreach ($names as $code => $name) {
-        $url    = $code === 'en' ? ($qs ?? '.') : ($qs ? $qs . '&' : '?') . 'lang=' . $code;
-        $active = $code === $LANG ? ' class="lang-active"' : '';
-        $html  .= '<a href="' . htmlspecialchars($url) . '"' . $active . '>' . htmlspecialchars($name) . '</a>';
+        $url      = $code === 'en' ? ($qs ?? '.') : ($qs ? $qs . '&' : '?') . 'lang=' . $code;
+        $selected = $code === $LANG ? ' selected' : '';
+        $html    .= '<option value="' . htmlspecialchars($url) . '"' . $selected . '>' . htmlspecialchars($name) . '</option>';
     }
-    $html .= '</div></details>';
+    $html .= '</select>';
     return $html;
 }
 
