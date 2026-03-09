@@ -79,7 +79,17 @@ function lang_hreflang_links(string $base_url): string {
 
 function t(string $key): string {
     global $LANG, $TRANSLATIONS;
-    return $TRANSLATIONS[$LANG][$key] ?? $TRANSLATIONS['en'][$key] ?? $key;
+    $val = $TRANSLATIONS[$LANG][$key] ?? $TRANSLATIONS['en'][$key] ?? $key;
+    // Localise lilleviklofoten.no links for non-English languages
+    if ($LANG !== 'en' && str_contains($val, 'lilleviklofoten.no')) {
+        $ll = 'https://lilleviklofoten.no/' . $LANG;
+        $val = str_replace(
+            ['href="https://lilleviklofoten.no"', 'href="https://lilleviklofoten.no?', 'href="https://lilleviklofoten.no/webcams/'],
+            ['href="' . $ll . '/"',               'href="' . $ll . '/?',              'href="' . $ll . '/webcams/'],
+            $val
+        );
+    }
+    return $val;
 }
 
 /** Returns "&lang=XX" (for appending to URLs that already have a query string), or "" for English. */
