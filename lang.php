@@ -148,7 +148,7 @@ function lang_selector_html(): string {
     unset($params['lang']);
     $qs = count($params) ? '?' . http_build_query($params) : null;
 
-    $html = '<select onchange="location.href=this.value">';
+    $html = '<select class="lang-select" onchange="location.href=this.value">';
     foreach ($names as $code => $name) {
         $url      = ($qs ? $qs . '&' : '?') . 'lang=' . $code;
         $selected = $code === $LANG ? ' selected' : '';
