@@ -1,13 +1,13 @@
 MAILTO=""
 
 # Copy the latest webcam image to latest.jpg
-* * * * * /home/1/l/lilleviklofoten/www/webcam/copy-latest-image.sh
+*/7 * * * * /home/1/l/lilleviklofoten/www/webcam/copy-latest-image.sh
 
 # Rename and make mini images
-* * * * * /home/1/l/lilleviklofoten/www/webcam/rename_and_make_mini_images.sh
+*/10 * * * * /home/1/l/lilleviklofoten/www/webcam/rename_and_make_mini_images.sh
 
 # Copy the latest Viktun webcam image to latest.jpg
-* * * * * /home/1/l/lilleviklofoten/www/webcam/viktun/copy_latest_viktun_image.sh
+*/7 * * * * /home/1/l/lilleviklofoten/www/webcam/viktun/copy_latest_viktun_image.sh
 
 # Rename Viktun images and make mini thumbnails
-* * * * * /home/1/l/lilleviklofoten/www/webcam/viktun/rename_viktun_images.sh
+*/10 * * * * /home/1/l/lilleviklofoten/www/webcam/viktun/rename_viktun_images.sh
