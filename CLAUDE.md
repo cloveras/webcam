@@ -193,7 +193,7 @@ Dependencies: `ultralytics`, `astral`, `opencv-python`, `numpy` (install in a ve
 ## Image maintenance
 
 ```bash
-python3 delete_old_images.py                          # Dry-run: list deletable images
-python3 delete_old_images.py --delete --one-per-hour  # Delete + keep 1/hour
-python3 delete_old_images.py --compress-quality 80    # Compress images (requires Pillow)
+python3 util/delete_old_images.py                          # Dry-run: list deletable images
+python3 util/delete_old_images.py --delete --one-per-hour  # Delete + keep 1/hour
+python3 util/delete_old_images.py --compress-quality 80    # Compress images (requires Pillow)
 ```

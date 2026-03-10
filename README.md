@@ -186,11 +186,11 @@ python3 people_scan.py /dev/null \
 
 [`util/nctpput-all-images.sh`](util/nctpput-all-images.sh) mass-uploads files using [`ncftp`](https://www.ncftp.com).
 
-[`delete_old_images.py`](delete_old_images.py) thins out old images (dry-run by default):
+[`util/delete_old_images.py`](util/delete_old_images.py) thins out old images (dry-run by default):
 
 ```bash
-python3 delete_old_images.py --delete --one-per-hour   # keep one per hour
-python3 delete_old_images.py --compress-quality 80     # recompress (requires Pillow)
+python3 util/delete_old_images.py --delete --one-per-hour   # keep one per hour
+python3 util/delete_old_images.py --compress-quality 80     # recompress (requires Pillow)
 ```
 
 ---
