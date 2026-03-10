@@ -23,7 +23,14 @@ cd "$image_dir"
 # Rename: strip "Viktun_01_" prefix
 for f in Viktun_01_*.jpg; do
     [ -f "$f" ] || continue
-    mv "$f" "$(echo "$f" | sed 's/Viktun_01_//')"
+    newname="$(echo "$f" | sed 's/Viktun_01_//')"
+    mv "$f" "$newname"
+    exiftool \
+        -Copyright='© Lillevik Lofoten / lilleviklofoten.no' \
+        -Artist='lilleviklofoten.no' \
+        -ImageDescription='Viktun webcam — https://lilleviklofoten.no/webcam/viktun/' \
+        -Comment='Viktun webcam — https://lilleviklofoten.no/webcam/viktun/' \
+        -overwrite_original "$newname" > /dev/null
 done
 
 # Create mini thumbnails

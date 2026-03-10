@@ -23,7 +23,14 @@ cd "$image_dir"
 # Short: 20231114134047.jpg
 for f in "Lillevik Lofoten_01_"*.jpg; do
     [ -f "$f" ] || continue
-    mv "$f" "$(echo "$f" | sed 's/Lillevik Lofoten_01_//')"
+    newname="$(echo "$f" | sed 's/Lillevik Lofoten_01_//')"
+    mv "$f" "$newname"
+    exiftool \
+        -Copyright='© Lillevik Lofoten / lilleviklofoten.no' \
+        -Artist='lilleviklofoten.no' \
+        -ImageDescription='Lillevik Lofoten webcam — https://lilleviklofoten.no/webcam/' \
+        -Comment='Lillevik Lofoten webcam — https://lilleviklofoten.no/webcam/' \
+        -overwrite_original "$newname" > /dev/null
 done
 
 # Create "mini" directory if it does not exist.
