@@ -141,7 +141,8 @@ python3 people_scan.py /path/to/images/2026 --build-background data/background-2
 # Step 2 — scan (re-run whenever new images arrive)
 python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \
     --background data/background-2026.png \
-    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.0,0.0,1.0,0.60 \
+    --exclude-zone 0.0,0.60,0.45,0.68 \
     --exclude-zone 0.52,0.70,0.61,0.81 \
     --exclude-zone 0.40,0.88,0.46,0.99 \
     --json-output data/people-2026.json
@@ -155,7 +156,8 @@ If `--background` points to a non-existent file the model is built automatically
 python3 people_scan.py /dev/null \
     --annotate /path/to/image.jpg annotated.jpg \
     --background data/background-2026.png \
-    --exclude-zone 0.0,0.0,1.0,0.68
+    --exclude-zone 0.0,0.0,1.0,0.60 \
+    --exclude-zone 0.0,0.60,0.45,0.68
 ```
 
 `--annotate` saves an image showing every YOLO box (green = kept, red = rejected by zone, orange = rejected by background), zone overlays, and the foreground mask.

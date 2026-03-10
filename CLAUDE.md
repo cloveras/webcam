@@ -123,13 +123,17 @@ python3 people_scan.py /path/to/Lillevik-webcam/2026 --build-background data/bac
 # Scan
 python3 people_scan.py /path/to/Lillevik-webcam/2026 --civil-day --threshold 0.3 \
     --background data/background-2026.png \
-    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.0,0.0,1.0,0.60 \
+    --exclude-zone 0.0,0.60,0.45,0.68 \
     --exclude-zone 0.52,0.70,0.61,0.81 \
     --exclude-zone 0.40,0.88,0.46,0.99 \
     --json-output data/people-2026.json
 ```
 
-Exclusion zones: sky/mountains/water, boathouse, foreground poles.
+Exclusion zones (new 16:9 camera): two-zone sky exclusion to match the non-flat shoreline —
+zone 1 covers sky/mountains/water everywhere (top 60%), zone 2 covers the left-side shore where
+the land sits lower in the frame (x < 45%, y 60–68%). Boathouse and foreground poles are
+separate zones. Old 4:3 camera used a single zone `0.0,0.0,1.0,0.68`.
 
 ### Viktun
 
@@ -155,7 +159,8 @@ Exclusion zones: sky (top 50%), mountain on the left side.
 python3 people_scan.py /dev/null \
     --annotate /path/to/image.jpg annotated.jpg \
     --background data/background-2026.png \
-    --exclude-zone 0.0,0.0,1.0,0.68 \
+    --exclude-zone 0.0,0.0,1.0,0.60 \
+    --exclude-zone 0.0,0.60,0.45,0.68 \
     --exclude-zone 0.52,0.70,0.61,0.81 \
     --exclude-zone 0.40,0.88,0.46,0.99
 ```

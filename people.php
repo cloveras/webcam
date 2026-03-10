@@ -18,7 +18,7 @@ require_once __DIR__ . '/NavigationHelper.php';
 // ============================================================
 defined('PEOPLE_LABEL')       || define('PEOPLE_LABEL',       'Lillevik Lofoten webcam');
 defined('PEOPLE_CSS_PATH')    || define('PEOPLE_CSS_PATH',    'css.php');
-defined('PEOPLE_INTRO_HTML')  || define('PEOPLE_INTRO_HTML',  '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Vik, Gimsøy, Lofoten, Norway.');
+defined('PEOPLE_INTRO_HTML')  || define('PEOPLE_INTRO_HTML',  '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Gimsøy, Lofoten islands, Norway: <a href="https://maps.app.goo.gl/CrTRstYiXqWwciBe9">Map</a>.');
 defined('PEOPLE_SHOW_AURORA') || define('PEOPLE_SHOW_AURORA', true);
 defined('PEOPLE_DATA_DIR')    || define('PEOPLE_DATA_DIR',    __DIR__ . '/data');
 
@@ -129,7 +129,7 @@ echo '<!DOCTYPE html>' . "\n";
 echo '<html lang="en-US">' . "\n";
 echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
-echo '  <meta name="description" content="' . htmlspecialchars(WebcamConfig::SITE_DESCRIPTION) . '">' . "\n";
+echo '  <meta name="description" content="' . htmlspecialchars(t('seo_description')) . '">' . "\n";
 echo '  <meta name="keywords" content="lofoten,webcam,people,Lillevik">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robots" content="noindex, nofollow">' . "\n";

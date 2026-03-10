@@ -1,8 +1,8 @@
 """
-people_scan.py — scan webcam images for people using YOLOv8.
+people_scan.py — scan webcam images for people, animals, and vehicles using YOLOv8.
 
 Mirrors aurora_scan.py: same CLI, same JSON merge/replace behaviour.
-Score = highest person-detection confidence in the frame (0–1).
+Score = highest detection confidence in the frame (0–1).
 
 Two complementary false-positive reduction techniques are available:
 
@@ -10,6 +10,14 @@ Two complementary false-positive reduction techniques are available:
                    inside a static region (given as x1,y1,x2,y2 fractions
                    0–1).  Repeatable.  Recommended zones for this camera:
 
+  New camera (3840×2160, 16:9, 2025-07-26+) — two-zone sky exclusion to follow
+  the non-flat shoreline (left field sits lower in the frame than the right shore):
+                     0.0,0.0,1.0,0.60    sky / mountains / main water (full width)
+                     0.0,0.60,0.45,0.68  left-side shore / water (x < 45%, y 60–68%)
+                     0.52,0.70,0.61,0.81 boathouse
+                     0.40,0.88,0.46,0.99 foreground poles
+
+  Old camera (2560×1920, 4:3, before 2025-07-26):
                      0.0,0.0,1.0,0.68    sky / mountains / water
                      0.52,0.70,0.61,0.81 boathouse
                      0.40,0.88,0.46,0.99 foreground poles
@@ -28,7 +36,8 @@ Usage:
     # 2. Scan with all filters
     python3 people_scan.py /path/to/images/2026 --civil-day --threshold 0.3 \\
         --background data/background-2026.png \\
-        --exclude-zone 0.0,0.0,1.0,0.68 \\
+        --exclude-zone 0.0,0.0,1.0,0.60 \
+        --exclude-zone 0.0,0.60,0.45,0.68 \\
         --exclude-zone 0.52,0.70,0.61,0.81 \\
         --exclude-zone 0.40,0.88,0.46,0.99 \\
         --json-output data/people-2026.json
@@ -52,6 +61,23 @@ from ultralytics import YOLO
 
 BASE_URL = "https://lilleviklofoten.no/webcam/?type=one&image="
 _TZ = ZoneInfo("Europe/Oslo")
+
+# COCO classes to detect (people, common vehicles, animals).
+# Birds (14) are excluded to avoid seagull false positives.
+_DETECT_CLASSES = {
+    0,   # person
+    1,   # bicycle
+    2,   # car
+    3,   # motorcycle
+    5,   # bus
+    7,   # truck
+    8,   # boat
+    15,  # cat
+    16,  # dog
+    17,  # horse
+    18,  # sheep
+    19,  # cow
+}
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -111,7 +137,7 @@ def _in_excluded_zone(cx: float, cy: float) -> bool:
 
 
 def people_score(image_path) -> float:
-    """Return highest person-detection confidence not filtered by exclusion rules, or 0.0."""
+    """Return highest detection confidence (people/animals/vehicles) not filtered by exclusion rules, or 0.0."""
     model = _get_model()
     raw = Path(image_path).read_bytes()
     img = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
@@ -134,7 +160,7 @@ def people_score(image_path) -> float:
     results = model(img, verbose=False, device="cpu")
     best = 0.0
     for box in results[0].boxes:
-        if int(box.cls) != 0:   # class 0 = person
+        if int(box.cls) not in _DETECT_CLASSES:
             continue
 
         x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].tolist()]
@@ -326,7 +352,8 @@ def build_background(paths, n_samples=300, max_long_edge=960):
 
 def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False,
                 exclude_zones=None, background_path=None,
-                fg_overlap=0.15, bg_diff_threshold=25, workers=None):
+                fg_overlap=0.15, bg_diff_threshold=25, workers=None,
+                date_before=None, date_after=None):
     if not Path(folder).is_dir():
         print(f"Error: folder not found: {folder}")
         return [], set()
@@ -335,11 +362,19 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
     paths = []
     all_months = set()  # every month present in the folder, regardless of time filter
     skipped_time = 0
+    skipped_date = 0
     for path in Path(folder).rglob("*.jpg"):
         if "mini" in str(path):
             continue
         stem = path.stem
         dt = parse_dt_from_stem(stem)
+        date_str = stem[:8]
+        if date_before and date_str >= date_before:
+            skipped_date += 1
+            continue
+        if date_after and date_str < date_after:
+            skipped_date += 1
+            continue
         if dt:
             all_months.add(dt.strftime("%Y%m"))
         if (day_only or civil_day) and dt:
@@ -352,7 +387,8 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
             print(f"\rCollecting file list... {len(paths)} found", end="", flush=True)
 
     total = len(paths)
-    print(f"\rFound {total} images to scan ({skipped_time} skipped by time filter)    ")
+    date_note = f", {skipped_date} by date filter" if skipped_date else ""
+    print(f"\rFound {total} images to scan ({skipped_time} skipped by time filter{date_note})    ")
 
     if exclude_zones:
         print(f"Exclusion zones ({len(exclude_zones)}): {exclude_zones}")
@@ -363,6 +399,7 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
     scanned = 0
     tick = 0
     spinner = ["-", "\\", "|", "/"]
+    interrupted = False
 
     num_workers = workers if workers is not None else multiprocessing.cpu_count()
     try:
@@ -382,6 +419,7 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
                     end="", flush=True,
                 )
     except KeyboardInterrupt:
+        interrupted = True
         print(f"\n\nInterrupted after {scanned}/{total} images.")
 
     print()
@@ -397,7 +435,7 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
         print(f"        {url}")
 
     print(f"\nScanned {scanned} images, kept {len(results)} above threshold {threshold}")
-    return results, all_months
+    return results, all_months, interrupted
 
 
 if __name__ == "__main__":
@@ -420,7 +458,8 @@ if __name__ == "__main__":
     parser.add_argument("--exclude-zone", metavar="x1,y1,x2,y2", action="append",
                         help="Ignore detections whose centre falls in this zone (fractions 0–1). "
                              "Repeatable. Recommended: "
-                             "'0.0,0.0,1.0,0.68' (sky/water), "
+                             "new cam: '0.0,0.0,1.0,0.60' + '0.0,0.60,0.45,0.68' (sky/water), "
+                             "old cam: '0.0,0.0,1.0,0.68' (sky/water), "
                              "'0.52,0.70,0.61,0.81' (boathouse), "
                              "'0.40,0.88,0.46,0.99' (poles)")
     parser.add_argument("--background", metavar="FILE",
@@ -434,6 +473,11 @@ if __name__ == "__main__":
                         help="Pixel intensity diff to consider a region changed from background (default 25)")
     parser.add_argument("--fg-overlap", type=float, default=0.15,
                         help="Min fraction of a detection box that must be in foreground (default 0.15)")
+
+    parser.add_argument("--before", metavar="YYYYMMDD",
+                        help="Only scan images before this date (exclusive upper bound)")
+    parser.add_argument("--after", metavar="YYYYMMDD",
+                        help="Only scan images from this date onward (inclusive lower bound)")
 
     parser.add_argument("--annotate", nargs=2, metavar=("IMAGE", "OUTPUT"),
                         help="Diagnostic: annotate a single image with YOLO boxes and zone overlays, "
@@ -491,7 +535,7 @@ if __name__ == "__main__":
             background_path = args.background
 
     # ── Scan ──────────────────────────────────────────────────────────────────
-    results, scanned_months = scan_folder(
+    results, scanned_months, interrupted = scan_folder(
         args.folder,
         threshold=args.threshold,
         limit=args.limit,
@@ -502,7 +546,13 @@ if __name__ == "__main__":
         fg_overlap=args.fg_overlap,
         bg_diff_threshold=args.bg_diff,
         workers=args.workers,
+        date_before=args.before,
+        date_after=args.after,
     )
+
+    if interrupted:
+        print("\nJSON not written — scan was interrupted.")
+        raise SystemExit(1)
 
     if args.json_output:
         new_data = sorted(
@@ -511,7 +561,7 @@ if __name__ == "__main__":
         )
         output_path = Path(args.json_output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        if output_path.exists() and new_data:
+        if output_path.exists():
             existing = json.loads(output_path.read_text())
             if args.append:
                 by_ts = {x["timestamp"]: x for x in existing}
