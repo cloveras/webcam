@@ -3,7 +3,7 @@
 PHP gallery for webcam images stored as `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`.
 No build step — deploy the PHP files directly to a web server.
 
-Live example: [lilleviklofoten.no/webcam](https://lilleviklofoten.no/webcam/)
+[![Live demo](https://img.shields.io/badge/live-lilleviklofoten.no-blue)](https://lilleviklofoten.no/webcam/)
 
 [![Single image view](images/webcam-example-single-image.png)](https://lilleviklofoten.no/webcam/?type=one&image=20260223131133)
 
