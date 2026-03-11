@@ -2,8 +2,9 @@
 
 A self-hosted PHP gallery for webcam images. No database, no build step —
 copy the files to your server and you have a full image archive with
-dawn-to-dusk filtering, aurora borealis and people detection, 21-language
-support, and good SEO.
+dawn-to-dusk filtering, weather, aurora borealis and people detection,
+21-language support, and good SEO. Navigates with swipe on phones and
+arrow keys on desktops. Loads fast.
 
 [![Live demo](https://img.shields.io/badge/live-lilleviklofoten.no-blue)](https://lilleviklofoten.no/webcam/)
 
