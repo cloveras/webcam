@@ -1206,7 +1206,7 @@ function get_openmeteo_daily_weather($date_str)
     $url = 'https://archive-api.open-meteo.com/v1/archive?'
          . 'latitude='   . $lat . '&longitude=' . $lon
          . '&start_date=' . $date_str . '&end_date=' . $date_str
-         . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum'
+         . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum,weather_code'
          . '&timezone=' . urlencode(WebcamConfig::TIMEZONE);
 
     $context  = stream_context_create(['http' => ['timeout' => 5]]);
@@ -1218,11 +1218,12 @@ function get_openmeteo_daily_weather($date_str)
     if (!$daily || empty($daily['time'])) return null;
 
     $result = [
-        'temp_min' => $daily['temperature_2m_min'][0]  ?? null,
-        'temp_max' => $daily['temperature_2m_max'][0]  ?? null,
-        'wind_max' => $daily['wind_speed_10m_max'][0]  ?? null, // km/h — converted on display
-        'precip'   => $daily['precipitation_sum'][0]   ?? null,
-        '_cached_at' => time(),
+        'temp_min'     => $daily['temperature_2m_min'][0]  ?? null,
+        'temp_max'     => $daily['temperature_2m_max'][0]  ?? null,
+        'wind_max'     => $daily['wind_speed_10m_max'][0]  ?? null, // km/h — converted on display
+        'precip'       => $daily['precipitation_sum'][0]   ?? null,
+        'weather_code' => $daily['weather_code'][0]        ?? null,
+        '_cached_at'   => time(),
     ];
 
     @file_put_contents($cache_file, json_encode($result));
@@ -1233,12 +1234,37 @@ function get_openmeteo_daily_weather($date_str)
  * Print daily weather from Open-Meteo for the given timestamp's date.
  * Closes the <p> tag left open by print_sunrise_sunset_info($leave_open=true).
  */
+/**
+ * Map a WMO weather code (from Open-Meteo) to one of our weather_* translation keys.
+ */
+function wmo_code_to_weather_key($code)
+{
+    $map = [
+        0 => 'clearsky', 1 => 'fair', 2 => 'partlycloudy', 3 => 'cloudy',
+        45 => 'fog', 48 => 'fog',
+        51 => 'lightrain', 53 => 'rain', 55 => 'heavyrain',
+        56 => 'lightsleet', 57 => 'heavysleet',
+        61 => 'lightrain', 63 => 'rain', 65 => 'heavyrain',
+        66 => 'lightsleet', 67 => 'heavysleet',
+        71 => 'lightsnow', 73 => 'snow', 75 => 'heavysnow', 77 => 'snow',
+        80 => 'lightrainshowers', 81 => 'rainshowers', 82 => 'heavyrainshowers',
+        85 => 'lightsnowshowers', 86 => 'heavysnowshowers',
+        95 => 'thunder', 96 => 'rainandthunder', 99 => 'heavyrainandthunder',
+    ];
+    return $map[$code] ?? null;
+}
+
 function print_openmeteo_weather_info($timestamp)
 {
     $obs = get_openmeteo_daily_weather(date('Y-m-d', $timestamp));
     if (!$obs) { echo "</p>\n\n"; return; }
 
     $parts = [];
+    if (isset($obs['weather_code']) && $obs['weather_code'] !== null) {
+        $key = wmo_code_to_weather_key((int)$obs['weather_code']);
+        $desc = $key ? t('weather_' . $key) : null;
+        if ($desc) $parts[] = $desc;
+    }
     if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
         $temp_str = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
         if ($obs['wind_max'] !== null) {
