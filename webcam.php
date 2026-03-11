@@ -1005,10 +1005,11 @@ function print_single_image($image_filename, $last_image)
     // For the latest image, use responsive srcset (900w/1800w) to avoid serving the full 4K file.
     // latest.jpg and latest.php always serve the full-size original unchanged.
     if ($last_image && file_exists('latest-resized-650.jpg') && file_exists('latest-resized-900.jpg') && file_exists('latest-resized-1800.jpg')) {
+        $v = filemtime('latest-resized-900.jpg');
         echo "fetchpriority=\"high\" width=\"900\" height=\"506\" ";
-        echo "srcset=\"latest-resized-650.jpg 650w, latest-resized-900.jpg 900w, latest-resized-1800.jpg 1800w\" ";
+        echo "srcset=\"latest-resized-650.jpg?v=$v 650w, latest-resized-900.jpg?v=$v 900w, latest-resized-1800.jpg?v=$v 1800w\" ";
         echo "sizes=\"(max-width: 900px) 100vw, 900px\" ";
-        echo "src=\"latest-resized-900.jpg\">";
+        echo "src=\"latest-resized-900.jpg?v=$v\">";
     } else {
         echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
         echo "src=\"$year/$month/$day/$image_filename\">";
