@@ -85,15 +85,15 @@ foreach ($months_list as $ym) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
         $size_param = ($size === 'large') ? '&size=large' : '';
-        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
-        $prev_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
+        $prev_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param . lang_param();
+        $prev_label = t_month_year($m, $y);
     }
     if ($ym > $current_ym && !$next_url) {
         $y = (int)substr($ym, 0, 4);
         $m = (int)substr($ym, 4, 2);
         $size_param = ($size === 'large') ? '&size=large' : '';
-        $next_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param;
-        $next_label = date('F Y', mktime(12, 0, 0, $m, 15, $y));
+        $next_url   = "?year=$y&month=" . sprintf('%02d', $m) . $size_param . lang_param();
+        $next_label = t_month_year($m, $y);
     }
 }
 
@@ -111,7 +111,7 @@ usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = PEOPLE_LABEL . ': People ' . date('F Y', $title_ts);
+$title    = PEOPLE_LABEL . ': ' . t('nav_people') . ' ' . t_month_year($month, $year);
 
 // ============================================================
 // HTML header
@@ -203,17 +203,17 @@ $nav_links = [];
 if ($prev_url && $prev_label) {
     $nav_links[] = "<a href=\"$prev_url\">&larr; $prev_label</a>";
 }
-$nav_links[] = date('F Y', $title_ts);
+$nav_links[] = t_month_year($month, $year);
 if ($next_url && $next_label) {
     $nav_links[] = "<a href=\"$next_url\">$next_label &rarr;</a>";
 }
-$nav_links[] = "<a href=\".\">Webcam</a>";
+$nav_links[] = "<a href=\"." . lang_query() . "\">" . t('nav_webcam') . "</a>";
 if ($size === 'large') {
-    $nav_links[] = "<a href=\"{$base_url}\">Mini photos</a>";
+    $nav_links[] = "<a href=\"{$base_url}\">" . t('nav_mini_photos') . "</a>";
 } else {
-    $nav_links[] = "<a href=\"{$base_url}&size=large\">Large photos</a>";
+    $nav_links[] = "<a href=\"{$base_url}&size=large\">" . t('nav_large_photos') . "</a>";
 }
-if (PEOPLE_SHOW_AURORA) $nav_links[] = "<a href=\"aurora.php\">Aurora borealis</a>";
+if (PEOPLE_SHOW_AURORA) $nav_links[] = "<a href=\"aurora.php" . lang_query() . "\">" . t('nav_aurora') . "</a>";
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
 
 // ============================================================
@@ -247,7 +247,7 @@ foreach ($month_images as $img) {
         $img_attrs = " width=\"$mini_w\" height=\"$mini_h\"";
     }
     $alt       = PEOPLE_LABEL . ": $y-$m-$d $h:$mi";
-    $link      = "webcam.php?type=one&image=$ts";
+    $link      = "webcam.php?type=one&image=$ts" . lang_param();
     $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
 
     $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
@@ -262,7 +262,7 @@ foreach ($month_images as $img) {
 echo "</div>\n\n";
 
 if ($count === 0) {
-    echo '<p>(No photos with people to display for ' . date('F Y', $title_ts) . '.)</p>' . "\n\n";
+    echo '<p>(No photos with people to display for ' . t_month_year($month, $year) . '.)</p>' . "\n\n";
 }
 
 // ============================================================

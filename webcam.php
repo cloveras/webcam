@@ -907,8 +907,8 @@ function print_single_image($image_filename, $last_image)
                 // This was not the first image in the array, so we can get the previous one.
                 $previous_image = $images[$i - 1];
             }
-            if ($i != $number_of_images) {
-                // This was not the Latest image in the array, so we can get the next one.
+            if ($i < $number_of_images - 1) {
+                // This was not the last image in the array, so we can get the next one.
                 $next_image = $images[$i + 1];
             }
             break;
@@ -955,17 +955,6 @@ function print_single_image($image_filename, $last_image)
     }
     print_full_day_link($timestamp, $last_image);
 
-    if ($previous_datepart || $next_datepart) {
-        echo "<p>";
-        if ($previous_datepart) {
-            echo "<a href=\"$previous\">" . t('prev_image') . ": " . substr($previous_datepart, 8, 2) . ":" . substr($previous_datepart, 10, 2) . "</a>.\n";
-        }
-        if ($next_datepart) {
-            echo "<a href=\"$next\">" . t('next_image') . ": " . substr($next_datepart, 8, 2) . ":" . substr($next_datepart, 10, 2) . "</a>.\n";
-        }
-        echo "</p>\n\n";
-    }
-
     echo "<p>\n";
     echo "<a href=\"?type=day&date=$year$month$day" . lang_param() . "\">";
     echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
@@ -992,8 +981,9 @@ function print_single_image($image_filename, $last_image)
     echo "</a>\n";
     echo "</p>\n\n";
 
-    list($width, $height) = getimagesize("$year/$month/$day/$image_filename");
-    $full_size_link = "<a href=\"$year/$month/$day/$image_filename\" rel=\"nofollow\">" . t('full_size') . " ($width x $height)</a>";
+    $imagesize  = @getimagesize("$year/$month/$day/$image_filename");
+    $dimensions = $imagesize ? " ({$imagesize[0]} x {$imagesize[1]})" : '';
+    $full_size_link = "<a href=\"$year/$month/$day/$image_filename\" rel=\"nofollow\">" . t('full_size') . $dimensions . "</a>";
 
     if (CAM_IS_PRIMARY) {
         echo "<p class=\"seo-desc\">" . t('seo_description_short') . "</p>\n\n";
