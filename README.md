@@ -1,7 +1,9 @@
 # webcam.php
 
-PHP gallery for webcam images stored as `YYYY/MM/DD/YYYYMMDDHHMMSS.jpg`.
-No build step — deploy the PHP files directly to a web server.
+A self-hosted PHP gallery for webcam images. No database, no build step —
+copy the files to your server and you have a full image archive with
+dawn-to-dusk filtering, aurora borealis and people detection, 21-language
+support, and good SEO.
 
 [![Live demo](https://img.shields.io/badge/live-lilleviklofoten.no-blue)](https://lilleviklofoten.no/webcam/)
 
