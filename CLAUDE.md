@@ -210,6 +210,18 @@ HTTP cache headers are set in each PHP file:
 - `css.php` — `public, max-age=86400`
 - `latest.php` — `no-store, no-cache` (serves the raw latest JPEG)
 
+## Lillevik photos gallery (`lillevik-photos/`)
+
+Static promotional photos shown at the bottom of the main webcam page (10 random images per load). Full-size originals are kept; `mini/` holds 320×320 thumbnails served to the browser.
+
+`webcam.php` serves `mini/filename.jpg` if it exists, falling back to the original. Images have `loading="lazy"` since they're below the fold.
+
+To add a new photo: copy it to `lillevik-photos/` on the server, then create its thumbnail:
+```bash
+cd ~/www/webcam/lillevik-photos
+convert new-photo.jpg -resize 320x320^ -gravity center -extent 320x320 -quality 85 mini/new-photo.jpg
+```
+
 ## Image maintenance
 
 ```bash

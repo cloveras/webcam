@@ -1714,12 +1714,15 @@ function print_lillevik_images_and_links()
 
     $width = "166px";
     $height = "166px";
+    $mini_dir = $dir . '/mini';
     foreach ($selected as $path) {
         $filename = basename($path);
-        $img_url = $url_base . '/' . urlencode($filename);
+        $img_url  = file_exists($mini_dir . '/' . $filename)
+            ? $url_base . '/mini/' . urlencode($filename)
+            : $url_base . '/' . urlencode($filename);
         $utm_url = "https://lilleviklofoten.no/?utm_source=webcam&utm_medium=thumbnail&utm_campaign=lillevik_photos&utm_content=" . urlencode($filename);
         echo "  <a href=\"$utm_url\" style=\"flex: 1 0 30%; max-width: $width;\">\n";
-        echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" style=\"width: $width; height: $height; object-fit: cover; display: block;\" />\n";
+        echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" style=\"width: $width; height: $height; object-fit: cover; display: block;\" loading=\"lazy\" />\n";
         echo "  </a>\n";
     }
 
