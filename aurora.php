@@ -214,14 +214,11 @@ $using_default = !isset($_GET['year']) && !isset($_GET['month']);
 $size  = (isset($_GET['size']) && $_GET['size'] === 'large') ? 'large' : 'mini';
 
 if (!$year || !$month) {
-    if (!empty($months_list)) {
-        $latest = end($months_list);
-        $year  = (int)substr($latest, 0, 4);
-        $month = (int)substr($latest, 4, 2);
-    } else {
-        $year  = (int)date('Y');
-        $month = (int)date('m');
-    }
+    // Always default to the current month so the forecast is shown.
+    // If the current month has no detections, the image grid will be empty
+    // but the forecast and nav links to previous months still appear.
+    $year  = (int)date('Y');
+    $month = (int)date('m');
 }
 
 $month_str  = sprintf('%02d', $month);
