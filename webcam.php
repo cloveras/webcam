@@ -1543,6 +1543,7 @@ function roundDawnAndDusk($dawn, $dusk)
 function print_full_day($timestamp, $image_size, $number_of_images)
 {
     global $size;
+    global $show_all;
     global $large_image_width;
     global $large_image_height;
     global $mini_image_width;
@@ -1602,6 +1603,19 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     }
     print_yesterday_tomorrow_links($timestamp, false);
 
+    // "See all photos" / "See photos between dawn and dusk" toggle
+    if (!$is_future && !$midnight_sun && !$polar_night) {
+        $date_str = date('Ymd', $timestamp);
+        $size_param = $size ? "&size=$size" : '';
+        if ($show_all) {
+            $filtered_url = "?type=day&date=$date_str$size_param" . lang_param();
+            echo "<p>See <a href=\"$filtered_url\">photos between dawn and dusk</a>.</p>\n";
+        } else {
+            $all_url = "?type=day&date=$date_str&all=1$size_param" . lang_param();
+            echo "<p>See <a href=\"$all_url\">all photos</a>.</p>\n";
+        }
+    }
+
     // Get all *jpg images in "today's" image directory.
     $directory = date('Y/m/d', $timestamp);
     $images_printed = 0;
@@ -1628,8 +1642,8 @@ function print_full_day($timestamp, $image_size, $number_of_images)
             // Create timestamp to check if this image is from between dawn and dusk.
             $image_timestamp = mktime((int) $hour, (int) $minute, (int) $seconds, (int) $month, (int) $day, (int) $year);
 
-            // Check if the image is between dawn and dusk.
-            if ($image_timestamp >= $dawn && $image_timestamp <= $dusk) {
+            // Check if the image is between dawn and dusk (skipped when ?all=1).
+            if ($show_all || ($image_timestamp >= $dawn && $image_timestamp <= $dusk)) {
 
                 // ------------------------------------------------------------
                 // CSS overlay   
@@ -1754,6 +1768,7 @@ date_default_timezone_set(WebcamConfig::TIMEZONE);
 $timestamp = time();
 $debug = 0;
 $size = "mini";
+$show_all = false;
 $type = "one";
 $monthly_day = WebcamConfig::MONTHLY_DAY;
 $monthly_hour = WebcamConfig::MONTHLY_HOUR;
@@ -1791,6 +1806,7 @@ if ($_SERVER['QUERY_STRING'] == 1) {
     $parse_output['size'] = "";
     $parse_output['image'] = "";
     $parse_output['last_image'] = "";
+    $parse_output['all'] = "";
     parse_str($_SERVER['QUERY_STRING'], $parse_output);
     debug("WORK IN PROGRESS!");
     debug("Parse:");
@@ -1801,6 +1817,7 @@ if ($_SERVER['QUERY_STRING'] == 1) {
     $size = $parse_output['size'];
     $image = $parse_output['image'];
     $last_image = $parse_output['last_image'];
+    $show_all = !empty($parse_output['all']);
 }
 //debug("QUERY_STRING: " . $_SERVER['QUERY_STRING']);
 //debug("type: $type<br/>date: $date<br/>year: $year</br>month: $month</br>size: $size<br/>image: $image<br/>last_image: $last_image");
