@@ -50,66 +50,72 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     $_cam_label    = CAM_LABEL;
     $_cam_css_path = CAM_CSS_PATH . '?v=' . filemtime(__DIR__ . '/webcam.css');
     $_css_inline   = '  <style>' . "\n" . file_get_contents(__DIR__ . '/webcam.css') . '  </style>';
+    $_webcam_url    = WebcamConfig::WEBCAM_URL;
+    $_favicon_32    = WebcamConfig::FAVICON_32;
+    $_favicon_192   = WebcamConfig::FAVICON_192;
+    $_favicon_180   = WebcamConfig::FAVICON_180;
     $_cam_canonical = CAM_IS_PRIMARY
-        ? '  <link rel="canonical" href="https://lilleviklofoten.no/webcam/">'
+        ? "  <link rel=\"canonical\" href=\"{$_webcam_url}\">"
         : '';
     $_ga_id        = WebcamConfig::GOOGLE_ANALYTICS_ID;
     $_clarity_id   = WebcamConfig::MICROSOFT_CLARITY_ID;
     $_meta_desc    = htmlspecialchars(strip_tags(t('seo_description')), ENT_QUOTES, 'UTF-8');
-    $_og_image     = $og_image ?: 'https://lilleviklofoten.no/webcam/latest.jpg';
+    $_og_image     = $og_image ?: WebcamConfig::WEBCAM_URL . 'latest.jpg';
     if (CAM_IS_PRIMARY) {
+        $_site_url    = WebcamConfig::SITE_URL;
+        $_webcam_url2 = WebcamConfig::WEBCAM_URL;
+        $_site_name   = WebcamConfig::SITE_NAME;
+        $_email       = WebcamConfig::CONTACT_EMAIL;
+        $_phone       = WebcamConfig::CONTACT_PHONE;
+        $_logo        = WebcamConfig::LOGO_URL;
+        $_street      = WebcamConfig::ADDRESS_STREET;
+        $_postal      = WebcamConfig::ADDRESS_POSTAL;
+        $_city        = WebcamConfig::ADDRESS_CITY;
+        $_region      = WebcamConfig::ADDRESS_REGION;
+        $_country     = WebcamConfig::ADDRESS_COUNTRY;
+        $_same_as     = json_encode(WebcamConfig::SOCIAL_PROFILES, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        $_latest_url  = WebcamConfig::WEBCAM_URL . 'latest.jpg';
         $_cam_json_ld = <<<JSONLD
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "@id": "https://lilleviklofoten.no/webcam/#webpage",
-    "url": "https://lilleviklofoten.no/webcam/",
-    "name": "Live Webcam – Lillevik Lofoten, Gimsøysand, Norway",
-    "description": "Webcam from Lillevik Lofoten on Gimsøy in Lofoten, Norway. See the midnight sun in summer and northern lights in winter. Image updates every 10 minutes.",
+    "@id": "{$_webcam_url2}#webpage",
+    "url": "{$_webcam_url2}",
+    "name": "Live Webcam – {$_site_name}, {$_city}, {$_country}",
+    "description": "Webcam from {$_site_name} on Gimsøy in Lofoten, Norway. See the midnight sun in summer and northern lights in winter. Image updates every 10 minutes.",
     "inLanguage": "en",
     "publisher": {
       "@type": "Organization",
-      "@id": "https://lilleviklofoten.no/#organization",
-      "name": "Lillevik Lofoten",
-      "url": "https://lilleviklofoten.no/",
-      "email": "post@lofotenvacation.no",
-      "telephone": "+4741130944",
-      "logo": "https://lilleviklofoten.no/logo/lillevik-logo-1000.jpg",
-      "image": "https://lilleviklofoten.no/logo/lillevik-logo-1000.jpg",
+      "@id": "{$_site_url}/#organization",
+      "name": "{$_site_name}",
+      "url": "{$_site_url}/",
+      "email": "{$_email}",
+      "telephone": "{$_phone}",
+      "logo": "{$_logo}",
+      "image": "{$_logo}",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Årstrandveien 663",
-        "postalCode": "8314",
-        "addressLocality": "Gimsøysand",
-        "addressRegion": "Nordland",
-        "addressCountry": "NO"
+        "streetAddress": "{$_street}",
+        "postalCode": "{$_postal}",
+        "addressLocality": "{$_city}",
+        "addressRegion": "{$_region}",
+        "addressCountry": "{$_country}"
       },
-        "sameAs": [
-            "https://facebook.com/lilleviklofoten",
-            "https://instagram.com/lilleviklofoten",
-            "https://www.tiktok.com/@lilleviklofoten",
-            "https://www.reddit.com/user/Lillevik_Lofoten/",
-            "https://bsky.app/profile/lilleviklofoten.bsky.social",
-            "https://www.booking.com/hotel/no/lillevik-lofoten.html",
-            "https://www.airbnb.com/rooms/44385543",
-            "https://lofotenvacation.com/en/lillevik-lofoten",
-            "https://maps.app.goo.gl/nKPJn2wFm5uWBZTg7",
-            "https://maps.apple.com/?ll=68.330081,14.091728&q=Lillevik%20Lofoten"
-        ]
+      "sameAs": {$_same_as}
     },
     "primaryImageOfPage": {
       "@type": "ImageObject",
-      "@id": "https://lilleviklofoten.no/webcam/latest.jpg",
-      "contentUrl": "https://lilleviklofoten.no/webcam/latest.jpg",
-      "url": "https://lilleviklofoten.no/webcam/latest.jpg",
-      "caption": "Lillevik Lofoten live webcam - Gimsøy, Lofoten, Norway",
+      "@id": "{$_latest_url}",
+      "contentUrl": "{$_latest_url}",
+      "url": "{$_latest_url}",
+      "caption": "{$_site_name} live webcam - {$_city}, Lofoten, Norway",
       "width": 3840,
       "height": 2160,
-      "license": "https://lilleviklofoten.no/"
+      "license": "{$_site_url}/"
     },
-    "image": "https://lilleviklofoten.no/webcam/latest.jpg"
+    "image": "{$_latest_url}"
   }
   </script>
 JSONLD;
@@ -131,12 +137,12 @@ JSONLD;
   <meta property="og:title" content="$_cam_label">
   <meta property="og:description" content="$_meta_desc">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://lilleviklofoten.no/webcam/">
+  <meta property="og:url" content="$_webcam_url">
   <meta property="og:image" content="$_og_image">
 
-  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
-  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
-  <link rel="apple-touch-icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg">
+  <link rel="icon" href="$_favicon_32" sizes="32x32">
+  <link rel="icon" href="$_favicon_192" sizes="192x192">
+  <link rel="apple-touch-icon" href="$_favicon_180">
 
 $_cam_canonical
 
@@ -149,7 +155,7 @@ END1;
 
     // Set some web variables for command-line use.
     if (!$_SERVER['SERVER_NAME']) {
-        $_SERVER['SERVER_NAME'] = "lilleviklofoten.no";
+        $_SERVER['SERVER_NAME'] = WebcamConfig::FALLBACK_SERVER_NAME;
         $_SERVER['SCRIPT_NAME'] = "webcam.php";
     }
     
@@ -967,7 +973,7 @@ function print_single_image($image_filename, $last_image)
     if (!$last_image) {
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
-    $_single_og_image = 'https://lilleviklofoten.no/webcam/' . "$year/$month/$day/$image_filename";
+    $_single_og_image = WebcamConfig::WEBCAM_URL . "$year/$month/$day/$image_filename";
     page_header($title, $previous, $next, $up, $down, $prefetch_images, $_single_og_image);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, true);
     if ($last_image || date('Y-m-d', $timestamp) === date('Y-m-d')) {
@@ -1072,7 +1078,7 @@ function get_weather_data()
     $url = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={$lat}&lon={$lon}";
 
     $context = stream_context_create(['http' => [
-        'header'  => "User-Agent: lilleviklofoten-webcam/1.0 https://github.com/cloveras/webcam\r\n",
+        'header'  => "User-Agent: " . WebcamConfig::FALLBACK_SERVER_NAME . "-webcam/1.0 https://github.com/cloveras/webcam\r\n",
         'timeout' => 5,
     ]]);
 

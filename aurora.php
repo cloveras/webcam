@@ -31,11 +31,12 @@ function get_yr_aurora_forecast()
             return $cached;
         }
     }
+    $loc      = WebcamConfig::YR_LOCATION_CODE;
     $context  = stream_context_create(['http' => [
         'timeout' => 5,
-        'header'  => "User-Agent: LillevikLofoten/1.0\r\n",
+        'header'  => "User-Agent: " . WebcamConfig::FALLBACK_SERVER_NAME . "/1.0\r\n",
     ]]);
-    $response = @file_get_contents('https://www.yr.no/api/v0/locations/1-279560/aurora', false, $context);
+    $response = @file_get_contents("https://www.yr.no/api/v0/locations/{$loc}/aurora", false, $context);
     if ($response === false) return null;
     $data = json_decode($response, true);
     if (!$data) return null;
@@ -111,7 +112,7 @@ function print_aurora_forecast()
 
     $updated    = $data['auroraForecast']['updated'] ?? '';
     $updated_ts = $updated ? strtotime($updated) : 0;
-    $yr_url     = 'https://www.yr.no/en/other-conditions/1-279560/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
+    $yr_url     = 'https://www.yr.no/en/other-conditions/' . WebcamConfig::YR_LOCATION_CODE . '/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
     $swpc_url   = 'https://www.swpc.noaa.gov/products/aurora-30-minute-forecast';
     $frames_url = 'https://services.swpc.noaa.gov/images/animations/ovation/north/';
 
@@ -268,7 +269,7 @@ foreach ($month_images as $_img) {
     if (!$_best || $_img['score'] > $_best['score']) $_best = $_img;
 }
 $_og_image_aurora = $_best
-    ? 'https://lilleviklofoten.no/webcam/' . substr($_best['timestamp'],0,4) . '/' . substr($_best['timestamp'],4,2) . '/' . substr($_best['timestamp'],6,2) . '/' . $_best['timestamp'] . '.jpg'
+    ? WebcamConfig::WEBCAM_URL . substr($_best['timestamp'],0,4) . '/' . substr($_best['timestamp'],4,2) . '/' . substr($_best['timestamp'],6,2) . '/' . $_best['timestamp'] . '.jpg'
     : '';
 
 // ============================================================
@@ -276,7 +277,7 @@ $_og_image_aurora = $_best
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = 'Lillevik Lofoten webcam: ' . t('aurora_page_suffix') . ' ' . t_month_year($month, $year);
+$title    = WebcamConfig::SITE_NAME . ' webcam: ' . t('aurora_page_suffix') . ' ' . t_month_year($month, $year);
 
 // ============================================================
 // HTML header
@@ -286,13 +287,14 @@ $ga_id      = WebcamConfig::GOOGLE_ANALYTICS_ID;
 $clarity_id = WebcamConfig::MICROSOFT_CLARITY_ID;
 
 if (empty($_SERVER['SERVER_NAME'])) {
-    $_SERVER['SERVER_NAME'] = 'lilleviklofoten.no';
+    $_SERVER['SERVER_NAME'] = WebcamConfig::FALLBACK_SERVER_NAME;
     $_SERVER['SCRIPT_NAME'] = '/webcam/aurora.php';
 }
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
+$_webcam_url = WebcamConfig::WEBCAM_URL;
 $_aurora_canonical = $using_default
-    ? 'https://lilleviklofoten.no/webcam/aurora.php'
-    : "https://lilleviklofoten.no/webcam/aurora.php?year={$year_str}&month={$month_str}";
+    ? "{$_webcam_url}aurora.php"
+    : "{$_webcam_url}aurora.php?year={$year_str}&month={$month_str}";
 
 header('Cache-Control: public, max-age=1800');
 header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 1800) . ' GMT');
@@ -313,7 +315,7 @@ echo '  <meta property="og:url" content="' . htmlspecialchars($_aurora_canonical
 if ($_og_image_aurora) {
     echo '  <meta property="og:image" content="' . htmlspecialchars($_og_image_aurora) . '">' . "\n";
 }
-echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
+echo '  <link rel="icon" href="' . WebcamConfig::FAVICON_32 . '" sizes="32x32">' . "\n";
 echo '  <link rel="stylesheet" type="text/css" href="css.php?v=' . filemtime(__DIR__ . '/webcam.css') . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";

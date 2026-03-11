@@ -59,4 +59,41 @@ class WebcamConfig {
     public const MICROSOFT_CLARITY_ID = 'brp4ocus57';
 
     // Open-Meteo (https://open-meteo.com) is used for historical daily weather — no API key needed.
+
+    // Yr.no location code — find yours at https://www.yr.no (copy from the URL of your location)
+    public const YR_LOCATION_CODE = '1-279560';
+
+    // Contact information (used in JSON-LD structured data)
+    public const CONTACT_EMAIL = 'post@lofotenvacation.no';
+    public const CONTACT_PHONE = '+4741130944';
+
+    // Physical address (used in JSON-LD structured data)
+    public const ADDRESS_STREET  = 'Årstrandveien 663';
+    public const ADDRESS_POSTAL  = '8314';
+    public const ADDRESS_CITY    = 'Gimsøysand';
+    public const ADDRESS_REGION  = 'Nordland';
+    public const ADDRESS_COUNTRY = 'NO';
+
+    // Logo and favicon URLs (used in JSON-LD and <link> tags)
+    public const LOGO_URL        = 'https://lilleviklofoten.no/logo/lillevik-logo-1000.jpg';
+    public const FAVICON_32      = '/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg';
+    public const FAVICON_192     = '/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg';
+    public const FAVICON_180     = '/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-180x180.jpg';
+
+    // Social media and booking profiles (used in JSON-LD sameAs)
+    public const SOCIAL_PROFILES = [
+        'https://facebook.com/lilleviklofoten',
+        'https://instagram.com/lilleviklofoten',
+        'https://www.tiktok.com/@lilleviklofoten',
+        'https://www.reddit.com/user/Lillevik_Lofoten/',
+        'https://bsky.app/profile/lilleviklofoten.bsky.social',
+        'https://www.booking.com/hotel/no/lillevik-lofoten.html',
+        'https://www.airbnb.com/rooms/44385543',
+        'https://lofotenvacation.com/en/lillevik-lofoten',
+        'https://maps.app.goo.gl/nKPJn2wFm5uWBZTg7',
+        'https://maps.apple.com/?ll=68.330081,14.091728&q=Lillevik%20Lofoten',
+    ];
+
+    // Fallback SERVER_NAME for command-line use (php webcam.php)
+    public const FALLBACK_SERVER_NAME = 'lilleviklofoten.no';
 }

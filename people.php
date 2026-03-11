@@ -121,7 +121,7 @@ $ga_id      = WebcamConfig::GOOGLE_ANALYTICS_ID;
 $clarity_id = WebcamConfig::MICROSOFT_CLARITY_ID;
 
 if (empty($_SERVER['SERVER_NAME'])) {
-    $_SERVER['SERVER_NAME'] = 'lilleviklofoten.no';
+    $_SERVER['SERVER_NAME'] = WebcamConfig::FALLBACK_SERVER_NAME;
     $_SERVER['SCRIPT_NAME'] = '/webcam/people.php';
 }
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
@@ -134,10 +134,9 @@ echo '<html lang="' . lang_html_attr() . '">' . "\n";
 echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
 echo '  <meta name="description" content="' . htmlspecialchars(t('seo_description')) . '">' . "\n";
-echo '  <meta name="keywords" content="lofoten,webcam,people,Lillevik">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robots" content="noindex, nofollow">' . "\n";
-echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
+echo '  <link rel="icon" href="' . WebcamConfig::FAVICON_32 . '" sizes="32x32">' . "\n";
 echo '  <link rel="stylesheet" type="text/css" href="' . PEOPLE_CSS_PATH . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
