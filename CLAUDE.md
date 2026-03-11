@@ -226,9 +226,14 @@ Static promotional photos shown at the bottom of the main webcam page (10 random
 To add a new photo: copy it to `lillevik-photos/` on the server, then create its thumbnail and WebP:
 ```bash
 cd ~/www/webcam/lillevik-photos
-convert new-photo.jpg -resize 320x320^ -gravity center -extent 320x320 -quality 85 mini/new-photo.jpg
-convert mini/new-photo.jpg -quality 82 mini/new-photo.webp
+convert new-photo.jpg -resize 300x300^ -gravity center -extent 300x300 -quality 85 mini/new-photo.jpg
+convert mini/new-photo.jpg -quality 70 mini/new-photo.webp
 ```
+
+`copy-latest-image.sh` generates three responsive sizes on every cron run:
+- `latest-resized-650.jpg` — 650×366, ~42 KB (mobile)
+- `latest-resized-900.jpg` — 900×506, ~79 KB (desktop 1x)
+- `latest-resized-1800.jpg` — 1800×1013, ~295 KB (retina)
 
 ## Image maintenance
 
