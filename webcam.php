@@ -1004,7 +1004,7 @@ function print_single_image($image_filename, $last_image)
  * @param bool $polar_night Whether it's polar night period
  * @param string|bool $include_interval Whether to include time interval ("day", "average", or false)
  */
-function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval, $leave_open = false)
+function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval, $leave_open = false, $append_html = '')
 {
     debug("<br/>print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval)");
     global $monthly_day;
@@ -1018,12 +1018,13 @@ function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_su
     }
     if ($include_interval == "day") {
         echo ". " . sprintf(t('displaying_between'), date('H:i', $dawn), date('H:i', $dusk));
+        if ($append_html) echo " " . $append_html;
     } else if ($include_interval == "average") {
         echo " (" . sprintf(t('calculated_for'), date('F', $dawn), $monthly_day) . ")";
         //echo " with the newest images first";
     }
     if ($leave_open) {
-        echo ".";
+        if (!$append_html) echo ".";
     } else {
         echo ".</p>\n\n";
     }
@@ -1594,27 +1595,28 @@ function print_full_day($timestamp, $image_size, $number_of_images)
         $title .= date('H', $timestamp) . ":" . date('i', $timestamp);
     }
 
+    // Build "See all photos" / "See photos between dawn and dusk" toggle link
+    $toggle_html = '';
+    if (!$is_future && !$midnight_sun && !$polar_night) {
+        $date_str   = date('Ymd', $timestamp);
+        $size_param = $size ? "&size=$size" : '';
+        if ($show_all) {
+            $toggle_url  = "?type=day&date=$date_str$size_param" . lang_param();
+            $toggle_html = sprintf(t('see_link'), '<a href="' . $toggle_url . '">' . t('filtered_photos') . '</a>');
+        } else {
+            $toggle_url  = "?type=day&date=$date_str&all=1$size_param" . lang_param();
+            $toggle_html = sprintf(t('see_link'), '<a href="' . $toggle_url . '">' . t('all_photos') . '</a>');
+        }
+    }
+
     page_header($title, $previous, $next, $up, $down, $prefetch_images);
-    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $is_future ? false : $number_of_images != 1, true);
+    print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $is_future ? false : $number_of_images != 1, true, $toggle_html);
     if (date('Y-m-d', $timestamp) === date('Y-m-d')) {
         print_weather_info();
     } else {
         print_openmeteo_weather_info($timestamp);
     }
     print_yesterday_tomorrow_links($timestamp, false);
-
-    // "See all photos" / "See photos between dawn and dusk" toggle
-    if (!$is_future && !$midnight_sun && !$polar_night) {
-        $date_str = date('Ymd', $timestamp);
-        $size_param = $size ? "&size=$size" : '';
-        if ($show_all) {
-            $filtered_url = "?type=day&date=$date_str$size_param" . lang_param();
-            echo "<p>See <a href=\"$filtered_url\">photos between dawn and dusk</a>.</p>\n";
-        } else {
-            $all_url = "?type=day&date=$date_str&all=1$size_param" . lang_param();
-            echo "<p>See <a href=\"$all_url\">all photos</a>.</p>\n";
-        }
-    }
 
     // Get all *jpg images in "today's" image directory.
     $directory = date('Y/m/d', $timestamp);
