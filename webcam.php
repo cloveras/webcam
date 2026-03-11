@@ -22,13 +22,18 @@ require_once __DIR__ . '/lang.php';
 // ============================================================
 // Camera configuration — override via define() before including this file
 // ============================================================
-defined('CAM_LABEL')           || define('CAM_LABEL',           'Lillevik Lofoten webcam');
-defined('CAM_FILE_PREFIX')     || define('CAM_FILE_PREFIX',     'Lillevik Lofoten_01_');
-defined('CAM_FILE_PREFIX_ALT') || define('CAM_FILE_PREFIX_ALT', 'Lillevik Lofoten_00_');
-defined('CAM_IS_PRIMARY')      || define('CAM_IS_PRIMARY',      true);
-defined('CAM_SHOW_PEOPLE')     || define('CAM_SHOW_PEOPLE',     false);
-defined('CAM_CSS_PATH')        || define('CAM_CSS_PATH',        'css.php');
-defined('CAM_INTRO_HTML')      || define('CAM_INTRO_HTML',      '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Gimsøy, Lofoten islands, Norway: <a href="https://maps.app.goo.gl/CrTRstYiXqWwciBe9">Map</a>. See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>');
+defined('CAM_LABEL')                 || define('CAM_LABEL',                 'Lillevik Lofoten webcam');
+defined('CAM_FILE_PREFIX')           || define('CAM_FILE_PREFIX',           'Lillevik Lofoten_01_');
+defined('CAM_FILE_PREFIX_ALT')       || define('CAM_FILE_PREFIX_ALT',       'Lillevik Lofoten_00_');
+defined('CAM_IS_PRIMARY')            || define('CAM_IS_PRIMARY',            true);
+defined('CAM_SHOW_PEOPLE')           || define('CAM_SHOW_PEOPLE',           false);
+defined('CAM_CSS_PATH')              || define('CAM_CSS_PATH',              'css.php');
+defined('CAM_INTRO_HTML')            || define('CAM_INTRO_HTML',            '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Gimsøy, Lofoten islands, Norway: <a href="https://maps.app.goo.gl/CrTRstYiXqWwciBe9">Map</a>. See also: <a href="https://lilleviklofoten.no/webcams/">Lofoten webcams at Gimsøy, Henningsvær, Reine, Svolvær, Leknes, etc.</a>');
+// Site-specific string overrides — set to a string to bypass the translated version in lang.php.
+// Useful when deploying for a different location where the built-in translations don't apply.
+defined('CAM_WEBCAM_INTRO')          || define('CAM_WEBCAM_INTRO',          null); // overrides 'webcam_intro' in all languages
+defined('CAM_SEO_DESCRIPTION')       || define('CAM_SEO_DESCRIPTION',       null); // overrides 'seo_description' in all languages
+defined('CAM_SEO_DESCRIPTION_SHORT') || define('CAM_SEO_DESCRIPTION_SHORT', null); // overrides 'seo_description_short' in all languages
 
 // ============================================================
 // Functions

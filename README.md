@@ -63,6 +63,19 @@ No build step — deploy the PHP files directly to a web server.
 
 For verbose debug output: set `$debug = 1` in `webcam.php`.
 
+### Localising site-specific strings
+
+`lang.php` contains translations for 21 languages, but several keys — `webcam_intro`, `seo_description`, `seo_description_short` — contain place names and URLs specific to Lillevik Lofoten. To deploy for a different location, override them before including `webcam.php`:
+
+```php
+define('CAM_WEBCAM_INTRO',          '<a href=".">Webcam</a> at My Place, My Town, My Country.');
+define('CAM_SEO_DESCRIPTION',       'Live webcam at My Place, My Town. Updated every 10 minutes.');
+define('CAM_SEO_DESCRIPTION_SHORT', 'Live webcam at My Place. Updated every 10 minutes.');
+require_once __DIR__ . '/webcam.php';
+```
+
+These override the translated version for all languages. All other translation keys (navigation labels, weather terms, month names, etc.) are generic and need no changes.
+
 ### Code structure
 
 - `webcam.php` — main entry point and HTML rendering

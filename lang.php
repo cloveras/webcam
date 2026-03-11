@@ -82,6 +82,15 @@ function lang_hreflang_links(string $base_url): string {
 
 function t(string $key): string {
     global $LANG, $TRANSLATIONS;
+    // Allow per-installation overrides for site-specific strings (set via define() before including webcam.php).
+    $cam_overrides = [
+        'webcam_intro'          => defined('CAM_WEBCAM_INTRO')          ? CAM_WEBCAM_INTRO          : null,
+        'seo_description'       => defined('CAM_SEO_DESCRIPTION')       ? CAM_SEO_DESCRIPTION       : null,
+        'seo_description_short' => defined('CAM_SEO_DESCRIPTION_SHORT') ? CAM_SEO_DESCRIPTION_SHORT : null,
+    ];
+    if (isset($cam_overrides[$key]) && $cam_overrides[$key] !== null) {
+        return $cam_overrides[$key];
+    }
     $val = $TRANSLATIONS[$LANG][$key] ?? $TRANSLATIONS['en'][$key] ?? $key;
     // Localise lilleviklofoten.no links for non-English languages
     if ($LANG !== 'en' && str_contains($val, 'lilleviklofoten.no')) {
@@ -209,6 +218,12 @@ $TRANSLATIONS = [
     'full_size'           => 'Full size',
     'prev_image'          => 'Previous',
     'next_image'          => 'Next',
+    // ---- Site-specific strings ----
+    // The keys below contain place names, URLs, and descriptions tied to this installation.
+    // To deploy for a different location, either:
+    //   (a) Set CAM_WEBCAM_INTRO, CAM_SEO_DESCRIPTION, CAM_SEO_DESCRIPTION_SHORT before including webcam.php — these override the translated versions for all languages.
+    //   (b) Replace the strings in each language block below with your own content.
+    // All other keys above are generic UI labels and are safe to reuse as-is.
     'more_photos_header'  => 'Lillevik Lofoten: More photos',
     'more_photos_intro'   => 'The photos below are taken at <a href="https://lilleviklofoten.no?utm_source=webcam">Lillevik Lofoten</a>, or nearby on Gimsøy.',
     'more_photos_booking' => 'Information and booking: <a href="https://lilleviklofoten.no?utm_source=webcam">lilleviklofoten.no</a>.',
