@@ -229,7 +229,7 @@ $TRANSLATIONS = [
     'more_photos_booking' => 'Information and booking: <a href="https://lilleviklofoten.no?utm_source=webcam">lilleviklofoten.no</a>.',
     'more_photos_reload'  => 'For new photos: <a href="#" onclick="location.reload(); return false;">Reload</a>.',
     'made_with'           => 'Made with',
-    'aurora_page_suffix'  => 'Northern lights',
+    'aurora_page_suffix'  => 'Northern lights (aurora borealis)',
     'aurora_no_photos'    => 'No northern lights photos to display for %s',
     'aurora_credit'       => 'Northern lights detection by <a style="color: rgb(200, 200, 200);" href="https://github.com/cloveras/webcam">aurora_scan.py</a>. Image overlay: day, time, and aurora detection score.',
     'aurora_intro'        => '<a href=".">Webcam</a> at <a href="https://lilleviklofoten.no">Lillevik Lofoten</a>, Gimsøy, Lofoten, Norway.',
