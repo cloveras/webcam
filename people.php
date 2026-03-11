@@ -12,6 +12,7 @@
 
 require_once __DIR__ . '/WebcamConfig.php';
 require_once __DIR__ . '/NavigationHelper.php';
+require_once __DIR__ . '/lang.php';
 
 // ============================================================
 // Camera configuration — override via define() before including this file
@@ -129,7 +130,7 @@ header('Cache-Control: public, max-age=3600');
 header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
 
 echo '<!DOCTYPE html>' . "\n";
-echo '<html lang="en-US">' . "\n";
+echo '<html lang="' . lang_html_attr() . '">' . "\n";
 echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
 echo '  <meta name="description" content="' . htmlspecialchars(t('seo_description')) . '">' . "\n";

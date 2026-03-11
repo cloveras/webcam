@@ -44,7 +44,7 @@ defined('CAM_INTRO_HTML')      || define('CAM_INTRO_HTML',      '<a href=".">Web
  * @param string|false $down URL for down navigation (false if none)
  * @param array $prefetch_images Optional array of image paths to prefetch
  */
-function page_header($title, $previous, $next, $up, $down, $prefetch_images = array())
+function page_header($title, $previous, $next, $up, $down, $prefetch_images = array(), $og_image = '')
 {
     // Pre-compute variables for heredoc interpolation (PHP tags don't execute inside heredocs)
     $_cam_label    = CAM_LABEL;
@@ -55,6 +55,7 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     $_ga_id        = WebcamConfig::GOOGLE_ANALYTICS_ID;
     $_clarity_id   = WebcamConfig::MICROSOFT_CLARITY_ID;
     $_meta_desc    = htmlspecialchars(strip_tags(t('seo_description')), ENT_QUOTES, 'UTF-8');
+    $_og_image     = $og_image ?: 'https://lilleviklofoten.no/webcam/latest.jpg';
     if (CAM_IS_PRIMARY) {
         $_cam_json_ld = <<<JSONLD
 
@@ -103,8 +104,8 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
       "contentUrl": "https://lilleviklofoten.no/webcam/latest.jpg",
       "url": "https://lilleviklofoten.no/webcam/latest.jpg",
       "caption": "Lillevik Lofoten live webcam - Gimsøy, Lofoten, Norway",
-      "width": 2560,
-      "height": 1920,
+      "width": 3840,
+      "height": 2160,
       "license": "https://lilleviklofoten.no/"
     },
     "image": "https://lilleviklofoten.no/webcam/latest.jpg"
@@ -123,7 +124,6 @@ JSONLD;
   <meta charset="utf-8">
 
   <meta name="description" content="$_meta_desc">
-  <meta name="keywords" content="lofoten,webcam,webcamera,webkamera,web cam, webcam,vik,gimsøy,lofoten islands,nordland,norway">
   <meta name="robots" content="index, follow">
   <meta name="generator" content="webcam.php: https://github.com/cloveras/webcam">
 
@@ -131,7 +131,7 @@ JSONLD;
   <meta property="og:description" content="$_meta_desc">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://lilleviklofoten.no/webcam/">
-  <meta property="og:image" content="https://lilleviklofoten.no/webcam/latest.jpg">
+  <meta property="og:image" content="$_og_image">
 
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">
   <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-192x192.jpg" sizes="192x192">
@@ -953,7 +953,8 @@ function print_single_image($image_filename, $last_image)
     if (!$last_image) {
         $title .= ": " . date("Y-m-d H:i", $timestamp);
     }
-    page_header($title, $previous, $next, $up, $down, $prefetch_images);
+    $_single_og_image = 'https://lilleviklofoten.no/webcam/' . "$year/$month/$day/$image_filename";
+    page_header($title, $previous, $next, $up, $down, $prefetch_images, $_single_og_image);
     print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, false, true);
     if ($last_image || date('Y-m-d', $timestamp) === date('Y-m-d')) {
         print_weather_info();

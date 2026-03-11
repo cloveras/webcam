@@ -262,6 +262,15 @@ $month_images = array_values(array_filter($all_images, function ($img) use ($cur
 }));
 usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 
+// Best image for og:image (highest score this month)
+$_best = null;
+foreach ($month_images as $_img) {
+    if (!$_best || $_img['score'] > $_best['score']) $_best = $_img;
+}
+$_og_image_aurora = $_best
+    ? 'https://lilleviklofoten.no/webcam/' . substr($_best['timestamp'],0,4) . '/' . substr($_best['timestamp'],4,2) . '/' . substr($_best['timestamp'],6,2) . '/' . $_best['timestamp'] . '.jpg'
+    : '';
+
 // ============================================================
 // Page title
 // ============================================================
@@ -281,6 +290,9 @@ if (empty($_SERVER['SERVER_NAME'])) {
     $_SERVER['SCRIPT_NAME'] = '/webcam/aurora.php';
 }
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
+$_aurora_canonical = $using_default
+    ? 'https://lilleviklofoten.no/webcam/aurora.php'
+    : "https://lilleviklofoten.no/webcam/aurora.php?year={$year_str}&month={$month_str}";
 
 header('Cache-Control: public, max-age=1800');
 header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 1800) . ' GMT');
@@ -291,10 +303,16 @@ echo '<head>' . "\n";
 echo '  <meta charset="utf-8">' . "\n";
 $_aurora_meta_desc = htmlspecialchars(strip_tags(t('aurora_seo_description')), ENT_QUOTES, 'UTF-8');
 echo '  <meta name="description" content="' . $_aurora_meta_desc . '">' . "\n";
-echo '  <meta property="og:description" content="' . $_aurora_meta_desc . '">' . "\n";
-echo '  <meta name="keywords" content="lofoten,webcam,aurora,northern lights,nordlys,polarlys">' . "\n";
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robots" content="index, follow">' . "\n";
+echo '  <link rel="canonical" href="' . htmlspecialchars($_aurora_canonical) . '">' . "\n";
+echo '  <meta property="og:title" content="' . htmlspecialchars($title) . '">' . "\n";
+echo '  <meta property="og:description" content="' . $_aurora_meta_desc . '">' . "\n";
+echo '  <meta property="og:type" content="website">' . "\n";
+echo '  <meta property="og:url" content="' . htmlspecialchars($_aurora_canonical) . '">' . "\n";
+if ($_og_image_aurora) {
+    echo '  <meta property="og:image" content="' . htmlspecialchars($_og_image_aurora) . '">' . "\n";
+}
 echo '  <link rel="icon" href="/wp-content/uploads/2020/08/cropped-lillevik-drone-001-20200613-0921-21-2-scaled-2-32x32.jpg" sizes="32x32">' . "\n";
 echo '  <link rel="stylesheet" type="text/css" href="css.php?v=' . filemtime(__DIR__ . '/webcam.css') . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
@@ -410,9 +428,10 @@ foreach ($month_images as $img) {
         $src = file_exists($mini_path) ? $mini_path : $full_path;
         $img_attrs = " width=\"$mini_w\" height=\"$mini_h\"";
     }
-    $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi";
+    $pct       = round($score * 100);
+    $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi – aurora {$pct}%";
     $link      = "webcam.php?type=one&image=$ts" . lang_param();
-    $label     = "$d $h:$mi (" . number_format($score, 2) . ")";
+    $label     = "$d $h:$mi ({$pct}%)";
 
     $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
     $time_style = ($size === 'large') ? ' style="bottom:40px"' : '';
