@@ -452,7 +452,7 @@ function print_full_month($year, $month)
     $minute = 0;
     $second = 0;
     $timestamp = mktime($monthly_hour, 0, 0, $month, $monthly_day, $year); // Using the $monthly_day as average.
-    $title = CAM_LABEL . ": " . t_month_year((int)$month, (int)$year) . " (ca. $monthly_hour:00 each day)";
+    $title = CAM_LABEL . ": " . t_month_year((int)$month, (int)$year) . " (" . sprintf(t('ca_hour'), $monthly_hour) . ")";
     
     // Collect images to prefetch for better performance
     global $imageManager;
@@ -559,7 +559,7 @@ function print_full_year($year)
         }
     }
 
-    page_header(CAM_LABEL . ": $year (ca. $monthly_hour:00 each day)", $previous, $next, $up, $down);
+    page_header(CAM_LABEL . ": $year (" . sprintf(t('ca_hour'), $monthly_hour) . ")", $previous, $next, $up, $down);
     // Links to all months 1-12: Commas and "and" for the last one.
     echo "\n<p>" . year_nav_links($year) . " | " . t('nav_months') . ": \n";
     $monthLinks = [];
