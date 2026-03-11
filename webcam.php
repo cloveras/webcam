@@ -986,7 +986,7 @@ function print_single_image($image_filename, $last_image)
     } else {
         print_openmeteo_weather_info($timestamp);
     }
-    print_full_day_link($timestamp);
+    print_full_day_link($timestamp, $last_image);
 
     if ($previous_datepart || $next_datepart) {
         echo "<p>";
@@ -1515,13 +1515,15 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
  *
  * @param int $timestamp Unix timestamp
  */
-function print_full_day_link($timestamp)
+function print_full_day_link($timestamp, $last_image = false)
 {
     $links = [];
     $links[] = "<a href=\"?type=day&date=" . date('Ymd', $timestamp) . lang_param() . "\">" . t_month_day((int)date('m', $timestamp), (int)date('d', $timestamp)) . "</a>";
     $links[] = "<a href=\"?type=month&year=" . date('Y', $timestamp) . "&month=" . date('m', $timestamp) . lang_param() . "\">" . t_month((int)date('m', $timestamp)) . "</a>";
     $links[] = "<a href=\"?type=year&year=" . date('Y', $timestamp) . lang_param() . "\">" . date('Y', $timestamp) . "</a>";
-    $links[] = "<a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>";
+    if (!$last_image) {
+        $links[] = "<a href=\"?type=last" . lang_param() . "\">" . t('nav_latest') . "</a>";
+    }
     if (file_exists('aurora.php')) {
         $links[] = "<a href=\"aurora.php" . lang_query() . "\">" . t('nav_aurora') . "</a>";
     }
