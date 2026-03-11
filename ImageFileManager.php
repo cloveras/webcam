@@ -9,10 +9,7 @@
  */
 class ImageFileManager {
     
-    private bool $debug;
-    
-    public function __construct(bool $debug = false) {
-        $this->debug = $debug;
+    public function __construct() {
     }
     
     /**
@@ -31,7 +28,6 @@ class ImageFileManager {
         $minute = substr($yyyymmddhhmmss, 10, 2);
         $seconds = substr($yyyymmddhhmmss, 12, 2);
         
-        $this->debugLog("splitImageFilename($filename): $year-$month-$day $hour:$minute:$seconds");
         
         return [$year, $month, $day, $hour, $minute, $seconds];
     }
@@ -56,14 +52,11 @@ class ImageFileManager {
         [$year, $month, $day] = explode('-', date('Y-m-d'));
         
         if (is_dir("$year/$month/$day")) {
-            $this->debugLog("NORMAL: Finding latest in $year/$month/$day/");
-            $images = glob("$year/$month/$day/*.jpg", GLOB_BRACE);
+                $images = glob("$year/$month/$day/*.jpg", GLOB_BRACE);
         } elseif (is_dir("$year/$month")) {
-            $this->debugLog("MONTH: Finding latest in $year/$month/");
-            $images = glob("$year/$month/**/*.jpg", GLOB_BRACE);
+                $images = glob("$year/$month/**/*.jpg", GLOB_BRACE);
         } elseif (is_dir("$year")) {
-            $this->debugLog("YEAR: Finding latest in $year/");
-            $images = glob("$year/**/*.jpg", GLOB_BRACE);
+                $images = glob("$year/**/*.jpg", GLOB_BRACE);
         } else {
             return '';
         }
@@ -72,7 +65,6 @@ class ImageFileManager {
         $latest_image = max($images);
 
         $image = $this->getYYYYMMDDHHMMSS($latest_image);
-        $this->debugLog("FOUND latest image: $image");
 
         return $image;
     }
@@ -83,7 +75,6 @@ class ImageFileManager {
      * @return string Date in YYYYMMDD format (e.g., "20231101")
      */
     public function findFirstDayWithImages(string $year, string $month): string {
-        $this->debugLog("findFirstDayWithImages($year, $month)");
         
         // Pattern matches directories like "20231101", "20231102", etc.
         $pattern = sprintf("%s%s*", $year, $month);
@@ -94,7 +85,6 @@ class ImageFileManager {
         }
         
         $directory = $directories[0];  // First one in that month
-        $this->debugLog("First day with images: $directory");
         
         return $directory;
     }
@@ -107,7 +97,6 @@ class ImageFileManager {
      */
     public function getAllImagesInDirectory(string $directory): array {
         $images = glob("$directory/*.jpg");
-        $this->debugLog("getAllImagesInDirectory($directory): " . count($images) . " images found");
         
         return $images;
     }
@@ -135,7 +124,6 @@ class ImageFileManager {
                 $best = $img;
             }
         }
-        $this->debugLog("findClosestImageToHour($directory, $targetHour): " . ($best ?: 'none'));
         return $best;
     }
 
@@ -152,8 +140,6 @@ class ImageFileManager {
         $hour_padded = sprintf("%02d", $hour);
         $images = glob("$directory/$date$hour_padded*.jpg");
 
-        $this->debugLog("getLatestImageInDirectoryByDateHour($directory, $hour): Found " .
-                       count($images) . " images");
 
         return !empty($images) ? $images[0] : $this->findClosestImageToHour($directory, $hour);
     }
@@ -176,23 +162,19 @@ class ImageFileManager {
         $seconds = sprintf("%02d", $seconds);
         $hour = sprintf("%02d", $hour);
 
-        $this->debugLog("findFirstImageAfterTime($year, $month, $day, $hour, $minute, $seconds)");
 
         $imagePattern = sprintf("%s/%s/%s/%s%s%s%s*",
                                $year, $month, $day, $year, $month, $day, $hour);
 
-        $this->debugLog("Looking with pattern: $imagePattern");
 
         $images = glob($imagePattern);
 
         if (!empty($images)) {
             $image = $this->getYYYYMMDDHHMMSS($images[0]);
-            $this->debugLog("Image found: $image");
-            return $image;
+                return $image;
         }
 
         // Fallback: no image at the target hour — pick the closest one in the day
-        $this->debugLog("No images at hour $hour, falling back to closest image in day");
         $closest = $this->findClosestImageToHour("$year/$month/$day", (int)$hour);
         return $closest ? $this->getYYYYMMDDHHMMSS($closest) : '';
     }
@@ -206,15 +188,12 @@ class ImageFileManager {
     public function checkAndRenameFilesHack(string $filenamePrefix): void {
         [$year, $month, $day] = explode('-', date('Y-m-d'));
         
-        $this->debugLog("Checking for files to rename: $year/$month/$day/$filenamePrefix*");
         
         $images = glob("$year/$month/$day/$filenamePrefix*");
-        $this->debugLog("Found " . count($images) . " images to rename");
         
         foreach ($images as $imageToRename) {
             $newName = str_replace($filenamePrefix, '', $imageToRename);
-            $this->debugLog("rename($imageToRename, $newName)");
-            rename($imageToRename, $newName);
+                rename($imageToRename, $newName);
         }
     }
     
@@ -322,14 +301,5 @@ class ImageFileManager {
         }
         
         return $prefetch_images;
-    }
-    
-    /**
-     * Debug logging helper
-     */
-    private function debugLog(string $message): void {
-        if ($this->debug) {
-            echo "$message<br/>\n";
-        }
     }
 }

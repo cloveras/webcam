@@ -9,12 +9,9 @@ class SunCalculator {
     
     private float $latitude;
     private float $longitude;
-    private bool $debug;
-    
-    public function __construct(float $latitude, float $longitude, bool $debug = false) {
+    public function __construct(float $latitude, float $longitude) {
         $this->latitude = $latitude;
         $this->longitude = $longitude;
-        $this->debug = $debug;
     }
     
     /**
@@ -61,7 +58,6 @@ class SunCalculator {
      * Adjusts dawn and dusk to be on the same day as sunrise and sunset.
      */
     public function findSunTimes(int $timestamp): array {
-        $this->debugLog("findSunTimes($timestamp) (" . date('Y-m-d H:i', $timestamp) . ")");
         
         $year = (int)date('Y', $timestamp);
         $month = (int)date('m', $timestamp);
@@ -83,7 +79,6 @@ class SunCalculator {
      * Get fake sun times for midnight sun period
      */
     private function getMidnightSunTimes(int $year, int $month, int $day, bool $midnight_sun, bool $polar_night): array {
-        $this->debugLog("MIDNIGHT SUN!");
         
         // Fake sunrise and sunset to show some images
         $sunrise = mktime(0, 0, 1, $month, $day, $year);    // 00:00:01
@@ -98,7 +93,6 @@ class SunCalculator {
      * Get fake sun times for polar night period
      */
     private function getPolarNightTimes(int $year, int $month, int $day, bool $midnight_sun, bool $polar_night): array {
-        $this->debugLog("POLAR NIGHT!");
         
         $adjust_hours = WebcamConfig::POLAR_NIGHT_DAWN_DUSK_ADJUST_HOURS;
         
@@ -115,17 +109,9 @@ class SunCalculator {
      * Get actual calculated sun times for normal days
      */
     private function getNormalSunTimes(int $timestamp, int $year, int $month, int $day, bool $midnight_sun, bool $polar_night): array {
-        $this->debugLog("NOT MIDNIGHT SUN OR POLAR NIGHT! timestamp: $timestamp, date: " . date('Y-m-d H:i:s', $timestamp));
         
         // Get sun info using PHP's built-in functionality
         $sun_info = date_sun_info($timestamp, $this->latitude, $this->longitude);
-        
-        if ($this->debug) {
-            $this->debugLog("date_sun_info($timestamp, {$this->latitude}, {$this->longitude})");
-            foreach ($sun_info as $key => $val) {
-                $this->debugLog("$key: [$val] " . date("Y-m-d H:i", $val));
-            }
-        }
         
         $sunrise = $sun_info['sunrise'];
         $sunset = $sun_info['sunset'];
@@ -133,26 +119,17 @@ class SunCalculator {
         // Fix sunrise if invalid. PHP's date_sun_info() returns 1 or a specific bogus timestamp
         // (1715464868 = 2024-05-12 00:01:08 UTC) when it cannot calculate a value (e.g. polar night).
         if ($sunrise == 1 || $sunrise == 1715464868 || !$sunrise) {
-            $this->debugLog("Sunrise to fix: " . date('Y-m-d H:i', $sunrise));
             $sunrise = mktime(0, 0, 0, $month, $day, $year);
-            $this->debugLog("Sunrise fixed: " . date('Y-m-d H:i', $sunrise));
         }
-        
+
         // Fix sunset if invalid (same bogus values as sunrise above).
         if ($sunset == 1 || $sunset == 1715464868 || !$sunset) {
-            $this->debugLog("Sunset to fix: " . date('Y-m-d H:i', $sunset));
             $sunset = mktime(23, 59, 59, $month, $day, $year);
-            $this->debugLog("Sunset fixed: " . date('Y-m-d H:i', $sunset));
         }
-        
+
         $dawn = $this->calculateDawn($sun_info, $sunrise, $month, $day, $year);
         $dusk = $this->calculateDusk($sun_info, $sunset, $month, $day, $year);
-        
-        $this->debugLog("Final times - dawn: " . date('Y-m-d H:i', $dawn) . 
-                       ", sunrise: " . date('Y-m-d H:i', $sunrise) . 
-                       ", sunset: " . date('Y-m-d H:i', $sunset) . 
-                       ", dusk: " . date('Y-m-d H:i', $dusk));
-        
+
         return [$sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night];
     }
     
@@ -163,19 +140,15 @@ class SunCalculator {
         $adjust_seconds = WebcamConfig::POLAR_NIGHT_DAWN_DUSK_ADJUST_HOURS * 60 * 60;
         
         $dawn = $sun_info['nautical_twilight_begin'];
-        $this->debugLog("Dawn initial: $dawn (" . date('Y-m-d H:i', $dawn) . ")");
         
         if ($dawn == 1715464868 || !$dawn) {
-            $this->debugLog("No nautical_twilight_begin, setting dawn to: sunrise - $adjust_seconds seconds");
-            $dawn = $sunrise - $adjust_seconds;
+                $dawn = $sunrise - $adjust_seconds;
             
             // If dawn is on the previous day, set it to midnight
             if (date('d', $dawn) != $day) {
-                $this->debugLog("Dawn on previous day, setting to 00:00:00");
-                $dawn = mktime(0, 0, 0, $month, $day, $year);
+                        $dawn = mktime(0, 0, 0, $month, $day, $year);
             }
-            $this->debugLog("Dawn adjusted: $dawn (" . date('Y-m-d H:i', $dawn) . ")");
-        }
+            }
         
         return $dawn;
     }
@@ -187,29 +160,17 @@ class SunCalculator {
         $adjust_seconds = WebcamConfig::POLAR_NIGHT_DAWN_DUSK_ADJUST_HOURS * 60 * 60;
         
         $dusk = $sun_info['nautical_twilight_end'];
-        $this->debugLog("Dusk initial: $dusk (" . date('Y-m-d H:i', $dusk) . ")");
         
         if ($dusk == 1715464868 || !$dusk) {
-            $this->debugLog("No nautical_twilight_end, setting dusk to: sunset + $adjust_seconds seconds");
-            $dusk = $sunset + $adjust_seconds;
+                $dusk = $sunset + $adjust_seconds;
             
             // If dusk is on the next day, set it to end of day
             if (date('d', $dusk) != $day) {
-                $this->debugLog("Dusk on next day, setting to 23:59:59");
-                $dusk = mktime(23, 59, 59, $month, $day, $year);
+                        $dusk = mktime(23, 59, 59, $month, $day, $year);
             }
-            $this->debugLog("Dusk adjusted: $dusk (" . date('Y-m-d H:i', $dusk) . ")");
-        }
+            }
         
         return $dusk;
     }
     
-    /**
-     * Debug logging helper
-     */
-    private function debugLog(string $message): void {
-        if ($this->debug) {
-            echo "$message<br/>\n";
-        }
-    }
 }

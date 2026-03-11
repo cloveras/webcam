@@ -74,10 +74,6 @@ Key functions:
 
 Translation keys include all nav labels, month names, weather terms, aurora/people UI strings, and two SEO descriptions: `seo_description` (full, used in `<meta>`) and `seo_description_short` (half-length, shown below single images).
 
-## Debug mode
-
-Set `$debug = 1` in `webcam.php`.
-
 ## Day view query parameters
 
 - `?type=day&date=YYYYMMDD` — show images between dawn and dusk for that date

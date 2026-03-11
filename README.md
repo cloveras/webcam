@@ -64,8 +64,6 @@ arrow keys on desktops. Loads fast.
 4. Verify calculated sunrise/sunset at [yr.no](https://www.yr.no/).
 5. Update the midnight sun and polar night date ranges in [`WebcamConfig.php`](WebcamConfig.php) if applicable.
 
-For verbose debug output: set `$debug = 1` in `webcam.php`.
-
 ### Localising site-specific strings
 
 `lang.php` contains translations for 21 languages, but several keys — `webcam_intro`, `seo_description`, `seo_description_short` — contain place names and URLs specific to Lillevik Lofoten. To deploy for a different location, override them before including `webcam.php`:

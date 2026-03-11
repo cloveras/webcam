@@ -279,17 +279,6 @@ END3;
 }
 
 /**
- * Output debug message if debugging is enabled
- * 
- * @param string $txt Debug message to output
- */
-function debug($txt)
-{
-    global $debug;
-    if ($debug) {
-        echo "$txt<br/>\n";
-    }
-}
 
 
 /**
@@ -435,7 +424,6 @@ function find_sun_times($timestamp)
  */
 function print_full_month($year, $month)
 {
-    debug("<br/>print_full_month($year, $month)");
     global $size;
     global $monthly_day;
     global $monthly_hour;
@@ -492,14 +480,11 @@ function print_full_month($year, $month)
         // Get all *jpg images that start with the right year, month, day and hour.
         $directory = $year . "/" . $month . "/" . $i;
         if (file_exists($directory)) {
-            debug("Directory exists: $directory");
             // Getting the latest image in that directory for that hour (monthly hour = the fixed hour we look for).
             $image = get_latest_image_in_directory_by_date_hour($directory, $monthly_hour);
             if ($image) {
-                debug("Image found: $image");
                 // There was at least one image: 2023/11/14/20231114154051.jpg
                 $yyyymmddhhmmss = get_yyyymmddhhmmss($image);
-                debug("Image datepart: $yyyymmddhhmmss<br/>");
                 list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($yyyymmddhhmmss);
                 // Print mini images, link to all images for that day.
 
@@ -531,7 +516,6 @@ function print_full_month($year, $month)
                 $images_printed += 1; // Count the image just printed.
             }
         } else {
-            debug("Directory does not exist: $directory");
         }
     }
 
@@ -552,7 +536,6 @@ function print_full_month($year, $month)
  */
 function print_full_year($year)
 {
-    debug("<br/>print_full_year($year)");
     global $monthly_hour;
     global $mini_image_width;
     global $mini_image_height;
@@ -608,15 +591,12 @@ function print_full_year($year)
         foreach ($days as $day) {
             $day = sprintf("%02d", $day);
             // Find first image for that day taken after $monthly_hour
-            debug("monthly_hour: $monthly_hour");
-            debug("find_first_image_after_time($year, $month, $day, $monthly_hour, 0, 0);");
             $yyyymmddhhmmss = find_first_image_after_time($year, $month, $day, $monthly_hour, 0, 0);
             if ($yyyymmddhhmmss) {
                 // There was an image.
                 $hour = substr($yyyymmddhhmmss, 8, 2);
                 $minute = substr($yyyymmddhhmmss, 10, 2);
                 $image_filename = $year . "/" . $month . "/" . $day . "/" . $yyyymmddhhmmss . ".jpg";
-                debug($year . "/" . $month . "/" . $day . "/" . $yyyymmddhhmmss . ".jpg");
                 // Print mini images (never large images for full years), link to all images for that day.
 
                 // CSS overlay   
@@ -661,7 +641,6 @@ function print_full_year($year)
  */
 function print_all_years()
 {
-    debug("<br/>print_all_years()");
     global $monthly_day;
     global $monthly_hour;
     global $mini_image_width;
@@ -701,7 +680,6 @@ function print_all_years()
             foreach ($monthly_days as $monthly_day) {
 
                 // Find first image for the $monthly_day taken after $monthly_hour
-                debug("find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);");
                 $yyyymmddhhmmss = find_first_image_after_time($year, $month, $monthly_day, $monthly_hour, 0, 0);
                 if ($yyyymmddhhmmss) {
                     // There was an image.
@@ -794,19 +772,15 @@ function find_latest_image()
     list($year, $month, $day) = explode('-', date('Y-m-d'));
     $images = [];
     if (is_dir("$year/$month/$day")) {
-        debug("NORMAL: max(glob(\"$year/$month/$day/*.jpg\", GLOB_BRACE))");
         $images = glob("$year/$month/$day/*.jpg", GLOB_BRACE);
     } else if (is_dir("$year/$month")) {
-        debug("MONTH: max(glob(\"$year/$month/*.jpg\", GLOB_BRACE))");
         $images = glob("$year/$month/**/*.jpg", GLOB_BRACE);
     } else if (is_dir("$year")) {
-        debug("YEAR: max(glob(\"$year/**/*.jpg\", GLOB_BRACE))");
         $images = glob("$year/**/*.jpg", GLOB_BRACE);
     }
     if (empty($images)) return '';
     $latest_image = max($images);
     $image = get_yyyymmddhhmmss($latest_image);
-    debug("FOUND: image (datepart): $image");
     return $image;
 }
 
@@ -825,10 +799,8 @@ function find_first_day_with_images($year, $month)
         return $imageManager->findFirstDayWithImages($year, $month);
     }
     // Fallback
-    debug("<br/>find_first_day_with_images($year, $month)");
     $directories = glob("$year/$month/*");
     $directory = !empty($directories) ? basename($directories[0]) : '';
-    debug("First day with images: $directory");
     return $directory;
 }
 
@@ -839,7 +811,6 @@ function find_first_day_with_images($year, $month)
  */
 function find_first_year_with_images()
 {
-    debug("<br/>find_first_year_with_images()");
     return WebcamConfig::START_YEAR;
 }
 
@@ -911,11 +882,9 @@ function print_single_image($image_filename, $last_image)
     }
 
     // Find the date and time for the image.
-    debug("split_image_filename($image_filename)");
     list($year, $month, $day, $hour, $minute, $seconds) = split_image_filename($image_filename);
 
     // Make a timestamp for the image's date and time.
-    debug(" mktime($hour, $minute, 0, $month, $day, $year)");
     $timestamp = mktime((int) $hour, (int) $minute, 0, (int) $month, (int) $day, (int) $year);
 
     // Calculate the sun times for the image's timestamp.
@@ -948,7 +917,6 @@ function print_single_image($image_filename, $last_image)
     }
 
     // Links to previous, next, up, down.
-    debug("previous_image: $previous_image<br/>next_image: $next_image<br/>");
     if ($previous_image) {
         $previous_image_datepart = get_yyyymmddhhmmss($previous_image);
         $previous = "?type=one&image=$previous_image_datepart" . lang_param(); // Only date for the link.
@@ -961,7 +929,6 @@ function print_single_image($image_filename, $last_image)
     $up = "?type=day&date=$up_image_datepart" . lang_param(); // The full day.
     $down = false; // Already showing a single image, not possible to go lower.
 
-    debug("PREV: $previous<br/>NEXT: $next<br/>UP: $up<br/>DOWN: $down<br/>");
 
     // Collect images to prefetch
     global $imageManager;
@@ -1040,7 +1007,6 @@ function print_single_image($image_filename, $last_image)
  */
 function print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval, $leave_open = false, $append_html = '')
 {
-    debug("<br/>print_sunrise_sunset_info($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night, $include_interval)");
     global $monthly_day;
     echo "\n\n<p>";
     if ($midnight_sun) {
@@ -1586,14 +1552,11 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     global $large_image_height;
     global $mini_image_width;
     global $mini_image_height;
-    debug("print_full_day($timestamp, $image_size, $number_of_images)");
 
     list($sunrise, $sunset, $dawn, $dusk, $midnight_sun, $polar_night) = find_sun_times($timestamp);
     // TODO
     //list($dawn, $dusk) = roundDawnAndDusk($dawn, $dusk);
 
-    debug("IN: print_full_day(" . $timestamp . "," . $image_size . "," . $number_of_images . ")");
-    debug("Sunrise: " . date('H:i', $sunrise) . " Sunset: " . date('H:i', $sunset) . " Dawn: " . date('H:i', $dawn) . " Dusk: " . date('H:i', $dusk));
 
     $is_future = date('Ymd', $timestamp) > date('Ymd');
 
@@ -1659,7 +1622,6 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     // Get all *jpg images in "today's" image directory.
     $directory = date('Y/m/d', $timestamp);
     $images_printed = 0;
-    debug("Getting images from directory: <a href=\"$directory\">$directory</a>");
 
     //echo "<p>\n";
 
@@ -1671,7 +1633,6 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     }
 
     if (file_exists($directory)) {
-        debug("Directory exists: " . $directory);
         $images = glob("$directory/*.jpg");
         // Loop through all images. Reverse sort to start with the latest image at the top.
         foreach (array_reverse($images) as $image) {
@@ -1713,7 +1674,6 @@ function print_full_day($timestamp, $image_size, $number_of_images)
 
                 $images_printed += 1; // Count the image just printed.
             } else {
-                debug("Outside dusk and dawn:" . date('H:i:s', $dawn) . "  / " . date('H:i:s', $image_timestamp) . " / " . date('H:i:s', $dusk));
             }
 
         }
@@ -1816,7 +1776,6 @@ date_default_timezone_set(WebcamConfig::TIMEZONE);
 
 // Initialize global variables
 $timestamp = time();
-$debug = 0;
 $size = "mini";
 $show_all = false;
 $type = "one";
@@ -1829,8 +1788,8 @@ $mini_image_width = WebcamConfig::MINI_IMAGE_WIDTH;
 $mini_image_height = WebcamConfig::MINI_IMAGE_HEIGHT;
 
 // Initialize helper objects
-$sunCalculator = new SunCalculator(WebcamConfig::LATITUDE, WebcamConfig::LONGITUDE, $debug);
-$imageManager = new ImageFileManager($debug);
+$sunCalculator = new SunCalculator(WebcamConfig::LATITUDE, WebcamConfig::LONGITUDE);
+$imageManager = new ImageFileManager();
 $navHelper = new NavigationHelper();
 
 // Handle files not yet processed by cron - must be done early before finding latest image
@@ -1844,10 +1803,8 @@ if (CAM_FILE_PREFIX_ALT !== '') {
 // ------------------------------------------------------------
 if ($_SERVER['QUERY_STRING'] == 1) {
     $type = "last";
-    debug("LAST");
 } else if (empty($_SERVER['QUERY_STRING'])) {
     $type = "last";
-    debug("DAY");
 } else {
     $parse_output['type'] = "";
     $parse_output['date'] = "";
@@ -1858,8 +1815,6 @@ if ($_SERVER['QUERY_STRING'] == 1) {
     $parse_output['last_image'] = "";
     $parse_output['all'] = "";
     parse_str($_SERVER['QUERY_STRING'], $parse_output);
-    debug("WORK IN PROGRESS!");
-    debug("Parse:");
     $type = $parse_output['type'];
     $date = $parse_output['date'];
     $year = $parse_output['year'];
@@ -1869,8 +1824,6 @@ if ($_SERVER['QUERY_STRING'] == 1) {
     $last_image = $parse_output['last_image'];
     $show_all = !empty($parse_output['all']);
 }
-//debug("QUERY_STRING: " . $_SERVER['QUERY_STRING']);
-//debug("type: $type<br/>date: $date<br/>year: $year</br>month: $month</br>size: $size<br/>image: $image<br/>last_image: $last_image");
 
 // HTTP cache headers — no caching for latest view, 1 hour for archive
 if ($type === 'last' || $type === '') {
@@ -1883,7 +1836,6 @@ if ($type === 'last' || $type === '') {
 
 // Determine which page type to display and render it
 // ------------------------------------------------------------
-debug("type: $type");
 if ($type == "" || $type == false) {
     $type = "last";
 }
