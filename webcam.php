@@ -970,16 +970,24 @@ function print_single_image($image_filename, $last_image)
     echo "<a href=\"?type=day&date=$year$month$day" . lang_param() . "\">";
     echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
     // For the latest image, use responsive srcset (900w/1800w) to avoid serving the full 4K file.
-    // latest.jpg and latest.php always serve the full-size original unchanged.
-    if ($last_image && file_exists('latest-resized-650.jpg') && file_exists('latest-resized-900.jpg') && file_exists('latest-resized-1800.jpg')) {
+    // Fall back to the direct file if latest-resized-*.jpg is stale (e.g. cron hasn't run yet
+    // but checkAndRenameFilesHack() already renamed a fresh image into the directory).
+    $actual_image_path = "$year/$month/$day/$image_filename";
+    $resized_ok = $last_image
+        && file_exists('latest-resized-650.jpg')
+        && file_exists('latest-resized-900.jpg')
+        && file_exists('latest-resized-1800.jpg')
+        && filemtime('latest-resized-900.jpg') >= @filemtime($actual_image_path);
+    if ($resized_ok) {
         $v = filemtime('latest-resized-900.jpg');
         echo "fetchpriority=\"high\" width=\"900\" height=\"506\" ";
         echo "srcset=\"latest-resized-650.jpg?v=$v 650w, latest-resized-900.jpg?v=$v 900w, latest-resized-1800.jpg?v=$v 1800w\" ";
         echo "sizes=\"(max-width: 900px) 100vw, 900px\" ";
         echo "src=\"latest-resized-900.jpg?v=$v\">";
     } else {
+        echo "fetchpriority=\"high\" ";
         echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
-        echo "src=\"$year/$month/$day/$image_filename\">";
+        echo "src=\"$actual_image_path\">";
     }
     echo "</a>\n";
     echo "</p>\n\n";
