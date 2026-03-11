@@ -60,9 +60,6 @@ class WebcamConfig {
 
     // Open-Meteo (https://open-meteo.com) is used for historical daily weather — no API key needed.
 
-    // Yr.no location code — find yours at https://www.yr.no (copy from the URL of your location)
-    public const YR_LOCATION_CODE = '1-279560';
-
     // Contact information (used in JSON-LD structured data)
     public const CONTACT_EMAIL = 'post@lofotenvacation.no';
     public const CONTACT_PHONE = '+4741130944';
