@@ -1083,51 +1083,7 @@ function weather_degrees_to_cardinal($deg)
 function weather_symbol_to_text($code)
 {
     $base = preg_replace('/_(day|night|polartwilight)$/', '', $code);
-    $map = [
-        'clearsky'                        => 'Clear sky',
-        'fair'                            => 'Fair',
-        'partlycloudy'                    => 'Partly cloudy',
-        'cloudy'                          => 'Cloudy',
-        'fog'                             => 'Fog',
-        'lightrain'                       => 'Light rain',
-        'rain'                            => 'Rain',
-        'heavyrain'                       => 'Heavy rain',
-        'lightrainshowers'                => 'Light rain showers',
-        'rainshowers'                     => 'Rain showers',
-        'heavyrainshowers'                => 'Heavy rain showers',
-        'lightsleet'                      => 'Light sleet',
-        'sleet'                           => 'Sleet',
-        'heavysleet'                      => 'Heavy sleet',
-        'lightsleetshowers'               => 'Light sleet showers',
-        'sleetshowers'                    => 'Sleet showers',
-        'heavysleetshowers'               => 'Heavy sleet showers',
-        'lightsnow'                       => 'Light snow',
-        'snow'                            => 'Snow',
-        'heavysnow'                       => 'Heavy snow',
-        'lightsnowshowers'                => 'Light snow showers',
-        'snowshowers'                     => 'Snow showers',
-        'heavysnowshowers'                => 'Heavy snow showers',
-        'thunder'                         => 'Thunder',
-        'lightrainandthunder'             => 'Light rain and thunder',
-        'rainandthunder'                  => 'Rain and thunder',
-        'heavyrainandthunder'             => 'Heavy rain and thunder',
-        'lightsleetandthunder'            => 'Light sleet and thunder',
-        'sleetandthunder'                 => 'Sleet and thunder',
-        'heavysleetandthunder'            => 'Heavy sleet and thunder',
-        'lightsnowandthunder'             => 'Light snow and thunder',
-        'snowandthunder'                  => 'Snow and thunder',
-        'heavysnowandthunder'             => 'Heavy snow and thunder',
-        'lightrainshowersandthunder'      => 'Light rain showers and thunder',
-        'rainshowersandthunder'           => 'Rain showers and thunder',
-        'heavyrainshowersandthunder'      => 'Heavy rain showers and thunder',
-        'lightsleetshowersandthunder'     => 'Light sleet showers and thunder',
-        'sleetshowersandthunder'          => 'Sleet showers and thunder',
-        'heavysleetshowersandthunder'     => 'Heavy sleet showers and thunder',
-        'lightsnowshowersandthunder'      => 'Light snow showers and thunder',
-        'snowshowersandthunder'           => 'Snow showers and thunder',
-        'heavysnowshowersandthunder'      => 'Heavy snow showers and thunder',
-    ];
-    return $map[$base] ?? null;
+    return t('weather_' . $base);
 }
 
 /**

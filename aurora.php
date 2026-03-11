@@ -218,7 +218,6 @@ $nav_links = [];
 if ($prev_url && $prev_label) {
     $nav_links[] = "<a href=\"$prev_url\">&larr; $prev_label</a>";
 }
-$nav_links[] = "<a href=\"aurora.php" . lang_query() . "\">Aurora webcam</a>";
 if ($next_url && $next_label) {
     $nav_links[] = "<a href=\"$next_url\">$next_label &rarr;</a>";
 }
