@@ -221,6 +221,16 @@ END2;
         echo "  </script>\n\n";
     }
 
+    // Speculation Rules: prerender prev/next pages in Chrome/Edge (silently ignored elsewhere)
+    if ($previous || $next) {
+        $spec_urls = [];
+        if ($previous) $spec_urls[] = $_SERVER['SCRIPT_NAME'] . $previous;
+        if ($next)     $spec_urls[] = $_SERVER['SCRIPT_NAME'] . $next;
+        echo "\n  <script type=\"speculationrules\">\n";
+        echo '  {"prerender":[{"urls":' . json_encode($spec_urls) . "}]}\n";
+        echo "  </script>\n";
+    }
+
     // Google Analytics and Microsoft Clarity
     $_cam_intro = t('webcam_intro');
     print <<<END3
@@ -242,6 +252,9 @@ END2;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "$_clarity_id");
     </script>
+
+  <!-- Prefetch pages on hover/touchstart for faster navigation -->
+  <script src="//instant.page/5.2.0" type="module" defer></script>
 
 </head>
 <body>
