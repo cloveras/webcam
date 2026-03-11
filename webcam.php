@@ -916,6 +916,29 @@ function print_single_image($image_filename, $last_image)
         $i += 1;
     }
 
+    // If first image of day: fall back to last image of the nearest previous day with images.
+    if (empty($previous_image)) {
+        $day_ts = mktime(12, 0, 0, (int)$month, (int)$day, (int)$year);
+        for ($d = 1; $d <= 7; $d++) {
+            $t    = $day_ts - $d * 86400;
+            $dir  = date('Y', $t) . '/' . date('m', $t) . '/' . date('d', $t);
+            $imgs = get_all_images_in_directory($dir);
+            if (!empty($imgs)) { $previous_image = end($imgs); break; }
+        }
+    }
+
+    // If last image of day: fall back to first image of the nearest next day with images.
+    if (empty($next_image)) {
+        $day_ts = mktime(12, 0, 0, (int)$month, (int)$day, (int)$year);
+        for ($d = 1; $d <= 7; $d++) {
+            $t    = $day_ts + $d * 86400;
+            if ($t > time()) break; // don't navigate into the future
+            $dir  = date('Y', $t) . '/' . date('m', $t) . '/' . date('d', $t);
+            $imgs = get_all_images_in_directory($dir);
+            if (!empty($imgs)) { $next_image = $imgs[0]; break; }
+        }
+    }
+
     // Links to previous, next, up, down.
     if ($previous_image) {
         $previous_image_datepart = get_yyyymmddhhmmss($previous_image);
