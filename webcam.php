@@ -759,7 +759,7 @@ function print_mini_large_links($timestamp, $size)
         echo "<a href=\"?type=day&date=$date&size=mini" . lang_param() . "\">" . t('nav_mini_photos') . "</a>. ";
     }
     if ($size == "mini" || empty($size)) { // Links to large if we showed mini, or don't know.
-        echo "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\">" . t('nav_large_photos') . "</a>. ";
+        echo "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\" rel=\"nofollow\">" . t('nav_large_photos') . "</a>. ";
     }
     echo "</p>\n\n";
 }
@@ -1017,7 +1017,7 @@ function print_single_image($image_filename, $last_image)
     echo "</p>\n\n";
 
     list($width, $height) = getimagesize("$year/$month/$day/$image_filename");
-    $full_size_link = "<a href=\"$year/$month/$day/$image_filename\">" . t('full_size') . " ($width x $height)</a>";
+    $full_size_link = "<a href=\"$year/$month/$day/$image_filename\" rel=\"nofollow\">" . t('full_size') . " ($width x $height)</a>";
 
     if (CAM_IS_PRIMARY) {
         echo "<p class=\"seo-desc\">" . t('seo_description_short') . "</p>\n\n";
@@ -1494,7 +1494,7 @@ function print_yesterday_tomorrow_links($timestamp, $is_full_month)
             if ($size == "large") {
                 $links[] = "<a href=\"?type=day&date=$date&size=mini" . lang_param() . "\">" . t('nav_mini_photos') . "</a>";
             } else {
-                $links[] = "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\">" . t('nav_large_photos') . "</a>";
+                $links[] = "<a href=\"?type=day&date=$date&size=large" . lang_param() . "\" rel=\"nofollow\">" . t('nav_large_photos') . "</a>";
             }
         }
     }
@@ -1639,7 +1639,7 @@ function print_full_day($timestamp, $image_size, $number_of_images)
             $toggle_html = sprintf(t('see_link'), '<a href="' . $toggle_url . '">' . t('filtered_photos') . '</a>');
         } else {
             $toggle_url  = "?type=day&date=$date_str&all=1$size_param" . lang_param();
-            $toggle_html = sprintf(t('see_link'), '<a href="' . $toggle_url . '">' . t('all_photos') . '</a>');
+            $toggle_html = sprintf(t('see_link'), '<a href="' . $toggle_url . '" rel="nofollow">' . t('all_photos') . '</a>');
         }
     }
 
