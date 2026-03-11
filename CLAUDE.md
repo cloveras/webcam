@@ -74,6 +74,8 @@ Key functions:
 
 Translation keys include all nav labels, month names, weather terms, aurora/people UI strings, and two SEO descriptions: `seo_description` (full, used in `<meta>`) and `seo_description_short` (half-length, shown below single images).
 
+Weather condition keys: `weather_*` (42 keys per language) map Yr.no weather symbol codes (e.g. `weather_partlycloudy`, `weather_heavyrainandthunder`) to translated strings. Used by `weather_symbol_to_text($code)` in `webcam.php` via `t('weather_' . $base)`. Historical day views also use these via `wmo_code_to_weather_key()` which maps Open-Meteo WMO codes to the same keys.
+
 ## Day view query parameters
 
 - `?type=day&date=YYYYMMDD` — show images between dawn and dusk for that date
@@ -226,10 +228,12 @@ convert new-photo.jpg -resize 300x300^ -gravity center -extent 300x300 -quality 
 convert mini/new-photo.jpg -quality 70 mini/new-photo.webp
 ```
 
-`copy-latest-image.sh` generates three responsive sizes on every cron run:
+`copy-latest-image.sh` runs every 7 min and generates three responsive sizes from the latest image:
 - `latest-resized-650.jpg` — 650×366, ~42 KB (mobile)
 - `latest-resized-900.jpg` — 900×506, ~79 KB (desktop 1x)
 - `latest-resized-1800.jpg` — 1800×1013, ~295 KB (retina)
+
+It searches both renamed files (`2*.jpg`) and pre-rename files (`Lillevik Lofoten_01_*.jpg`) to minimise lag. `webcam.php` compares mtimes: if `latest-resized-900.jpg` is older than the actual latest image (e.g. cron hasn't run yet but `checkAndRenameFilesHack()` already processed the file), it falls back to serving the full-size original directly. Resized URLs include `?v=filemtime()` for browser cache-busting.
 
 ## Image maintenance
 
