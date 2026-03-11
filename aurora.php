@@ -282,6 +282,9 @@ if (empty($_SERVER['SERVER_NAME'])) {
 }
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
 
+header('Cache-Control: public, max-age=1800');
+header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 1800) . ' GMT');
+
 echo '<!DOCTYPE html>' . "\n";
 echo '<html lang="' . lang_html_attr() . '">' . "\n";
 echo '<head>' . "\n";

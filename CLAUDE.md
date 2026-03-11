@@ -195,6 +195,21 @@ Dependencies: `ultralytics`, `astral`, `opencv-python`, `numpy` (install in a ve
 - `rsync-lillevik-webcam.sh` — pulls Lillevik images from server to NAS
 - `rsync-viktun-webcam.sh` — pulls Viktun images from server to NAS
 
+## HTTP caching and compression
+
+`.user.ini` in the webcam root enables PHP-level gzip compression for all PHP pages:
+```ini
+zlib.output_compression = On
+zlib.output_compression_level = 6
+```
+
+HTTP cache headers are set in each PHP file:
+- `webcam.php` — `no-store, no-cache` for latest view (`?type=last` / no query string); `public, max-age=3600` for archive views
+- `aurora.php` — `public, max-age=1800`
+- `people.php` — `public, max-age=3600`
+- `css.php` — `public, max-age=86400`
+- `latest.php` — `no-store, no-cache` (serves the raw latest JPEG)
+
 ## Image maintenance
 
 ```bash

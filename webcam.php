@@ -1801,6 +1801,15 @@ if ($_SERVER['QUERY_STRING'] == 1) {
 //debug("QUERY_STRING: " . $_SERVER['QUERY_STRING']);
 //debug("type: $type<br/>date: $date<br/>year: $year</br>month: $month</br>size: $size<br/>image: $image<br/>last_image: $last_image");
 
+// HTTP cache headers — no caching for latest view, 1 hour for archive
+if ($type === 'last' || $type === '') {
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Pragma: no-cache');
+} else {
+    header('Cache-Control: public, max-age=3600');
+    header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+}
+
 // Determine which page type to display and render it
 // ------------------------------------------------------------
 debug("type: $type");
