@@ -223,10 +223,11 @@ Static promotional photos shown at the bottom of the main webcam page (10 random
 
 `webcam.php` serves `mini/filename.jpg` if it exists, falling back to the original. Images have `loading="lazy"` since they're below the fold.
 
-To add a new photo: copy it to `lillevik-photos/` on the server, then create its thumbnail:
+To add a new photo: copy it to `lillevik-photos/` on the server, then create its thumbnail and WebP:
 ```bash
 cd ~/www/webcam/lillevik-photos
 convert new-photo.jpg -resize 320x320^ -gravity center -extent 320x320 -quality 85 mini/new-photo.jpg
+convert mini/new-photo.jpg -quality 82 mini/new-photo.webp
 ```
 
 ## Image maintenance

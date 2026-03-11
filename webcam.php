@@ -49,6 +49,7 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     // Pre-compute variables for heredoc interpolation (PHP tags don't execute inside heredocs)
     $_cam_label    = CAM_LABEL;
     $_cam_css_path = CAM_CSS_PATH . '?v=' . filemtime(__DIR__ . '/webcam.css');
+    $_css_inline   = '  <style>' . "\n" . file_get_contents(__DIR__ . '/webcam.css') . '  </style>';
     $_cam_canonical = CAM_IS_PRIMARY
         ? '  <link rel="canonical" href="https://lilleviklofoten.no/webcam/">'
         : '';
@@ -139,7 +140,7 @@ JSONLD;
 
 $_cam_canonical
 
-  <link rel="stylesheet" type="text/css" href="$_cam_css_path">
+$_css_inline
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 $_cam_json_ld
@@ -980,7 +981,7 @@ function print_single_image($image_filename, $last_image)
     // For the latest image, use responsive srcset (900w/1800w) to avoid serving the full 4K file.
     // latest.jpg and latest.php always serve the full-size original unchanged.
     if ($last_image && file_exists('latest-resized-900.jpg') && file_exists('latest-resized-1800.jpg')) {
-        echo "width=\"900\" height=\"506\" ";
+        echo "fetchpriority=\"high\" width=\"900\" height=\"506\" ";
         echo "srcset=\"latest-resized-900.jpg 900w, latest-resized-1800.jpg 1800w\" ";
         echo "sizes=\"(max-width: 900px) 100vw, 900px\" ";
         echo "src=\"latest-resized-1800.jpg\">";
@@ -1741,13 +1742,23 @@ function print_lillevik_images_and_links()
     $height = "166px";
     $mini_dir = $dir . '/mini';
     foreach ($selected as $path) {
-        $filename = basename($path);
-        $img_url  = file_exists($mini_dir . '/' . $filename)
+        $filename     = basename($path);
+        $webp_file    = $mini_dir . '/' . pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+        $webp_url     = $url_base . '/mini/' . urlencode(pathinfo($filename, PATHINFO_FILENAME) . '.webp');
+        $img_url      = file_exists($mini_dir . '/' . $filename)
             ? $url_base . '/mini/' . urlencode($filename)
             : $url_base . '/' . urlencode($filename);
         $utm_url = "https://lilleviklofoten.no/?utm_source=webcam&utm_medium=thumbnail&utm_campaign=lillevik_photos&utm_content=" . urlencode($filename);
+        $img_style = "style=\"width: $width; height: $height; object-fit: cover; display: block;\"";
         echo "  <a href=\"$utm_url\" style=\"flex: 1 0 30%; max-width: $width;\">\n";
-        echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" style=\"width: $width; height: $height; object-fit: cover; display: block;\" loading=\"lazy\" />\n";
+        if (file_exists($webp_file)) {
+            echo "    <picture>\n";
+            echo "      <source type=\"image/webp\" srcset=\"$webp_url\">\n";
+            echo "      <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" $img_style loading=\"lazy\" />\n";
+            echo "    </picture>\n";
+        } else {
+            echo "    <img src=\"$img_url\" alt=\"Lillevik Lofoten: lilleviklofoten.no\" $img_style loading=\"lazy\" />\n";
+        }
         echo "  </a>\n";
     }
 
