@@ -19,171 +19,6 @@ setlocale(LC_ALL, WebcamConfig::LOCALE);
 date_default_timezone_set(WebcamConfig::TIMEZONE);
 
 // ============================================================
-// Aurora forecast (Yr internal API)
-// ============================================================
-
-function get_yr_aurora_forecast()
-{
-    $cache_file = sys_get_temp_dir() . '/yr_aurora_forecast.json';
-    if (file_exists($cache_file)) {
-        $cached = json_decode(file_get_contents($cache_file), true);
-        if ($cached && isset($cached['_cached_at']) && time() - $cached['_cached_at'] < 1800) {
-            return $cached;
-        }
-    }
-    $loc      = WebcamConfig::YR_LOCATION_CODE;
-    $context  = stream_context_create(['http' => [
-        'timeout' => 5,
-        'header'  => "User-Agent: " . WebcamConfig::FALLBACK_SERVER_NAME . "/1.0\r\n",
-    ]]);
-    $response = @file_get_contents("https://www.yr.no/api/v0/locations/{$loc}/aurora", false, $context);
-    if ($response === false) return null;
-    $data = json_decode($response, true);
-    if (!$data) return null;
-    $data['_cached_at'] = time();
-    @file_put_contents($cache_file, json_encode($data));
-    return $data;
-}
-
-function print_aurora_forecast()
-{
-    $data = get_yr_aurora_forecast();
-    if (!$data) return;
-
-    $intervals = $data['auroraForecast']['shortIntervals'] ?? [];
-    if (empty($intervals)) return;
-
-    // Group non-day intervals into nights.
-    // Night key: hour >= 12 → same date; hour < 12 → previous date.
-    $nights = [];
-    foreach ($intervals as $iv) {
-        if (($iv['sunlight']['id'] ?? '') === 'day') continue;
-        $ts  = strtotime($iv['start']);
-        $key = (int)date('H', $ts) >= 12
-            ? date('Y-m-d', $ts)
-            : date('Y-m-d', strtotime('-1 day', $ts));
-        if (!isset($nights[$key])) {
-            $nights[$key] = ['aurora_max' => 0.0, 'kp_max' => 0, 'condition' => 'no_intensity', 'cloud' => []];
-        }
-        $av = (float)($iv['auroraValue'] ?? 0);
-        $kp = (int)($iv['kpIndex'] ?? 0);
-        if ($av > $nights[$key]['aurora_max']) {
-            $nights[$key]['aurora_max'] = $av;
-            $nights[$key]['condition']  = $iv['condition']['id'] ?? 'no_intensity';
-        }
-        if ($kp > $nights[$key]['kp_max']) $nights[$key]['kp_max'] = $kp;
-        if (!empty($iv['cloudCoverDescription'])) $nights[$key]['cloud'][] = $iv['cloudCoverDescription'];
-    }
-    ksort($nights);
-    $nights = array_slice($nights, 0, 2, true); // tonight + tomorrow only
-    if (empty($nights)) return;
-
-    $condition_labels = [
-        'no_intensity'      => t('aurora_no_activity'),
-        'low_intensity'     => t('aurora_low'),
-        'medium_intensity'  => t('aurora_medium'),
-        'high_intensity'    => t('aurora_high'),
-        'extreme_intensity' => t('aurora_extreme'),
-    ];
-    $cloud_map = [
-        'Klart'        => t('cloud_clear'),
-        'Lettskyet'    => t('cloud_few'),
-        'Delvis skyet' => t('cloud_partly'),
-        'Skyet'        => t('cloud_cloudy'),
-        'Overskyet'    => t('cloud_overcast'),
-        'Tåke'         => t('cloud_fog'),
-    ];
-
-    $today    = date('Y-m-d');
-    $tomorrow = date('Y-m-d', strtotime('+1 day'));
-
-    $lines = [];
-    foreach ($nights as $key => $night) {
-        $label     = ($key === $today) ? t('aurora_tonight') : (($key === $tomorrow) ? t('aurora_tomorrow') : date('D M j', strtotime($key)));
-        $condition = $condition_labels[$night['condition']] ?? 'Unknown';
-        $counts    = array_count_values($night['cloud']);
-        arsort($counts);
-        $cloud_raw = $counts ? array_key_first($counts) : '';
-        $cloud     = $cloud_map[$cloud_raw] ?? $cloud_raw;
-        $line      = "$label: $condition";
-        if ($cloud) $line .= ", $cloud";
-        $lines[] = $line;
-    }
-
-    $updated    = $data['auroraForecast']['updated'] ?? '';
-    $updated_ts = $updated ? strtotime($updated) : 0;
-    $yr_url     = 'https://www.yr.no/en/other-conditions/' . WebcamConfig::YR_LOCATION_CODE . '/Norway/Nordland/V%C3%A5gan/Pannsarholmen';
-    $swpc_url   = 'https://www.swpc.noaa.gov/products/aurora-30-minute-forecast';
-    $frames_url = 'https://services.swpc.noaa.gov/images/animations/ovation/north/';
-
-    echo "<h2>" . t('aurora_forecast') . "</h2>\n\n";
-
-    // Animated player: cycles through the last 24 frames (2 hours at 5-min intervals).
-    // Frame filenames are aurora_N_YYYY-MM-DD_HHMM.jpg in UTC.
-    echo <<<HTML
-<p>
-<img id="swpc-aurora" src="{$frames_url}latest.jpg"
-     alt="NOAA SWPC Aurora 30-minute forecast"
-     style="width:450px;max-width:100%;height:auto;">
-<br><small><a href="{$swpc_url}" target="_blank">NOAA/SWPC Aurora 30-minute forecast</a></small>
-</p>
-<script>
-(function() {
-    var base = '{$frames_url}';
-    var img  = document.getElementById('swpc-aurora');
-    var frames = [];
-    var idx = 0;
-
-    // Build last 24 frame URLs from UTC timestamps (5-min intervals).
-    function buildFrames() {
-        var now = new Date();
-        now.setUTCSeconds(0, 0);
-        now.setUTCMinutes(Math.floor(now.getUTCMinutes() / 5) * 5);
-        var urls = [];
-        for (var i = 23; i >= 0; i--) {
-            var t = new Date(now.getTime() - i * 300000);
-            var yr = t.getUTCFullYear();
-            var mo = String(t.getUTCMonth() + 1).padStart(2, '0');
-            var dy = String(t.getUTCDate()).padStart(2, '0');
-            var hr = String(t.getUTCHours()).padStart(2, '0');
-            var mn = String(t.getUTCMinutes()).padStart(2, '0');
-            urls.push(base + 'aurora_N_' + yr + '-' + mo + '-' + dy + '_' + hr + mn + '.jpg');
-        }
-        return urls;
-    }
-
-    // Preload frames, skipping any that fail to load.
-    function preload(urls, done) {
-        var loaded = [], remaining = urls.length;
-        urls.forEach(function(url) {
-            var i = new Image();
-            i.onload  = function() { loaded.push(url); if (!--remaining) done(loaded); };
-            i.onerror = function() { if (!--remaining) done(loaded); };
-            i.src = url;
-        });
-    }
-
-    preload(buildFrames(), function(loaded) {
-        if (loaded.length === 0) return; // keep showing latest.jpg
-        frames = loaded;
-        idx = 0;
-        setInterval(function() {
-            idx = (idx + 1) % frames.length;
-            img.src = frames[idx];
-        }, 200);
-    });
-})();
-</script>
-
-HTML;
-
-    echo "<p>" . implode('. ', $lines) . ".\n";
-    echo t('source') . ": <a href=\"$yr_url\">Yr</a>";
-    if ($updated_ts) echo ", " . t('aurora_updated') . " " . date('M j H:i', $updated_ts);
-    echo ".</p>\n\n";
-}
-
-// ============================================================
 // Load aurora data
 // ============================================================
 
@@ -214,11 +49,14 @@ $using_default = !isset($_GET['year']) && !isset($_GET['month']);
 $size  = (isset($_GET['size']) && $_GET['size'] === 'large') ? 'large' : 'mini';
 
 if (!$year || !$month) {
-    // Always default to the current month so the forecast is shown.
-    // If the current month has no detections, the image grid will be empty
-    // but the forecast and nav links to previous months still appear.
-    $year  = (int)date('Y');
-    $month = (int)date('m');
+    if (!empty($months_list)) {
+        $latest = end($months_list);
+        $year  = (int)substr($latest, 0, 4);
+        $month = (int)substr($latest, 4, 2);
+    } else {
+        $year  = (int)date('Y');
+        $month = (int)date('m');
+    }
 }
 
 $month_str  = sprintf('%02d', $month);
@@ -449,9 +287,6 @@ if ($count === 0) {
 
 echo "<p class=\"seo-desc\">" . t('aurora_seo_description_short') . "</p>\n\n";
 
-if ($current_ym === date('Ym')) {
-    print_aurora_forecast();
-}
 
 // ============================================================
 // Footer
