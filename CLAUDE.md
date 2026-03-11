@@ -78,6 +78,13 @@ Translation keys include all nav labels, month names, weather terms, aurora/peop
 
 Set `$debug = 1` in `webcam.php`.
 
+## Day view query parameters
+
+- `?type=day&date=YYYYMMDD` — show images between dawn and dusk for that date
+- `&all=1` — bypass the dawn/dusk filter and show all images for the day; a "See all photos" / "See photos between dawn and dusk" toggle link appears at the end of the sunrise/sunset line
+- `&all=1` is preserved when navigating to prev/next days with arrow keys or nav links
+- `&size=large` — show large images instead of mini thumbnails
+
 ## Northern lights (aurora)
 
 `aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). `aurora.php` automatically loads all `aurora-YYYY.json` files it finds in the same directory.
