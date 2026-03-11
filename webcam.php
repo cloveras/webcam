@@ -1561,15 +1561,16 @@ function print_full_day($timestamp, $image_size, $number_of_images)
     $is_future = date('Ymd', $timestamp) > date('Ymd');
 
     // Set the navigation (we need $dusk from above).
+    $all_param = $show_all ? '&all=1' : '';
     // Previous: The previous day — but not if it's also in the future.
     $prev_date = date('Ymd', strtotime('-1 day', $timestamp));
     $previous = ($prev_date <= date('Ymd'))
-        ? "?type=day&date=$prev_date&size=$size" . lang_param()
+        ? "?type=day&date=$prev_date&size=$size$all_param" . lang_param()
         : false;
     // Next: The next day, only for past days (not today, not future).
     $next_date = date('Ymd', strtotime('+1 day', $timestamp));
     if (date('Ymd', $timestamp) < date('Ymd')) {
-        $next = "?type=day&date=$next_date&size=$size" . lang_param();
+        $next = "?type=day&date=$next_date&size=$size$all_param" . lang_param();
     } else {
         $next = false;
     }
