@@ -974,12 +974,23 @@ function print_single_image($image_filename, $last_image)
         echo "</p>\n\n";
     }
 
+    // For the latest image, serve the pre-resized version (1920×1080) if available.
+    // latest.jpg and latest.php always serve the full-size original.
+    if ($last_image && file_exists('latest-resized.jpg')) {
+        $img_src    = 'latest-resized.jpg';
+        $img_width  = 1920;
+        $img_height = 1080;
+    } else {
+        $img_src    = "$year/$month/$day/$image_filename";
+        $img_width  = $large_image_width;
+        $img_height = $large_image_height;
+    }
+
     echo "<p>\n";
     echo "<a href=\"?type=day&date=$year$month$day" . lang_param() . "\">";
     echo "<img alt=\"" . CAM_LABEL . ": $year-$month-$day $hour:$minute\" ";
-    //echo "title=\"$year-$month-$day $hour:$minute\" ";
-    echo "width=\"$large_image_width\" height=\"$large_image_height\" ";
-    echo "src=\"$year/$month/$day/$image_filename\">";
+    echo "width=\"$img_width\" height=\"$img_height\" ";
+    echo "src=\"$img_src\">";
     echo "</a>\n";
     echo "</p>\n\n";
 
