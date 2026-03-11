@@ -112,7 +112,7 @@ $_og_image_aurora = $_best
 // ============================================================
 
 $title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = WebcamConfig::SITE_NAME . ' webcam: ' . t('aurora_page_suffix') . ' ' . t_month_year($month, $year);
+$title    = WebcamConfig::SITE_NAME . ' webcam: ' . t('aurora_page_suffix');
 
 // ============================================================
 // HTML header
@@ -230,7 +230,7 @@ if ($size === 'large') {
 }
 $nav_links[] = lang_selector_html();
 if ($using_default && $current_ym !== date('Ym')) {
-    echo "<p>" . t('aurora_showing_latest') . "</p>\n\n";
+    echo "<p>" . rtrim(t('aurora_showing_latest'), '.') . ': ' . t_month_year($month, $year) . ".</p>\n\n";
 }
 
 echo "<p>" . implode(" | ", $nav_links) . "</p>\n\n";
