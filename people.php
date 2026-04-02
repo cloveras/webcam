@@ -42,7 +42,9 @@ foreach (glob(PEOPLE_DATA_DIR . '/people-*.json') as $json_file) {
 // Build sorted list of YYYYMM strings that have people images.
 $months_with_images = [];
 foreach ($all_images as $img) {
-    $ym = substr($img['timestamp'], 0, 6);
+    $ts = $img['timestamp'] ?? '';
+    if (!preg_match('/^\d{14}$/', $ts)) continue; // skip malformed timestamps
+    $ym = substr($ts, 0, 6);
     $months_with_images[$ym] = true;
 }
 ksort($months_with_images);
