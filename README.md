@@ -105,8 +105,8 @@ Each image is decoded at quarter resolution, then the bottom 35% (ground, sea, l
 
 **1. Green/teal pixel coverage** — the fraction of sky pixels that fall within aurora hue ranges. Two ranges are scored separately and the higher wins:
 
-- Classic green: H 38–85 (yellow-green), S ≥ 25, V ≥ 15
-- Teal/cyan: H 38–100 (extends into cyan), S ≥ 25, V ≥ 15
+- Classic green: H 38–85 (yellow-green), S ≥ 55, V ≥ 25
+- Teal/cyan: H 38–100 (extends into cyan), S ≥ 55, V ≥ 25
 
 The hue cap at H = 100 is deliberate. Pre-dawn and post-dusk twilight sky at high latitudes sits at H 100–130 (blue). Capping at 100 rejects it without affecting real aurora.
 
@@ -140,13 +140,13 @@ pip install opencv-python numpy astral
 
 ```bash
 # Update one month (fast — good for routine use)
-python3 aurora_scan.py /path/to/images/2026/03 --night --threshold 0.15 --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026/03 --threshold 0.15 --json-output data/aurora-2026.json
 
 # Full year (slow — use for initial build)
-python3 aurora_scan.py /path/to/images/2026 --night --threshold 0.15 --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026 --threshold 0.15 --json-output data/aurora-2026.json
 
 # Daily incremental update
-python3 aurora_scan.py /path/to/images/2026/03/15 --night --threshold 0.15 --append --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026/03/15 --threshold 0.15 --append --json-output data/aurora-2026.json
 ```
 
 When the output file already exists, only the scanned months are replaced — the rest is preserved.
