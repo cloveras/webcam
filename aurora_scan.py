@@ -55,12 +55,23 @@ def aurora_score(image_path):
     blur = cv2.GaussianBlur(V, (0, 0), 3)
     local_contrast = np.mean(np.abs(V.astype(np.float32) - blur.astype(np.float32))) / 255.0
 
+    # 5) Sky brightness penalty. Aurora is visible against a dark sky. Twilight
+    # produces a broadly lit sky even when the sun is below the horizon. A high
+    # mean V across the sky region is a strong signal for twilight, not aurora.
+    # Scale factor: 1.0 for a dark sky, approaching 0 as brightness rises.
+    sky_mean_v = float(np.mean(V)) / 255.0
+    # Penalty-free up to ~0.18 (dark night). At 0.35 (twilight glow) factor ≈ 0.
+    brightness_factor = max(0.0, min(1.0, (0.35 - sky_mean_v) / 0.17))
+
     def _component_score(h_lo, h_hi, s_min, v_min):
         # 1) Candidate aurora pixels
         green = (H >= h_lo) & (H <= h_hi) & (S >= s_min) & (V >= v_min)
         green_ratio = green.mean()
 
         # 4) Connectedness: aurora tends to form patches/bands.
+        # Cap CC reward at 0.20 — a single blob covering >20% of the sky is
+        # background sky (twilight gradient), not an aurora band. This prevents
+        # an entire teal twilight sky from scoring extremely high.
         green_u8 = (green.astype(np.uint8) * 255)
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(green_u8, connectivity=8)
         if num_labels <= 1:
@@ -68,7 +79,7 @@ def aurora_score(image_path):
         else:
             # stats[0] is background; take max area among components
             areas = stats[1:, cv2.CC_STAT_AREA]
-            largest_cc_ratio = float(np.max(areas)) / float(green_u8.size)
+            largest_cc_ratio = min(float(np.max(areas)) / float(green_u8.size), 0.20)
 
         return (
             (green_ratio * 1.8) +
@@ -80,12 +91,15 @@ def aurora_score(image_path):
     # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale)
     score_classic = _component_score(38, 85, 55, 25)
 
-    # Teal/cyan aurora (H 38–130): captures cameras that render aurora as blue-green.
-    # Stricter V>=33 to reject faint light-pollution glow in overcast skies.
-    score_teal = _component_score(38, 130, 55, 33)
+    # Teal/cyan aurora (H 38–100): captures cameras that render aurora as blue-green.
+    # Capped at H=100 (not 130) to exclude the blue end of the spectrum (H 100–130)
+    # which matches pre-dawn/post-dusk blue sky rather than aurora. Stricter S>=75
+    # to reject the low-saturation diffuse glow of twilight.
+    score_teal = _component_score(38, 100, 75, 33)
 
-    # Combine: take the max so existing detections are unaffected
-    return float(max(score_classic, score_teal))
+    # Apply brightness factor last so it suppresses both components equally.
+    # Twilight sky (bright) is pushed toward zero; dark aurora sky is unaffected.
+    return float(max(score_classic, score_teal) * brightness_factor)
 
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
