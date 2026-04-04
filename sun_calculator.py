@@ -90,20 +90,23 @@ def find_sun_times(d: date, depression: float = 12) -> tuple:
 
 # ── Public helper for aurora_scan.py ──────────────────────────────────────────
 
-def is_aurora_time(dt: datetime) -> bool:
+def is_aurora_time(dt: datetime, depression: float = 9) -> bool:
     """
     Return True if the given local datetime is dark enough for aurora to be visible.
 
     - Midnight sun  → always False  (never dark)
     - Polar night   → always True   (always dark)
-    - Normal day    → True when dt is before nautical dawn or after nautical dusk
+    - Normal day    → True when dt is before dawn or after dusk at the given
+                      solar depression angle. Default 9° (between civil 6° and
+                      nautical 12°) to capture early-evening aurora while
+                      avoiding bright twilight false positives.
     """
     d = dt.date()
 
     if is_midnight_sun(d):
         return False
 
-    dawn, dusk, _ms, polar_night = find_sun_times(d)
+    dawn, dusk, _ms, polar_night = find_sun_times(d, depression=depression)
 
     if polar_night:
         return True
