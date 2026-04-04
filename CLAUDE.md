@@ -87,7 +87,7 @@ Weather condition keys: `weather_*` (42 keys per language) map Yr.no weather sym
 
 `aurora_scan.py` scans a directory of webcam images and scores each for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). `aurora.php` automatically loads all `aurora-YYYY.json` files it finds in the same directory.
 
-Defaults: `--threshold 0.15`, `--night` on, JSON output auto-derived from year in folder path.
+Defaults: `--threshold 0.15`, night-only (no `--day`), JSON output auto-derived from year in folder path.
 
 Run per month (fast) or per year (full rebuild). When the output file already exists, the scanned month(s) are replaced and the rest is kept:
 
@@ -103,7 +103,7 @@ for year in $(seq 2026 -1 2015); do python3 aurora_scan.py /path/to/images/$year
 ```
 
 - `--threshold N` — minimum score to include (default: 0.15)
-- `--night` / `--day` — time filter (default: night)
+- `--day` — include daytime images (default: night only)
 - `--json-output FILE` — override auto-derived output path
 - `--limit N` — cap the stdout report at N results (does not affect JSON output)
 

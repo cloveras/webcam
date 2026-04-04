@@ -112,6 +112,8 @@ def aurora_score(image_path):
     # Twilight sky (bright) is pushed toward zero; dark aurora sky is unaffected.
     return float(max(score_classic, score_teal) * brightness_factor)
 
+
+
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
     # Suppress libjpeg "Premature end of JPEG file" warnings that come from
@@ -207,7 +209,10 @@ def _infer_scanned_months(folder, new_data):
             break
     if year and month:
         return {year + month}
-    # Whole-year scan or unknown layout — use months from the results
+    if year:
+        # Whole-year scan: clear all months for this year, even if 0 results.
+        return {f"{year}{m:02d}" for m in range(1, 13)}
+    # Unknown layout — use months present in the results
     return {x["timestamp"][:6] for x in new_data}
 
 
