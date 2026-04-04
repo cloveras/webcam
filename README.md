@@ -97,7 +97,37 @@ See [`CODE_STRUCTURE.md`](CODE_STRUCTURE.md) for full class documentation.
 
 ## Aurora borealis gallery
 
-`aurora_scan.py` scores each image for aurora likelihood using OpenCV (green hue, local contrast, connected-component structure). Results above `--threshold` are saved to `aurora-YYYY.json` and shown by `aurora.php`, which also displays a live Yr forecast and an animated NOAA/SWPC polar map for the current month.
+`aurora_scan.py` scores each image for aurora likelihood using OpenCV. Results above `--threshold` are saved to `aurora-YYYY.json` and shown by `aurora.php`, which also displays a live Yr forecast and an animated NOAA/SWPC polar map for the current month.
+
+### How scoring works
+
+Each image is decoded at quarter resolution, then the bottom 35% (ground, sea, lights) is discarded. The remaining sky region is converted to HSV and scored on four signals:
+
+**1. Green/teal pixel coverage** — the fraction of sky pixels that fall within aurora hue ranges. Two ranges are scored separately and the higher wins:
+
+- Classic green: H 38–85 (yellow-green), S ≥ 25, V ≥ 15
+- Teal/cyan: H 38–100 (extends into cyan), S ≥ 25, V ≥ 15
+
+The hue cap at H = 100 is deliberate. Pre-dawn and post-dusk twilight sky at high latitudes sits at H 100–130 (blue). Capping at 100 rejects it without affecting real aurora.
+
+**2. Local contrast** — mean absolute deviation between each pixel's brightness (V channel) and a Gaussian-blurred version of itself. Aurora has visible structure and texture; smooth overcast sky scores near zero.
+
+**3. Connected component size** — aurora forms patches and bands, so large connected regions of matched pixels are a positive signal. The contribution is capped at 20% of image area: a single blob covering more than that is more likely background sky than an aurora band.
+
+**4. Global green cast** — the mean of `G − (R + B) / 2` across the sky. A sky that is uniformly green-shifted (green overcast) is penalised.
+
+These are combined linearly:
+
+```
+score = green_ratio × 1.8
+      + local_contrast × 1.2
+      + min(largest_cc_ratio, 0.20) × 1.5
+      − global_green_cast × 0.8
+```
+
+**Brightness factor** — the whole score is multiplied by a factor that approaches zero as the mean sky brightness rises above ~0.18 (normalised). This suppresses high-latitude spring/autumn twilight images where the sky is still lit but the sun is technically below the horizon.
+
+**Time filter** — by default only images taken outside dawn–dusk (9° solar depression) are scanned. Midnight sun months are skipped entirely. Polar night months are always included.
 
 ### Dependencies
 
