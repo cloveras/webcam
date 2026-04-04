@@ -63,7 +63,7 @@ def aurora_score(image_path):
     # Penalty-free up to ~0.18 (dark night). At 0.35 (twilight glow) factor ≈ 0.
     brightness_factor = max(0.0, min(1.0, (0.35 - sky_mean_v) / 0.17))
 
-    def _component_score(h_lo, h_hi, s_min, v_min):
+    def _component_score(h_lo, h_hi, s_min, v_min, patch_bonus=0.0):
         # 1) Candidate aurora pixels
         green = (H >= h_lo) & (H <= h_hi) & (S >= s_min) & (V >= v_min)
         green_ratio = green.mean()
@@ -76,25 +76,37 @@ def aurora_score(image_path):
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(green_u8, connectivity=8)
         if num_labels <= 1:
             largest_cc_ratio = 0.0
+            largest_cc_pixels = 0
         else:
             # stats[0] is background; take max area among components
             areas = stats[1:, cv2.CC_STAT_AREA]
-            largest_cc_ratio = min(float(np.max(areas)) / float(green_u8.size), 0.20)
+            largest_cc_pixels = int(np.max(areas))
+            largest_cc_ratio = min(float(largest_cc_pixels) / float(green_u8.size), 0.20)
+
+        # Patch bonus: a compact cluster of ≥200 pixels in the target hue range
+        # is a strong positive signal even when overall coverage is low.
+        # Included in raw score so brightness_factor still suppresses it for
+        # bright (twilight) images.
+        effective_bonus = patch_bonus if largest_cc_pixels >= 200 else 0.0
 
         return (
             (green_ratio * 1.8) +
             (local_contrast * 1.2) +
             (largest_cc_ratio * 1.5) -
-            (global_green_cast * 0.8)
+            (global_green_cast * 0.8) +
+            effective_bonus
         )
 
-    # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale)
-    score_classic = _component_score(38, 85, 55, 25)
+    # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale).
+    # Patch bonus enabled: a compact cluster of yellow-green pixels can only be
+    # aurora — nothing else produces that colour in a night sky.
+    score_classic = _component_score(38, 85, 55, 25, patch_bonus=0.10)
 
     # Teal/cyan aurora (H 38–100): captures cameras that render aurora as blue-green.
     # Capped at H=100 to exclude the blue end of the spectrum (H 100–130) which
-    # matches pre-dawn/post-dusk twilight sky rather than aurora.
-    score_teal = _component_score(38, 100, 55, 25)
+    # matches pre-dawn/post-dusk twilight sky rather than aurora. No patch bonus —
+    # cyan pixels can also be polar night twilight glow or atmospheric scattering.
+    score_teal = _component_score(38, 100, 55, 25, patch_bonus=0.0)
 
     # Apply brightness factor last so it suppresses both components equally.
     # Twilight sky (bright) is pushed toward zero; dark aurora sky is unaffected.

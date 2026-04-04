@@ -114,7 +114,9 @@ The hue cap at H = 100 is deliberate. Pre-dawn and post-dusk twilight sky at hig
 
 **3. Connected component size** — aurora forms patches and bands, so large connected regions of matched pixels are a positive signal. The contribution is capped at 20% of image area: a single blob covering more than that is more likely background sky than an aurora band.
 
-**4. Global green cast** — the mean of `G − (R + B) / 2` across the sky. A sky that is uniformly green-shifted (green overcast) is penalised.
+**4. Patch bonus** — if the largest connected component of classic green pixels (H 38–85) contains ≥ 200 pixels, a fixed bonus of 0.10 is added to the raw score. A compact, well-defined green patch in a dark sky is unambiguously aurora even when total sky coverage is low. The bonus applies only to the classic green range, not teal, to avoid triggering on polar night atmospheric blue-grey glow.
+
+**5. Global green cast** — the mean of `G − (R + B) / 2` across the sky. A sky that is uniformly green-shifted (green overcast) is penalised.
 
 These are combined linearly:
 
@@ -122,12 +124,13 @@ These are combined linearly:
 score = green_ratio × 1.8
       + local_contrast × 1.2
       + min(largest_cc_ratio, 0.20) × 1.5
+      + patch_bonus (0.10 if largest classic-green CC ≥ 200 px, else 0)
       − global_green_cast × 0.8
 ```
 
 **Brightness factor** — the whole score is multiplied by a factor that approaches zero as the mean sky brightness rises above ~0.18 (normalised). This suppresses high-latitude spring/autumn twilight images where the sky is still lit but the sun is technically below the horizon.
 
-**Time filter** — by default only images taken outside dawn–dusk (9° solar depression) are scanned. Midnight sun months are skipped entirely. Polar night months are always included.
+**Time filter** — by default only images taken outside dawn–dusk (9° solar depression) are scanned. Midnight sun months are skipped entirely. During polar night, a fake dawn/dusk window (06:00–17:00) is applied so midday images with residual twilight glow are excluded, same as a normal day.
 
 ### Dependencies
 
@@ -140,13 +143,13 @@ pip install opencv-python numpy astral
 
 ```bash
 # Update one month (fast — good for routine use)
-python3 aurora_scan.py /path/to/images/2026/03 --threshold 0.15 --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026/03 --threshold 0.08 --json-output data/aurora-2026.json
 
 # Full year (slow — use for initial build)
-python3 aurora_scan.py /path/to/images/2026 --threshold 0.15 --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026 --threshold 0.08 --json-output data/aurora-2026.json
 
 # Daily incremental update
-python3 aurora_scan.py /path/to/images/2026/03/15 --threshold 0.15 --append --json-output data/aurora-2026.json
+python3 aurora_scan.py /path/to/images/2026/03/15 --threshold 0.08 --append --json-output data/aurora-2026.json
 ```
 
 When the output file already exists, only the scanned months are replaced — the rest is preserved.
@@ -155,8 +158,8 @@ When the output file already exists, only the scanned months are replaced — th
 
 | Option | Description |
 |---|---|
-| `--threshold N` | Minimum score to include (0.15 is a good starting point) |
-| `--night` / `--day` | Time filter (default: night) |
+| `--threshold N` | Minimum score to include (0.08 is a good starting point) |
+| `--day` | Include daytime images (default: night only) |
 | `--limit N` | Cap stdout report at N results (JSON output is unaffected) |
 | `--workers N` | Parallel workers (default: all cores; use 1–2 for network drives) |
 | `--append` | Upsert individual timestamps instead of replacing the whole month |
