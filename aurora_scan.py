@@ -88,14 +88,17 @@ def aurora_score(image_path):
             (global_green_cast * 0.8)
         )
 
-    # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale)
-    score_classic = _component_score(38, 85, 55, 25)
+    # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale).
+    # S>=25, V>=15 to catch faint/diffuse green aurora that this camera renders
+    # with low saturation. False positives in this hue range are rare (twilight
+    # sky sits at H 100–130, well outside H 38–85).
+    score_classic = _component_score(38, 85, 25, 15)
 
     # Teal/cyan aurora (H 38–100): captures cameras that render aurora as blue-green.
-    # Capped at H=100 (not 130) to exclude the blue end of the spectrum (H 100–130)
-    # which matches pre-dawn/post-dusk blue sky rather than aurora. Stricter S>=75
-    # to reject the low-saturation diffuse glow of twilight.
-    score_teal = _component_score(38, 100, 75, 33)
+    # Capped at H=100 to exclude the blue sky range (H 100–130) which matches
+    # pre-dawn/post-dusk twilight. Loose S/V thresholds are safe here because
+    # twilight false positives sit above H=100.
+    score_teal = _component_score(38, 100, 25, 15)
 
     # Apply brightness factor last so it suppresses both components equally.
     # Twilight sky (bright) is pushed toward zero; dark aurora sky is unaffected.

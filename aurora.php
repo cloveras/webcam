@@ -111,8 +111,10 @@ $_og_image_aurora = $_best
 // Page title
 // ============================================================
 
-$title_ts = mktime(12, 0, 0, $month, 15, $year);
-$title    = WebcamConfig::SITE_NAME . ' webcam: ' . t('aurora_page_suffix');
+$title = WebcamConfig::SITE_NAME . ' webcam: ' . t('aurora_page_suffix');
+if (!$using_default) {
+    $title .= ' ' . t_month_year($month, $year);
+}
 
 // ============================================================
 // HTML header
