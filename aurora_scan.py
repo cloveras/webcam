@@ -175,6 +175,31 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
     print(f"\nScanned {scanned} images, kept {len(results)} above threshold {threshold}")
     return results
 
+def _infer_scanned_months(folder, new_data):
+    """
+    Return the set of YYYYMM strings that were covered by this scan.
+
+    If the folder path contains a specific month (e.g. .../2026/03) or day
+    (.../2026/03/15), derive the month directly from the path so that a scan
+    returning 0 results still removes old entries for that month.
+    Fall back to the months present in new_data when the path is ambiguous
+    (e.g. a whole-year scan).
+    """
+    parts = Path(folder).parts
+    year = None
+    month = None
+    for i, part in enumerate(parts):
+        if part.isdigit() and len(part) == 4 and 2000 <= int(part) <= 2100:
+            year = part
+            if i + 1 < len(parts) and parts[i + 1].isdigit() and len(parts[i + 1]) == 2:
+                month = parts[i + 1]
+            break
+    if year and month:
+        return {year + month}
+    # Whole-year scan or unknown layout — use months from the results
+    return {x["timestamp"][:6] for x in new_data}
+
+
 def _infer_year(folder):
     """Extract a 4-digit year from the folder path, e.g. /images/2026 or /images/2026/03."""
     for part in Path(folder).parts:
@@ -226,23 +251,27 @@ if __name__ == "__main__":
         )
         output_path = Path(json_output)
         if output_path.exists():
-            if not new_data:
-                print(f"\nNo new results; {json_output} unchanged.")
-            else:
-                existing = json.loads(output_path.read_text())
-                if args.append:
+            existing = json.loads(output_path.read_text())
+            if args.append:
+                # Upsert mode: merge new entries into existing by timestamp
+                if not new_data:
+                    print(f"\nNo new results; {json_output} unchanged.")
+                else:
                     by_ts = {x["timestamp"]: x for x in existing}
                     for item in new_data:
                         by_ts[item["timestamp"]] = item
                     merged = sorted(by_ts.values(), key=lambda x: x["timestamp"])
                     output_path.write_text(json.dumps(merged, indent=2))
                     print(f"\nJSON updated in {json_output} ({len(merged)} total entries, {len(new_data)} new/updated)")
-                else:
-                    scanned_months = {x["timestamp"][:6] for x in new_data}
-                    kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
-                    merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
-                    output_path.write_text(json.dumps(merged, indent=2))
-                    print(f"\nJSON merged into {json_output} ({len(merged)} total entries, {len(new_data)} from this scan)")
+            else:
+                # Replace mode: remove all entries for scanned months, add new ones.
+                # This correctly clears false positives when a rescan finds 0 results.
+                scanned_months = _infer_scanned_months(args.folder, new_data)
+                kept = [x for x in existing if x["timestamp"][:6] not in scanned_months]
+                merged = sorted(kept + new_data, key=lambda x: x["timestamp"])
+                output_path.write_text(json.dumps(merged, indent=2))
+                removed = len(existing) - len(kept)
+                print(f"\nJSON merged into {json_output} ({len(merged)} total entries, {len(new_data)} from this scan, {removed} removed)")
         else:
             output_path.write_text(json.dumps(new_data, indent=2))
             print(f"\nJSON written to {json_output} ({len(new_data)} entries)")
