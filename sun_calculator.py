@@ -95,7 +95,7 @@ def is_aurora_time(dt: datetime, depression: float = 9) -> bool:
     Return True if the given local datetime is dark enough for aurora to be visible.
 
     - Midnight sun  → always False  (never dark)
-    - Polar night   → always True   (always dark)
+    - Polar night   → uses fake dawn/dusk (06:00–17:00) to filter midday images
     - Normal day    → True when dt is before dawn or after dusk at the given
                       solar depression angle. Default 9° (between civil 6° and
                       nautical 12°) to capture early-evening aurora while
@@ -108,8 +108,8 @@ def is_aurora_time(dt: datetime, depression: float = 9) -> bool:
 
     dawn, dusk, _ms, polar_night = find_sun_times(d, depression=depression)
 
-    if polar_night:
-        return True
-
+    # During polar night find_sun_times returns fake dawn/dusk (06:00–17:00).
+    # Apply those times even in polar night so midday images (which have some
+    # residual twilight glow) are filtered out, just like a normal day.
     aware = dt.replace(tzinfo=_tz) if dt.tzinfo is None else dt
     return aware < dawn or aware > dusk
