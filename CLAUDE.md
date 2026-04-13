@@ -126,19 +126,22 @@ Images: 3840×2160 (4K 16:9) for 2026+; 2560×1920 (4:3) for 2025.
 python3 people_scan.py /path/to/Lillevik-webcam/2026 --build-background data/background-2026.png
 
 # Scan
-python3 people_scan.py /path/to/Lillevik-webcam/2026 --civil-day --threshold 0.3 \
+python3 people_scan.py /path/to/Lillevik-webcam/2026 --civil-day --threshold 0.55 \
     --background data/background-2026.png \
+    --crop-top 0.67 \
     --exclude-zone 0.0,0.0,1.0,0.60 \
     --exclude-zone 0.0,0.60,0.45,0.68 \
     --exclude-zone 0.52,0.70,0.61,0.81 \
     --exclude-zone 0.40,0.88,0.46,0.99 \
+    --exclude-zone 0.13,0.67,0.25,0.69 \
+    --exclude-zone 0.96,0.67,1.0,0.74 \
     --json-output data/people-2026.json
 ```
 
-Exclusion zones (new 16:9 camera): two-zone sky exclusion to match the non-flat shoreline —
-zone 1 covers sky/mountains/water everywhere (top 60%), zone 2 covers the left-side shore where
-the land sits lower in the frame (x < 45%, y 60–68%). Boathouse and foreground poles are
-separate zones. Old 4:3 camera used a single zone `0.0,0.0,1.0,0.68`.
+Exclusion zones (new 16:9 camera): `--crop-top 0.67` removes sky/sea/mountains (nothing above
+the waterline). Remaining zones cover the boathouse, foreground poles, a water-edge strip at
+left (boat FP), and a static object at far right (animal FP). Old 4:3 camera used a single
+zone `0.0,0.0,1.0,0.68` with no crop.
 
 ### Viktun
 
@@ -149,14 +152,16 @@ Images: 960×720 (4:3).
 python3 people_scan.py /path/to/Viktun-webcam/2026 --build-background viktun/data/background-2026.png
 
 # Scan
-python3 people_scan.py /path/to/Viktun-webcam/2026 --civil-day --threshold 0.3 \
+python3 people_scan.py /path/to/Viktun-webcam/2026 --civil-day --threshold 0.55 \
     --background viktun/data/background-2026.png \
+    --crop-top 0.65 \
     --exclude-zone 0.0,0.0,1.0,0.50 \
     --exclude-zone 0.0,0.45,0.30,0.68 \
     --json-output viktun/data/people-2026.json
 ```
 
-Exclusion zones: sky (top 50%), mountain on the left side.
+Exclusion zones: `--crop-top 0.65` removes sky/mountain tops. Remaining zones cover residual
+sky (top 50%) and the left-side mountain face (x < 30%, y 45–68%).
 
 ### Diagnose a false positive
 
@@ -164,10 +169,13 @@ Exclusion zones: sky (top 50%), mountain on the left side.
 python3 people_scan.py /dev/null \
     --annotate /path/to/image.jpg annotated.jpg \
     --background data/background-2026.png \
+    --crop-top 0.67 \
     --exclude-zone 0.0,0.0,1.0,0.60 \
     --exclude-zone 0.0,0.60,0.45,0.68 \
     --exclude-zone 0.52,0.70,0.61,0.81 \
-    --exclude-zone 0.40,0.88,0.46,0.99
+    --exclude-zone 0.40,0.88,0.46,0.99 \
+    --exclude-zone 0.13,0.67,0.25,0.69 \
+    --exclude-zone 0.96,0.67,1.0,0.74
 ```
 
 - `--civil-day` — civil twilight (6° depression), tighter than `--day` (nautical 12°), fewer low-light false positives

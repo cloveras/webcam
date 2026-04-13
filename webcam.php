@@ -1216,19 +1216,31 @@ function get_openmeteo_daily_weather($date_str)
 
     $lat = number_format(WebcamConfig::LATITUDE,  4, '.', '');
     $lon = number_format(WebcamConfig::LONGITUDE, 4, '.', '');
-    $url = 'https://archive-api.open-meteo.com/v1/archive?'
-         . 'latitude='   . $lat . '&longitude=' . $lon
-         . '&start_date=' . $date_str . '&end_date=' . $date_str
-         . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum,weather_code'
-         . '&timezone=' . urlencode(WebcamConfig::TIMEZONE);
+    $params = 'latitude=' . $lat . '&longitude=' . $lon
+            . '&start_date=' . $date_str . '&end_date=' . $date_str
+            . '&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum,weather_code'
+            . '&timezone=' . urlencode(WebcamConfig::TIMEZONE);
 
-    $context  = stream_context_create(['http' => ['timeout' => 5]]);
-    $response = @file_get_contents($url, false, $context);
-    if ($response === false) return null;
+    // ERA5 archive has ~5-day lag — for recent dates try the forecast API (which archives
+    // past days with minimal lag) first, then fall back to the ERA5 archive.
+    $days_ago = (int) floor((time() - strtotime($date_str)) / 86400);
+    $urls = $days_ago <= 10
+        ? [
+            'https://api.open-meteo.com/v1/forecast?' . $params,
+            'https://archive-api.open-meteo.com/v1/archive?' . $params,
+          ]
+        : [ 'https://archive-api.open-meteo.com/v1/archive?' . $params ];
 
-    $data  = json_decode($response, true);
-    $daily = $data['daily'] ?? null;
-    if (!$daily || empty($daily['time'])) return null;
+    $context = stream_context_create(['http' => ['timeout' => 5]]);
+    $daily = null;
+    foreach ($urls as $url) {
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) continue;
+        $data  = json_decode($response, true);
+        $d     = $data['daily'] ?? null;
+        if ($d && !empty($d['time'])) { $daily = $d; break; }
+    }
+    if (!$daily) return null;
 
     $result = [
         'temp_min'     => $daily['temperature_2m_min'][0]  ?? null,

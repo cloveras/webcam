@@ -106,12 +106,30 @@ _background = None          # BGR uint8 ndarray, or None
 _exclude_zones = []         # [(x1, y1, x2, y2), ...] as image fractions 0–1
 _bg_diff_threshold = 25     # pixel intensity diff to mark a pixel as "changed"
 _fg_overlap_min = 0.15      # min fraction of bbox in foreground to accept a detection
+_crop_top = 0.0             # fraction of image height to crop from the top before inference
 
 
-def _worker_init(background_path, exclude_zones, fg_overlap_min, bg_diff_threshold):
+def _remap_zones(zones, crop_top):
+    """Remap exclusion zones from full-image fractions to post-crop fractions.
+    Zones entirely above the crop line are dropped; partial zones are clamped."""
+    if not crop_top:
+        return list(zones)
+    scale = 1.0 - crop_top
+    remapped = []
+    for x1, y1, x2, y2 in zones:
+        if y1 >= 1.0 or y2 <= crop_top:
+            continue  # entirely above crop line — drop
+        new_y1 = max(0.0, (y1 - crop_top) / scale)
+        new_y2 = min(1.0, (y2 - crop_top) / scale)
+        remapped.append((x1, new_y1, x2, new_y2))
+    return remapped
+
+
+def _worker_init(background_path, exclude_zones, fg_overlap_min, bg_diff_threshold, crop_top=0.0):
     """Called once per worker process at Pool creation. Sets all per-worker globals."""
-    global _background, _exclude_zones, _fg_overlap_min, _bg_diff_threshold
-    _exclude_zones = list(exclude_zones)
+    global _background, _exclude_zones, _fg_overlap_min, _bg_diff_threshold, _crop_top
+    _crop_top = crop_top
+    _exclude_zones = _remap_zones(exclude_zones, crop_top)
     _fg_overlap_min = fg_overlap_min
     _bg_diff_threshold = bg_diff_threshold
     if background_path is not None:
@@ -123,7 +141,7 @@ def _worker_init(background_path, exclude_zones, fg_overlap_min, bg_diff_thresho
 def _get_model():
     global _worker_model
     if _worker_model is None:
-        _worker_model = YOLO("yolov8n.pt")
+        _worker_model = YOLO("yolov8s.pt")
     return _worker_model
 
 
@@ -145,6 +163,10 @@ def people_score(image_path) -> float:
         return 0.0
     h, w = img.shape[:2]
 
+    if _crop_top > 0.0:
+        img = img[int(h * _crop_top):, :]
+        h = img.shape[0]
+
     # Build foreground mask: pixels that differ significantly from the background.
     fg_mask = None
     if _background is not None:
@@ -157,7 +179,7 @@ def people_score(image_path) -> float:
         # Dilate so the full silhouette of a person is covered, not just edges.
         fg_mask = cv2.dilate(fg_mask, np.ones((20, 20), np.uint8))
 
-    results = model(img, verbose=False, device="cpu")
+    results = model(img, verbose=False, device="cpu", imgsz=1280)
     best = 0.0
     for box in results[0].boxes:
         if int(box.cls) not in _DETECT_CLASSES:
@@ -205,10 +227,11 @@ def _score_worker(path):
 # ── Diagnostic visualiser ─────────────────────────────────────────────────────
 
 def annotate_image(image_path, output_path, exclude_zones=None,
-                   background_path=None, fg_overlap=0.15, bg_diff_threshold=25):
+                   background_path=None, fg_overlap=0.15, bg_diff_threshold=25,
+                   crop_top=0.0):
     """
     Run detection on a single image and save an annotated version showing:
-      - Every YOLO person detection box (green = kept, red = excluded by zone,
+      - Every YOLO detection box (green = kept, red = excluded by zone,
         orange = rejected by background check)
       - Exclusion zones as coloured semi-transparent overlays
       - Foreground mask as a faint green overlay (if background supplied)
@@ -219,16 +242,24 @@ def annotate_image(image_path, output_path, exclude_zones=None,
     if img is None:
         print(f"Could not load: {image_path}")
         return
-    h, w = img.shape[:2]
-    out = img.copy()
+    h_full, w = img.shape[:2]
 
-    zones = exclude_zones or []
+    # Draw crop line on the full image before cropping
+    out = img.copy()
+    if crop_top > 0.0:
+        crop_y_px = int(h_full * crop_top)
+        cv2.line(out, (0, crop_y_px), (w, crop_y_px), (0, 255, 0), 3)
+        img = img[crop_y_px:, :]
+    h, w = img.shape[:2]
+
+    zones = _remap_zones(exclude_zones or [], crop_top)
+    crop_offset_px = int(h_full * crop_top)
     zone_colours = [(0, 128, 255), (255, 128, 0), (128, 0, 255), (0, 255, 128)]
 
-    # Draw exclusion zones
+    # Draw exclusion zones (offset into full-image coordinates)
     for i, (zx1, zy1, zx2, zy2) in enumerate(zones):
-        px1, py1 = int(zx1 * w), int(zy1 * h)
-        px2, py2 = int(zx2 * w), int(zy2 * h)
+        px1, py1 = int(zx1 * w), crop_offset_px + int(zy1 * h)
+        px2, py2 = int(zx2 * w), crop_offset_px + int(zy2 * h)
         colour = zone_colours[i % len(zone_colours)]
         overlay = out.copy()
         cv2.rectangle(overlay, (px1, py1), (px2, py2), colour, -1)
@@ -237,28 +268,30 @@ def annotate_image(image_path, output_path, exclude_zones=None,
         cv2.putText(out, f"zone {i + 1}", (px1 + 4, py1 + 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
 
-    # Build foreground mask
+    # Build foreground mask on cropped image
     fg_mask = None
     if background_path:
         bg = cv2.imread(str(background_path))
         if bg is not None:
-            if bg.shape[:2] != (h, w):
-                bg = cv2.resize(bg, (w, h))
-            diff = cv2.absdiff(img, bg)
+            if bg.shape[:2] != (h_full, w):
+                bg = cv2.resize(bg, (w, h_full))
+            bg_crop = bg[crop_offset_px:, :]
+            diff = cv2.absdiff(img, bg_crop)
             gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
             _, fg_mask = cv2.threshold(gray, bg_diff_threshold, 255, cv2.THRESH_BINARY)
             fg_mask = cv2.dilate(fg_mask, np.ones((20, 20), np.uint8))
             green_overlay = np.zeros_like(out)
-            green_overlay[:, :, 1] = fg_mask
+            green_overlay[crop_offset_px:, :, 1] = fg_mask
             cv2.addWeighted(green_overlay, 0.15, out, 1.0, 0, out)
 
-    # Run YOLO
-    model = YOLO("yolov8n.pt")
-    results = model(img, verbose=False, device="cpu")
+    # Run YOLO on cropped image
+    model = YOLO("yolov8s.pt")
+    results = model(img, verbose=False, device="cpu", imgsz=1280)
 
+    class_names = results[0].names
     print(f"\nDetections in {Path(image_path).name}:")
     for box in results[0].boxes:
-        if int(box.cls) != 0:
+        if int(box.cls) not in _DETECT_CLASSES:
             continue
         x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].tolist()]
         cx, cy = (x1 + x2) / 2 / w, (y1 + y2) / 2 / h
@@ -283,18 +316,21 @@ def annotate_image(image_path, output_path, exclude_zones=None,
                     reason = f"bg({frac:.2f}<{fg_overlap})"
                     colour = (0, 140, 255)  # orange
 
-        cv2.rectangle(out, (x1, y1), (x2, y2), colour, 2)
-        # Mark centre point
-        cv2.circle(out, (int(cx * w), int(cy * h)), 6, colour, -1)
-        label = f"{conf:.2f} cx={cx:.3f} cy={cy:.3f}"
+        # Draw on full image — offset y by crop_offset_px
+        oy1, oy2 = y1 + crop_offset_px, y2 + crop_offset_px
+        oy_c = int(cy * h) + crop_offset_px
+        cv2.rectangle(out, (x1, oy1), (x2, oy2), colour, 2)
+        cv2.circle(out, (int(cx * w), oy_c), 6, colour, -1)
+        cls_name = class_names.get(int(box.cls), str(int(box.cls)))
+        label = f"{cls_name} {conf:.2f} cy={cy:.3f}"
         if reason:
             label += f" [{reason}]"
         else:
             label += " [KEPT]"
-        cv2.putText(out, label, (x1, max(y1 - 8, 16)),
+        cv2.putText(out, label, (x1, max(oy1 - 8, 16)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, colour, 2)
         status = "REJECT" if reason else "KEEP  "
-        print(f"  {status}  conf={conf:.3f}  cx={cx:.3f}  cy={cy:.3f}  "
+        print(f"  {status}  {cls_name:<12} conf={conf:.3f}  cx={cx:.3f}  cy={cy:.3f}  "
               f"box=({x1},{y1})-({x2},{y2})  reason={reason or '-'}")
 
     cv2.imwrite(str(output_path), out)
@@ -353,7 +389,7 @@ def build_background(paths, n_samples=300, max_long_edge=960):
 def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False,
                 exclude_zones=None, background_path=None,
                 fg_overlap=0.15, bg_diff_threshold=25, workers=None,
-                date_before=None, date_after=None):
+                date_before=None, date_after=None, crop_top=0.0):
     if not Path(folder).is_dir():
         print(f"Error: folder not found: {folder}")
         return [], set()
@@ -406,7 +442,7 @@ def scan_folder(folder, threshold=0.0, limit=50, day_only=False, civil_day=False
         with multiprocessing.Pool(
             processes=num_workers,
             initializer=_worker_init,
-            initargs=(background_path, exclude_zones or [], fg_overlap, bg_diff_threshold),
+            initargs=(background_path, exclude_zones or [], fg_overlap, bg_diff_threshold, crop_top),
         ) as pool:
             for score, path in pool.imap_unordered(_score_worker, paths, chunksize=1):
                 scanned += 1
@@ -474,6 +510,10 @@ if __name__ == "__main__":
     parser.add_argument("--fg-overlap", type=float, default=0.15,
                         help="Min fraction of a detection box that must be in foreground (default 0.15)")
 
+    parser.add_argument("--crop-top", type=float, default=0.0, metavar="FRAC",
+                        help="Crop this fraction from the top of each image before inference "
+                             "(e.g. 0.67 removes sky/sea/mountains). Exclusion zones are "
+                             "remapped automatically to cropped coordinates.")
     parser.add_argument("--before", metavar="YYYYMMDD",
                         help="Only scan images before this date (exclusive upper bound)")
     parser.add_argument("--after", metavar="YYYYMMDD",
@@ -507,7 +547,8 @@ if __name__ == "__main__":
         bg = args.background if args.background and Path(args.background).exists() else None
         annotate_image(image_in, image_out,
                        exclude_zones=exclude_zones, background_path=bg,
-                       fg_overlap=args.fg_overlap, bg_diff_threshold=args.bg_diff)
+                       fg_overlap=args.fg_overlap, bg_diff_threshold=args.bg_diff,
+                       crop_top=args.crop_top)
         raise SystemExit(0)
 
     # ── Build-background mode ──────────────────────────────────────────────────
@@ -548,6 +589,7 @@ if __name__ == "__main__":
         workers=args.workers,
         date_before=args.before,
         date_after=args.after,
+        crop_top=args.crop_top,
     )
 
     if interrupted:
