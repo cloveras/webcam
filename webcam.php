@@ -1173,7 +1173,7 @@ function print_weather_info()
         $feels_like = ($hi - 32) * 5/9;
     }
 
-    $temp_str = round($temp) . '°C';
+    $temp_str = (int)round($temp) . '°C';
     if ($feels_like !== null && round($feels_like) !== round($temp)) {
         $temp_str .= ' (' . t('feels_like') . ' ' . (int)round($feels_like) . '°C)';
     }
@@ -1233,13 +1233,25 @@ function get_openmeteo_daily_weather($date_str)
           ]
         : [ 'https://archive-api.open-meteo.com/v1/archive?' . $params ];
 
-    $context = stream_context_create(['http' => ['timeout' => 5]]);
     $daily = null;
     foreach ($urls as $url) {
-        $response = @file_get_contents($url, false, $context);
-        if ($response === false) continue;
-        $data  = json_decode($response, true);
-        $d     = $data['daily'] ?? null;
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 8,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $response = curl_exec($ch);
+            curl_close($ch);
+            if ($response === false) continue;
+        } else {
+            $ctx = stream_context_create(['http' => ['timeout' => 8]]);
+            $response = @file_get_contents($url, false, $ctx);
+            if ($response === false) continue;
+        }
+        $data = json_decode($response, true);
+        $d    = $data['daily'] ?? null;
         if ($d && !empty($d['time'])) { $daily = $d; break; }
     }
     if (!$daily) return null;
@@ -1293,7 +1305,7 @@ function print_openmeteo_weather_info($timestamp)
         if ($desc) $parts[] = $desc;
     }
     if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
-        $temp_str = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+        $temp_str = (int)round($obs['temp_min']) . '°C to ' . (int)round($obs['temp_max']) . '°C';
         if ($obs['wind_max'] !== null) {
             $fl_min = wind_chill_c($obs['temp_min'], $obs['wind_max']);
             $fl_max = wind_chill_c($obs['temp_max'], $obs['wind_max']);
@@ -1385,7 +1397,7 @@ function print_openmeteo_monthly_weather_info($year, $month)
 
     $parts = [];
     if ($obs['temp_min'] !== null && $obs['temp_max'] !== null) {
-        $parts[] = round($obs['temp_min']) . '°C to ' . round($obs['temp_max']) . '°C';
+        $parts[] = (int)round($obs['temp_min']) . '°C to ' . (int)round($obs['temp_max']) . '°C';
     }
     if ($obs['wind_max'] !== null) {
         $parts[] = t('max_wind') . ' ' . round($obs['wind_max'] / 3.6) . ' m/s';
