@@ -2,12 +2,15 @@ import cv2
 import numpy as np
 import multiprocessing
 import os
+import sys
+import traceback
 from pathlib import Path
 from datetime import datetime
 
 from sun_calculator import is_aurora_time
 
 BASE_URL = "https://lilleviklofoten.no/webcam/?type=one&image="
+_WORKER_STDERR_FD = None
 
 def parse_dt_from_stem(stem: str):
     # Try exact match first (standard renamed files: YYYYMMDDHHMMSS)
@@ -123,13 +126,28 @@ def aurora_score(image_path):
 
 def _worker_init():
     # Suppress libjpeg warnings once per worker instead of once per frame.
+    # Keep a copy of the original stderr so real exceptions can still be logged.
+    global _WORKER_STDERR_FD
+    _WORKER_STDERR_FD = os.dup(2)
     devnull = os.open(os.devnull, os.O_WRONLY)
     os.dup2(devnull, 2)
     os.close(devnull)
 
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
-    return (aurora_score(path), path)
+    try:
+        return (aurora_score(path), path)
+    except Exception:
+        # Restore stderr only while printing the traceback.
+        if _WORKER_STDERR_FD is not None:
+            os.dup2(_WORKER_STDERR_FD, 2)
+        print(f"\nWorker error while scoring: {path}", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        # Re-suppress noisy decoder warnings for subsequent files.
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, 2)
+        os.close(devnull)
+        return (0.0, path)
 
 def human_time_from_filename(stem):
     dt = parse_dt_from_stem(stem)
