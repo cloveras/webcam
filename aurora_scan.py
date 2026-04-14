@@ -3,11 +3,12 @@ import numpy as np
 import multiprocessing
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sun_calculator import is_aurora_time
 
 BASE_URL = "https://lilleviklofoten.no/webcam/?type=one&image="
+_WORKER_EXCLUDE_ZONES = ()
 
 def parse_dt_from_stem(stem: str):
     # Try exact match first (standard renamed files: YYYYMMDDHHMMSS)
@@ -26,7 +27,20 @@ def parse_dt_from_stem(stem: str):
             pass
     return None
 
-def aurora_score(image_path):
+
+def parse_exclude_zone(spec: str):
+    """Parse x1,y1,x2,y2 in normalized full-image coordinates."""
+    parts = [p.strip() for p in spec.split(",")]
+    if len(parts) != 4:
+        raise ValueError(f"Invalid --exclude-zone '{spec}' (expected x1,y1,x2,y2)")
+    x1, y1, x2, y2 = (float(p) for p in parts)
+    if not (0.0 <= x1 <= 1.0 and 0.0 <= y1 <= 1.0 and 0.0 <= x2 <= 1.0 and 0.0 <= y2 <= 1.0):
+        raise ValueError(f"Invalid --exclude-zone '{spec}' (values must be 0..1)")
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError(f"Invalid --exclude-zone '{spec}' (x2>x1 and y2>y1 required)")
+    return (x1, y1, x2, y2)
+
+def aurora_score(image_path, exclude_zones=()):
     # IMREAD_REDUCED_COLOR_4 decodes the JPEG at 1/4 resolution in the decoder
     # itself — much faster than reading full-size and resizing in Python.
     img = cv2.imread(str(image_path), cv2.IMREAD_REDUCED_COLOR_4)
@@ -46,27 +60,46 @@ def aurora_score(image_path):
     hsv = cv2.cvtColor(sky_small, cv2.COLOR_BGR2HSV)
     H, S, V = cv2.split(hsv)
 
+    # Ignore static false-positive regions if exclusion zones are configured.
+    # Zone coordinates are normalized to the full input image.
+    valid_mask = np.ones(H.shape, dtype=bool)
+    if exclude_zones:
+        h_sky, w_sky = H.shape
+        for x1, y1, x2, y2 in exclude_zones:
+            px1 = int(np.clip(x1, 0.0, 1.0) * w_sky)
+            px2 = int(np.clip(x2, 0.0, 1.0) * w_sky)
+            py1 = int(np.clip(y1 / 0.65, 0.0, 1.0) * h_sky)
+            py2 = int(np.clip(y2 / 0.65, 0.0, 1.0) * h_sky)
+            if px2 > px1 and py2 > py1:
+                valid_mask[py1:py2, px1:px2] = False
+    valid_count = int(np.count_nonzero(valid_mask))
+    if valid_count == 0:
+        return 0.0
+
     # 2) Reject globally green-tinted overcast: measure global green cast
     B, G, R = cv2.split(sky_small.astype(np.float32))
-    global_green_cast = np.mean(G - (R + B) / 2.0) / 255.0  # positive means "overall green bias"
+    green_cast = G - (R + B) / 2.0
+    global_green_cast = float(np.mean(green_cast[valid_mask])) / 255.0  # positive means "overall green bias"
 
     # 3) Look for STRUCTURE: aurora tends to have local contrast/texture in V channel
     # Overcast tends to be smooth.
     blur = cv2.GaussianBlur(V, (0, 0), 3)
-    local_contrast = np.mean(np.abs(V.astype(np.float32) - blur.astype(np.float32))) / 255.0
+    contrast_map = np.abs(V.astype(np.float32) - blur.astype(np.float32))
+    local_contrast = float(np.mean(contrast_map[valid_mask])) / 255.0
 
     # 5) Sky brightness penalty. Aurora is visible against a dark sky. Twilight
     # produces a broadly lit sky even when the sun is below the horizon. A high
     # mean V across the sky region is a strong signal for twilight, not aurora.
     # Scale factor: 1.0 for a dark sky, approaching 0 as brightness rises.
-    sky_mean_v = float(np.mean(V)) / 255.0
+    sky_mean_v = float(np.mean(V[valid_mask])) / 255.0
     # Penalty-free up to ~0.18 (dark night). At 0.35 (twilight glow) factor ≈ 0.
     brightness_factor = max(0.0, min(1.0, (0.35 - sky_mean_v) / 0.17))
 
     def _component_score(h_lo, h_hi, s_min, v_min, patch_bonus=0.0):
         # 1) Candidate aurora pixels
         green = (H >= h_lo) & (H <= h_hi) & (S >= s_min) & (V >= v_min)
-        green_ratio = green.mean()
+        green &= valid_mask
+        green_ratio = float(np.count_nonzero(green)) / float(valid_count)
 
         # 4) Connectedness: aurora tends to form patches/bands.
         # Cap CC reward at 0.20 — a single blob covering >20% of the sky is
@@ -81,7 +114,7 @@ def aurora_score(image_path):
             # stats[0] is background; take max area among components
             areas = stats[1:, cv2.CC_STAT_AREA]
             largest_cc_pixels = int(np.max(areas))
-            largest_cc_ratio = min(float(largest_cc_pixels) / float(green_u8.size), 0.20)
+            largest_cc_ratio = min(float(largest_cc_pixels) / float(valid_count), 0.20)
 
         # Patch bonus: a compact cluster of ≥200 pixels in the target hue range
         # is a strong positive signal even when overall coverage is low.
@@ -114,6 +147,11 @@ def aurora_score(image_path):
 
 
 
+def _worker_init(exclude_zones):
+    global _WORKER_EXCLUDE_ZONES
+    _WORKER_EXCLUDE_ZONES = tuple(exclude_zones or ())
+
+
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
     # Suppress libjpeg "Premature end of JPEG file" warnings that come from
@@ -122,7 +160,7 @@ def _score_worker(path):
     old_stderr = os.dup(2)
     os.dup2(devnull, 2)
     try:
-        score = aurora_score(path)
+        score = aurora_score(path, exclude_zones=_WORKER_EXCLUDE_ZONES)
     finally:
         os.dup2(old_stderr, 2)
         os.close(old_stderr)
@@ -135,7 +173,53 @@ def human_time_from_filename(stem):
         return stem
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
-def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None):
+def _apply_temporal_consistency(scored, threshold, window_minutes, min_neighbors):
+    """Drop isolated threshold crossings without nearby support frames."""
+    if window_minutes <= 0 or min_neighbors <= 0:
+        return scored
+
+    window = timedelta(minutes=window_minutes)
+    by_dt = []
+    for idx, (score, path) in enumerate(scored):
+        dt = parse_dt_from_stem(path.stem)
+        if dt and score >= threshold:
+            by_dt.append((dt, idx))
+    by_dt.sort(key=lambda x: x[0])
+    if not by_dt:
+        return scored
+
+    keep = set()
+    for i, (dt, idx) in enumerate(by_dt):
+        left = i - 1
+        right = i + 1
+        neighbors = 0
+        while left >= 0 and (dt - by_dt[left][0]) <= window:
+            neighbors += 1
+            if neighbors >= min_neighbors:
+                break
+            left -= 1
+        while neighbors < min_neighbors and right < len(by_dt) and (by_dt[right][0] - dt) <= window:
+            neighbors += 1
+            if neighbors >= min_neighbors:
+                break
+            right += 1
+        if neighbors >= min_neighbors:
+            keep.add(idx)
+
+    filtered = []
+    dropped = 0
+    for idx, item in enumerate(scored):
+        score, _ = item
+        if score < threshold or idx in keep:
+            filtered.append(item)
+        else:
+            dropped += 1
+    if dropped:
+        print(f"Temporal filter dropped {dropped} isolated detections")
+    return filtered
+
+
+def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None, exclude_zones=(), temporal_window_minutes=0, temporal_min_neighbors=1):
     # Collect paths first so we know the total count upfront.
     # Print progress during collection — can be slow on network volumes.
     print("Collecting file list...", end="", flush=True)
@@ -159,22 +243,31 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
 
     results = []
     scanned = 0
+    above_threshold = 0
     tick = 0
     spinner = ["-", "\\", "|", "/"]
 
     num_workers = workers if workers is not None else multiprocessing.cpu_count()
     try:
-        with multiprocessing.Pool(processes=num_workers) as pool:
+        with multiprocessing.Pool(processes=num_workers, initializer=_worker_init, initargs=(tuple(exclude_zones),)) as pool:
             for score, path in pool.imap_unordered(_score_worker, paths, chunksize=1):
                 scanned += 1
                 tick += 1
+                results.append((score, path))
                 if score >= threshold:
-                    results.append((score, path))
-                print(f"\r  {spinner[tick % 4]} {scanned}/{total} scanned, {len(results)} above threshold", end="", flush=True)
+                    above_threshold += 1
+                print(f"\r  {spinner[tick % 4]} {scanned}/{total} scanned, {above_threshold} above threshold", end="", flush=True)
     except KeyboardInterrupt:
         print(f"\n\nInterrupted after {scanned}/{total} images.")
 
     print()  # newline after progress line
+    results = _apply_temporal_consistency(
+        results,
+        threshold=threshold,
+        window_minutes=temporal_window_minutes,
+        min_neighbors=temporal_min_neighbors,
+    )
+    results = [(score, path) for score, path in results if score >= threshold]
     results.sort(reverse=True)
 
     print(f"\nTop {limit} likely aurora frames:\n")
@@ -238,8 +331,15 @@ if __name__ == "__main__":
     parser.add_argument("--workers", type=int, default=None, help="Parallel workers (default: all CPU cores; try 1-2 for network drives)")
     parser.add_argument("--json-output", metavar="FILE", help="JSON output file (default: data/aurora-YYYY.json derived from folder path)")
     parser.add_argument("--append", action="store_true", help="Upsert entries by timestamp instead of replacing the whole scanned month")
+    parser.add_argument("--exclude-zone", action="append", default=[], metavar="x1,y1,x2,y2", help="Ignore this normalized image zone (repeatable)")
+    parser.add_argument("--temporal-window-minutes", type=int, default=0, help="Require nearby detections within this time window (0 disables)")
+    parser.add_argument("--temporal-min-neighbors", type=int, default=1, help="Min nearby detections required by temporal filter")
 
     args = parser.parse_args()
+    try:
+        exclude_zones = tuple(parse_exclude_zone(z) for z in args.exclude_zone)
+    except ValueError as e:
+        parser.error(str(e))
 
     # Derive json output path from folder year if not given explicitly
     json_output = args.json_output
@@ -254,6 +354,9 @@ if __name__ == "__main__":
         threshold=args.threshold,
         night_only=not args.day,
         workers=args.workers,
+        exclude_zones=exclude_zones,
+        temporal_window_minutes=args.temporal_window_minutes,
+        temporal_min_neighbors=args.temporal_min_neighbors,
     )
 
     if json_output:

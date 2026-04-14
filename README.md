@@ -162,6 +162,9 @@ When the output file already exists, only the scanned months are replaced — th
 | `--day` | Include daytime images (default: night only) |
 | `--limit N` | Cap stdout report at N results (JSON output is unaffected) |
 | `--workers N` | Parallel workers (default: all cores; use 1–2 for network drives) |
+| `--exclude-zone x1,y1,x2,y2` | Ignore a normalized image zone (repeatable) to suppress static false positives |
+| `--temporal-window-minutes N` | Require nearby detections within this window (0 disables temporal filtering) |
+| `--temporal-min-neighbors N` | Minimum nearby detections needed to keep a threshold crossing |
 | `--append` | Upsert individual timestamps instead of replacing the whole month |
 
 ---
