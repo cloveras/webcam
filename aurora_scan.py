@@ -40,8 +40,12 @@ def aurora_score(image_path):
     # Ignore bottom 35% to reduce lights/sea/ground reflections
     sky = img[0:int(h*0.65), :, :]
 
-    # Downscale for speed + smoother stats
-    sky_small = cv2.resize(sky, (640, int(640 * sky.shape[0] / sky.shape[1])))
+    # Downscale for speed + smoother stats, but never upscale reduced decodes.
+    target_w = min(640, sky.shape[1])
+    if target_w < sky.shape[1]:
+        sky_small = cv2.resize(sky, (target_w, int(target_w * sky.shape[0] / sky.shape[1])))
+    else:
+        sky_small = sky
 
     hsv = cv2.cvtColor(sky_small, cv2.COLOR_BGR2HSV)
     H, S, V = cv2.split(hsv)
@@ -63,17 +67,15 @@ def aurora_score(image_path):
     # Penalty-free up to ~0.18 (dark night). At 0.35 (twilight glow) factor ≈ 0.
     brightness_factor = max(0.0, min(1.0, (0.35 - sky_mean_v) / 0.17))
 
-    def _component_score(h_lo, h_hi, s_min, v_min, patch_bonus=0.0):
-        # 1) Candidate aurora pixels
-        green = (H >= h_lo) & (H <= h_hi) & (S >= s_min) & (V >= v_min)
-        green_ratio = green.mean()
+    def _mask_score(mask, patch_bonus=0.0):
+        green_ratio = mask.mean()
 
         # 4) Connectedness: aurora tends to form patches/bands.
         # Cap CC reward at 0.20 — a single blob covering >20% of the sky is
         # background sky (twilight gradient), not an aurora band. This prevents
         # an entire teal twilight sky from scoring extremely high.
-        green_u8 = (green.astype(np.uint8) * 255)
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(green_u8, connectivity=8)
+        green_u8 = (mask.astype(np.uint8) * 255)
+        num_labels, _, stats, _ = cv2.connectedComponentsWithStats(green_u8, connectivity=8)
         if num_labels <= 1:
             largest_cc_ratio = 0.0
             largest_cc_pixels = 0
@@ -97,16 +99,21 @@ def aurora_score(image_path):
             effective_bonus
         )
 
+    # 1) Candidate aurora pixels for both hue windows.
+    sat_val_ok = (S >= 55) & (V >= 25)
+    classic_mask = (H >= 38) & (H <= 85) & sat_val_ok
+    teal_mask = (H >= 38) & (H <= 100) & sat_val_ok
+
     # Classic aurora green (yellow-green, H 38–85 in OpenCV 0–180 scale).
     # Patch bonus enabled: a compact cluster of yellow-green pixels can only be
     # aurora — nothing else produces that colour in a night sky.
-    score_classic = _component_score(38, 85, 55, 25, patch_bonus=0.10)
+    score_classic = _mask_score(classic_mask, patch_bonus=0.10)
 
     # Teal/cyan aurora (H 38–100): captures cameras that render aurora as blue-green.
     # Capped at H=100 to exclude the blue end of the spectrum (H 100–130) which
     # matches pre-dawn/post-dusk twilight sky rather than aurora. No patch bonus —
     # cyan pixels can also be polar night twilight glow or atmospheric scattering.
-    score_teal = _component_score(38, 100, 55, 25, patch_bonus=0.0)
+    score_teal = _mask_score(teal_mask, patch_bonus=0.0)
 
     # Apply brightness factor last so it suppresses both components equally.
     # Twilight sky (bright) is pushed toward zero; dark aurora sky is unaffected.
@@ -114,20 +121,15 @@ def aurora_score(image_path):
 
 
 
+def _worker_init():
+    # Suppress libjpeg warnings once per worker instead of once per frame.
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull, 2)
+    os.close(devnull)
+
 def _score_worker(path):
     """Top-level function required for multiprocessing pickling."""
-    # Suppress libjpeg "Premature end of JPEG file" warnings that come from
-    # IMREAD_REDUCED_COLOR_4 decoding partial DCT data. The images are fine.
-    devnull = os.open(os.devnull, os.O_WRONLY)
-    old_stderr = os.dup(2)
-    os.dup2(devnull, 2)
-    try:
-        score = aurora_score(path)
-    finally:
-        os.dup2(old_stderr, 2)
-        os.close(old_stderr)
-        os.close(devnull)
-    return (score, path)
+    return (aurora_score(path), path)
 
 def human_time_from_filename(stem):
     dt = parse_dt_from_stem(stem)
@@ -135,7 +137,7 @@ def human_time_from_filename(stem):
         return stem
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
-def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None):
+def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None, chunksize=32):
     # Collect paths first so we know the total count upfront.
     # Print progress during collection — can be slow on network volumes.
     print("Collecting file list...", end="", flush=True)
@@ -164,8 +166,8 @@ def scan_folder(folder, limit=50, threshold=0.0, night_only=False, workers=None)
 
     num_workers = workers if workers is not None else multiprocessing.cpu_count()
     try:
-        with multiprocessing.Pool(processes=num_workers) as pool:
-            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=1):
+        with multiprocessing.Pool(processes=num_workers, initializer=_worker_init) as pool:
+            for score, path in pool.imap_unordered(_score_worker, paths, chunksize=max(1, int(chunksize))):
                 scanned += 1
                 tick += 1
                 if score >= threshold:
@@ -238,6 +240,7 @@ if __name__ == "__main__":
     parser.add_argument("--workers", type=int, default=None, help="Parallel workers (default: all CPU cores; try 1-2 for network drives)")
     parser.add_argument("--json-output", metavar="FILE", help="JSON output file (default: data/aurora-YYYY.json derived from folder path)")
     parser.add_argument("--append", action="store_true", help="Upsert entries by timestamp instead of replacing the whole scanned month")
+    parser.add_argument("--chunksize", type=int, default=32, help="Multiprocessing chunk size (higher can reduce overhead)")
 
     args = parser.parse_args()
 
@@ -254,6 +257,7 @@ if __name__ == "__main__":
         threshold=args.threshold,
         night_only=not args.day,
         workers=args.workers,
+        chunksize=args.chunksize,
     )
 
     if json_output:
