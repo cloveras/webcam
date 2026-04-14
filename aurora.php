@@ -18,17 +18,50 @@ error_reporting(E_ERROR | E_PARSE);
 setlocale(LC_ALL, WebcamConfig::LOCALE);
 date_default_timezone_set(WebcamConfig::TIMEZONE);
 
+function load_cached_json_rows($glob_pattern, $cache_key, $ttl_seconds = 900)
+{
+    $files = glob($glob_pattern) ?: [];
+    $sig_parts = [];
+    foreach ($files as $f) {
+        $sig_parts[] = basename($f) . ':' . @filemtime($f) . ':' . @filesize($f);
+    }
+    $signature = sha1(implode('|', $sig_parts));
+
+    $cache_file = sys_get_temp_dir() . "/{$cache_key}.json";
+    if (file_exists($cache_file)) {
+        $cached = json_decode(@file_get_contents($cache_file), true);
+        if (
+            is_array($cached) &&
+            ($cached['signature'] ?? '') === $signature &&
+            isset($cached['cached_at']) &&
+            (time() - (int)$cached['cached_at']) < $ttl_seconds &&
+            isset($cached['rows']) &&
+            is_array($cached['rows'])
+        ) {
+            return $cached['rows'];
+        }
+    }
+
+    $rows = [];
+    foreach ($files as $json_file) {
+        $decoded = json_decode(@file_get_contents($json_file), true);
+        if (is_array($decoded)) {
+            $rows = array_merge($rows, $decoded);
+        }
+    }
+    @file_put_contents($cache_file, json_encode([
+        'signature' => $signature,
+        'cached_at' => time(),
+        'rows' => $rows,
+    ]));
+    return $rows;
+}
+
 // ============================================================
 // Load aurora data
 // ============================================================
 
-$all_images = [];
-foreach (glob(__DIR__ . '/data/aurora-*.json') as $json_file) {
-    $decoded = json_decode(file_get_contents($json_file), true);
-    if (is_array($decoded)) {
-        $all_images = array_merge($all_images, $decoded);
-    }
-}
+$all_images = load_cached_json_rows(__DIR__ . '/data/aurora-*.json', 'webcam_aurora_data_cache', 900);
 
 // Build sorted list of YYYYMM strings that have aurora images.
 $months_with_images = [];
@@ -98,6 +131,17 @@ $month_images = array_values(array_filter($all_images, function ($img) use ($cur
 }));
 usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 
+$_preload_image = '';
+if (!empty($month_images)) {
+    $_ts0 = $month_images[0]['timestamp'];
+    $_y0 = substr($_ts0, 0, 4);
+    $_m0 = substr($_ts0, 4, 2);
+    $_d0 = substr($_ts0, 6, 2);
+    $_full0 = "{$_y0}/{$_m0}/{$_d0}/{$_ts0}.jpg";
+    $_mini0 = "{$_y0}/{$_m0}/{$_d0}/mini/{$_ts0}.jpg";
+    $_preload_image = ($size === 'large') ? $_full0 : (file_exists($_mini0) ? $_mini0 : $_full0);
+}
+
 // Best image for og:image (highest score this month)
 $_best = null;
 foreach ($month_images as $_img) {
@@ -166,6 +210,9 @@ if ($prev_url) {
 if ($next_url) {
     echo "  <link rel=\"prefetch\" title=\"Next\" href=\"{$script_url}{$next_url}\">\n";
 }
+if ($_preload_image) {
+    echo '  <link rel="preload" as="image" href="' . htmlspecialchars($_preload_image) . '">' . "\n";
+}
 
 echo lang_hreflang_links('https://lilleviklofoten.no/webcam/aurora.php');
 echo "  <title>$title</title>\n";
@@ -205,6 +252,9 @@ echo "      t=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"
 echo "      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n";
 echo "  })(window, document, \"clarity\", \"script\", \"{$clarity_id}\");\n";
 echo "  </script>\n\n";
+
+echo "  <!-- Prefetch pages on hover/touchstart for faster navigation -->\n";
+echo "  <script src=\"//instant.page/5.2.0\" type=\"module\" defer></script>\n";
 
 echo "</head>\n";
 echo "<body>\n\n";

@@ -27,17 +27,50 @@ error_reporting(E_ERROR | E_PARSE);
 setlocale(LC_ALL, WebcamConfig::LOCALE);
 date_default_timezone_set(WebcamConfig::TIMEZONE);
 
+function load_cached_json_rows($glob_pattern, $cache_key, $ttl_seconds = 900)
+{
+    $files = glob($glob_pattern) ?: [];
+    $sig_parts = [];
+    foreach ($files as $f) {
+        $sig_parts[] = basename($f) . ':' . @filemtime($f) . ':' . @filesize($f);
+    }
+    $signature = sha1(implode('|', $sig_parts));
+
+    $cache_file = sys_get_temp_dir() . "/{$cache_key}.json";
+    if (file_exists($cache_file)) {
+        $cached = json_decode(@file_get_contents($cache_file), true);
+        if (
+            is_array($cached) &&
+            ($cached['signature'] ?? '') === $signature &&
+            isset($cached['cached_at']) &&
+            (time() - (int)$cached['cached_at']) < $ttl_seconds &&
+            isset($cached['rows']) &&
+            is_array($cached['rows'])
+        ) {
+            return $cached['rows'];
+        }
+    }
+
+    $rows = [];
+    foreach ($files as $json_file) {
+        $decoded = json_decode(@file_get_contents($json_file), true);
+        if (is_array($decoded)) {
+            $rows = array_merge($rows, $decoded);
+        }
+    }
+    @file_put_contents($cache_file, json_encode([
+        'signature' => $signature,
+        'cached_at' => time(),
+        'rows' => $rows,
+    ]));
+    return $rows;
+}
+
 // ============================================================
 // Load people data
 // ============================================================
 
-$all_images = [];
-foreach (glob(PEOPLE_DATA_DIR . '/people-*.json') as $json_file) {
-    $decoded = json_decode(file_get_contents($json_file), true);
-    if (is_array($decoded)) {
-        $all_images = array_merge($all_images, $decoded);
-    }
-}
+$all_images = load_cached_json_rows(PEOPLE_DATA_DIR . '/people-*.json', 'webcam_people_data_cache', 900);
 
 // Build sorted list of YYYYMM strings that have people images.
 $months_with_images = [];
@@ -108,6 +141,17 @@ $month_images = array_values(array_filter($all_images, function ($img) use ($cur
 }));
 usort($month_images, fn($a, $b) => strcmp($a['timestamp'], $b['timestamp']));
 
+$_preload_image = '';
+if (!empty($month_images)) {
+    $_ts0 = $month_images[0]['timestamp'];
+    $_y0 = substr($_ts0, 0, 4);
+    $_m0 = substr($_ts0, 4, 2);
+    $_d0 = substr($_ts0, 6, 2);
+    $_full0 = "{$_y0}/{$_m0}/{$_d0}/{$_ts0}.jpg";
+    $_mini0 = "{$_y0}/{$_m0}/{$_d0}/mini/{$_ts0}.jpg";
+    $_preload_image = ($size === 'large') ? $_full0 : (file_exists($_mini0) ? $_mini0 : $_full0);
+}
+
 // ============================================================
 // Page title
 // ============================================================
@@ -139,7 +183,11 @@ echo '  <meta name="description" content="' . htmlspecialchars(t('seo_descriptio
 echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' . "\n";
 echo '  <meta name="robots" content="noindex, nofollow">' . "\n";
 echo '  <link rel="icon" href="' . WebcamConfig::FAVICON_32 . '" sizes="32x32">' . "\n";
-echo '  <link rel="stylesheet" type="text/css" href="' . PEOPLE_CSS_PATH . '">' . "\n";
+$css_href = PEOPLE_CSS_PATH;
+if (PEOPLE_CSS_PATH === 'css.php' && file_exists(__DIR__ . '/webcam.css')) {
+    $css_href .= '?v=' . filemtime(__DIR__ . '/webcam.css');
+}
+echo '  <link rel="stylesheet" type="text/css" href="' . $css_href . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
 echo '  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">' . "\n";
@@ -151,6 +199,9 @@ if ($prev_url) {
 }
 if ($next_url) {
     echo "  <link rel=\"prefetch\" title=\"Next\" href=\"{$script_url}{$next_url}\">\n";
+}
+if ($_preload_image) {
+    echo '  <link rel="preload" as="image" href="' . htmlspecialchars($_preload_image) . '">' . "\n";
 }
 
 echo "  <title>$title</title>\n";
@@ -190,6 +241,9 @@ echo "      t=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"
 echo "      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n";
 echo "  })(window, document, \"clarity\", \"script\", \"{$clarity_id}\");\n";
 echo "  </script>\n\n";
+
+echo "  <!-- Prefetch pages on hover/touchstart for faster navigation -->\n";
+echo "  <script src=\"//instant.page/5.2.0\" type=\"module\" defer></script>\n";
 
 echo "</head>\n";
 echo "<body>\n\n";
