@@ -172,8 +172,25 @@ if (empty($_SERVER['SERVER_NAME'])) {
 }
 $script_url = '//' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'];
 
-header('Cache-Control: public, max-age=3600');
-header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+// Always revalidate — people data is updated by daily cron.
+// Last-Modified enables 304 responses so repeat visits cost zero bytes when unchanged.
+$_people_json_files = glob(PEOPLE_DATA_DIR . '/people-*.json') ?: [];
+$_people_last_mod = 0;
+foreach ($_people_json_files as $_f) {
+    $_mtime = @filemtime($_f);
+    if ($_mtime > $_people_last_mod) $_people_last_mod = $_mtime;
+}
+header('Cache-Control: no-cache');
+header('Vary: Accept-Encoding');
+if ($_people_last_mod > 0) {
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $_people_last_mod) . ' GMT');
+    if (!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+        if (strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= $_people_last_mod) {
+            http_response_code(304);
+            exit;
+        }
+    }
+}
 
 echo '<!DOCTYPE html>' . "\n";
 echo '<html lang="' . lang_html_attr() . '">' . "\n";
@@ -190,9 +207,7 @@ if (PEOPLE_CSS_PATH === 'css.php' && file_exists(__DIR__ . '/webcam.css')) {
 echo '  <link rel="stylesheet" type="text/css" href="' . $css_href . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
-echo '  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">' . "\n";
 echo '  <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>' . "\n";
-echo '  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>' . "\n";
 
 if ($prev_url) {
     echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"{$script_url}{$prev_url}\">\n";
@@ -309,7 +324,8 @@ foreach ($month_images as $img) {
     $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
     $time_style = ($size === 'large') ? ' style="bottom:40px"' : '';
     echo "  <div class=\"grid-item\"$item_style>\n";
-    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" loading=\"lazy\"{$img_attrs}></a>\n";
+    $lazy = ($count === 0) ? '' : ' loading="lazy"';
+    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\"{$lazy}{$img_attrs}></a>\n";
     echo "    <span class=\"time\"$time_style>$label</span>\n";
     echo "  </div>\n";
     $count++;
@@ -331,7 +347,7 @@ $next_url_safe = $next_url ? addslashes($next_url) : '';
 echo <<<TOUCH
 
 <!-- Touch gestures -->
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="hammer.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var body = document.body;

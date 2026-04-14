@@ -54,7 +54,11 @@ function page_header($title, $previous, $next, $up, $down, $prefetch_images = ar
     // Pre-compute variables for heredoc interpolation (PHP tags don't execute inside heredocs)
     $_cam_label    = CAM_LABEL;
     $_cam_css_path = CAM_CSS_PATH . '?v=' . filemtime(__DIR__ . '/webcam.css');
-    $_css_inline   = '  <style>' . "\n" . file_get_contents(__DIR__ . '/webcam.css') . '  </style>';
+    static $_css_cached = null;
+    if ($_css_cached === null) {
+        $_css_cached = file_get_contents(__DIR__ . '/webcam.css');
+    }
+    $_css_inline = '  <style>' . "\n" . $_css_cached . '  </style>';
     $_webcam_url    = WebcamConfig::WEBCAM_URL;
     $_favicon_32    = WebcamConfig::FAVICON_32;
     $_favicon_192   = WebcamConfig::FAVICON_192;
@@ -167,9 +171,7 @@ END1;
     // DNS prefetch and preconnect for external resources
     echo "  <link rel=\"dns-prefetch\" href=\"//www.googletagmanager.com\">\n";
     echo "  <link rel=\"dns-prefetch\" href=\"//www.clarity.ms\">\n";
-    echo "  <link rel=\"dns-prefetch\" href=\"//cdn.jsdelivr.net\">\n";
     echo "  <link rel=\"preconnect\" href=\"https://www.googletagmanager.com\" crossorigin>\n";
-    echo "  <link rel=\"preconnect\" href=\"https://cdn.jsdelivr.net\" crossorigin>\n";
     
     // Prefetch navigation pages
     if ($previous) {
@@ -300,7 +302,7 @@ function footer($images_printed, $previous, $next, $up, $down, $nav_prefix = '')
 
 <!-- Touch gestures -->
 <!-- script src="https://hammerjs.github.io/dist/hammer.min.js"></script -->
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="hammer.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var body = document.body;
@@ -1848,6 +1850,7 @@ if ($type === 'last' || $type === '') {
     header('Cache-Control: public, max-age=3600');
     header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
 }
+header('Vary: Accept-Encoding');
 
 // Determine which page type to display and render it
 // ------------------------------------------------------------

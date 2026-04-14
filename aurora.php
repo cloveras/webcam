@@ -177,8 +177,25 @@ $_aurora_canonical = $using_default
     ? "{$_webcam_url}aurora.php"
     : "{$_webcam_url}aurora.php?year={$year_str}&month={$month_str}";
 
-header('Cache-Control: public, max-age=1800');
-header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 1800) . ' GMT');
+// Always revalidate — aurora data is updated hourly at night.
+// Last-Modified enables 304 responses so repeat visits cost zero bytes when unchanged.
+$_aurora_json_files = glob(__DIR__ . '/data/aurora-*.json') ?: [];
+$_aurora_last_mod = 0;
+foreach ($_aurora_json_files as $_f) {
+    $_mtime = @filemtime($_f);
+    if ($_mtime > $_aurora_last_mod) $_aurora_last_mod = $_mtime;
+}
+header('Cache-Control: no-cache');
+header('Vary: Accept-Encoding');
+if ($_aurora_last_mod > 0) {
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $_aurora_last_mod) . ' GMT');
+    if (!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+        if (strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= $_aurora_last_mod) {
+            http_response_code(304);
+            exit;
+        }
+    }
+}
 
 echo '<!DOCTYPE html>' . "\n";
 echo '<html lang="' . lang_html_attr() . '">' . "\n";
@@ -200,9 +217,7 @@ echo '  <link rel="icon" href="' . WebcamConfig::FAVICON_32 . '" sizes="32x32">'
 echo '  <link rel="stylesheet" type="text/css" href="css.php?v=' . filemtime(__DIR__ . '/webcam.css') . '">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.googletagmanager.com">' . "\n";
 echo '  <link rel="dns-prefetch" href="//www.clarity.ms">' . "\n";
-echo '  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">' . "\n";
 echo '  <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>' . "\n";
-echo '  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>' . "\n";
 
 if ($prev_url) {
     echo "  <link rel=\"prefetch\" title=\"Previous\" href=\"{$script_url}{$prev_url}\">\n";
@@ -320,11 +335,12 @@ foreach ($month_images as $img) {
     $alt       = "Lillevik Lofoten webcam: $y-$m-$d $h:$mi – aurora {$pct}%";
     $link      = "webcam.php?type=one&image=$ts" . lang_param();
     $label     = "$d $h:$mi ({$pct}%)";
+    $lazy      = ($count === 0) ? '' : ' loading="lazy"';
 
     $item_style = ($size === 'large') ? ' style="max-width:900px"' : '';
     $time_style = ($size === 'large') ? ' style="bottom:40px"' : '';
     echo "  <div class=\"grid-item\"$item_style>\n";
-    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\" loading=\"lazy\"{$img_attrs}></a>\n";
+    echo "    <a href=\"$link\"><img alt=\"$alt\" src=\"$src\"{$lazy}{$img_attrs}></a>\n";
     echo "    <span class=\"time\"$time_style>$label</span>\n";
     echo "  </div>\n";
     $count++;
@@ -349,7 +365,7 @@ $next_url_safe = $next_url ? addslashes($next_url) : '';
 echo <<<TOUCH
 
 <!-- Touch gestures -->
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="hammer.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var body = document.body;
